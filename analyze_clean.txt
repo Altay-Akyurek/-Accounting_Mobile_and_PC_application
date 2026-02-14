@@ -1,0 +1,52 @@
+﻿Analyzing database_helper.dart...                               
+
+   info - The imported package 'supabase_flutter' isn't a dependency of the importing package - lib\services\database_helper.dart:2:8 - depend_on_referenced_packages
+  error - Target of URI doesn't exist: 'package:supabase_flutter/supabase_flutter.dart' - lib\services\database_helper.dart:2:8 - uri_does_not_exist
+  error - Undefined class 'SupabaseClient' - lib\services\database_helper.dart:14:9 - undefined_class
+  error - Undefined name 'Supabase' - lib\services\database_helper.dart:14:36 - undefined_identifier
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:36:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:67:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:90:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:130:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:176:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:188:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:207:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:238:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:250:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:280:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:337:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:349:7 - avoid_print
+warning - The value of the local variable 'puantajlar' isn't used - lib\services\database_helper.dart:538:11 - unused_local_variable
+warning - The value of the local variable 'workValueProducedThisPeriod' isn't used - lib\services\database_helper.dart:550:12 - unused_local_variable
+warning - The value of the local variable 'totalAccruedLabor' isn't used - lib\services\database_helper.dart:792:14 - unused_local_variable
+warning - Dead code - lib\services\database_helper.dart:838:41 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\services\database_helper.dart:838:44 - dead_null_aware_expression
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:844:7 - avoid_print
+warning - Dead code - lib\services\database_helper.dart:900:41 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\services\database_helper.dart:900:44 - dead_null_aware_expression
+warning - Dead code - lib\services\database_helper.dart:916:39 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\services\database_helper.dart:916:42 - dead_null_aware_expression
+warning - Dead code - lib\services\database_helper.dart:931:41 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\services\database_helper.dart:931:44 - dead_null_aware_expression
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:952:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:992:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1001:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1032:7 - avoid_print
+warning - Dead code - lib\services\database_helper.dart:1047:43 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\services\database_helper.dart:1047:46 - dead_null_aware_expression
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1064:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1083:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1117:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1132:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1151:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1167:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1180:13 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1190:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1203:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1214:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1246:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1280:7 - avoid_print
+   info - Statements in a while should be enclosed in a block - lib\services\database_helper.dart:1371:31 - curly_braces_in_flow_control_structures
+warning - The value of the local variable 'puantajlar' isn't used - lib\services\database_helper.dart:1515:11 - unused_local_variable
+   info - Don't invoke 'print' in production code - lib\services\database_helper.dart:1773:7 - avoid_print
+

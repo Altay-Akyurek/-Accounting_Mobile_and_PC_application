@@ -462,7 +462,7 @@ class _AttendanceCalendar extends StatefulWidget {
 
 class _AttendanceCalendarState extends State<_AttendanceCalendar> {
   DateTime _viewDate = DateTime.now();
-  Map<int, Puantaj> _attendance = {};
+  Map<String, Puantaj> _attendance = {}; // Key: "yyyy-MM-dd"
   List<Project> _projects = [];
   bool _isLoading = true;
 
@@ -472,22 +472,27 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
     _loadAttendance();
   }
 
+  String _dateKey(DateTime d) => "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+
   Future<void> _loadAttendance() async {
     setState(() => _isLoading = true);
     final start = DateTime(_viewDate.year, _viewDate.month, 1);
     final end = DateTime(_viewDate.year, _viewDate.month + 1, 0);
     
+    // Fetch 6 extra days to calculate streaks for Sundays at month start
+    final fetchStart = start.subtract(const Duration(days: 6));
+
     final results = await Future.wait([
-      DatabaseHelper.instance.getPuantajByWorkerId(widget.worker.id!, start, end),
+      DatabaseHelper.instance.getPuantajByWorkerId(widget.worker.id!, fetchStart, end),
       DatabaseHelper.instance.getAllProjects(),
     ]);
     
     final list = results[0] as List<Puantaj>;
     final projects = results[1] as List<Project>;
     
-    Map<int, Puantaj> map = {};
+    Map<String, Puantaj> map = {};
     for (var p in list) {
-      map[p.tarih.day] = p;
+      map[_dateKey(p.tarih)] = p;
     }
     
     setState(() {
@@ -499,12 +504,13 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
 
   Future<void> _showPuantajEditDialog(int day) async {
     final date = DateTime(_viewDate.year, _viewDate.month, day);
-    final existingPuantaj = _attendance[day];
+    final existingPuantaj = _attendance[_dateKey(date)];
     
     final hourController = TextEditingController(text: existingPuantaj?.saat.toString() ?? '8');
     final mesaiController = TextEditingController(text: existingPuantaj?.mesai.toString() ?? '0');
     final noteController = TextEditingController(text: existingPuantaj?.aciklama ?? '');
     int? selectedProjectId = existingPuantaj?.projectId;
+    PuantajStatus selectedStatus = existingPuantaj?.status ?? PuantajStatus.normal;
 
     showModalBottomSheet(
       context: context,
@@ -514,22 +520,101 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
         builder: (context, setModalState) => Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: Container(
-            decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32))),
-            padding: const EdgeInsets.all(32),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('${DateFormat('dd MMMM yyyy', 'tr_TR').format(date)} - Puantaj', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                Text(
+                  '${DateFormat('dd MMMM yyyy EEEE', 'tr_TR').format(date)} - Puantaj',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    Expanded(child: TextField(controller: hourController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Çalışma Saati'))),
+                    Expanded(
+                      child: TextField(
+                        controller: hourController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Çalışma Saati',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 16),
-                    Expanded(child: TextField(controller: mesaiController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Mesai Saati'))),
+                    Expanded(
+                      child: TextField(
+                        controller: mesaiController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Mesai Saati',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                TextField(controller: noteController, decoration: const InputDecoration(labelText: 'Not / Açıklama')),
+                const SizedBox(height: 24),
+                const Text(
+                  'DURUM SEÇİN',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1),
+                ),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: PuantajStatus.values.map((status) {
+                      String label = '';
+                      switch (status) {
+                        case PuantajStatus.normal: label = 'Normal'; break;
+                        case PuantajStatus.izinli: label = 'İzinli'; break;
+                        case PuantajStatus.raporlu: label = 'Raporlu'; break;
+                        case PuantajStatus.mazeretli: label = 'Mazeretli'; break;
+                        case PuantajStatus.izinsiz: label = 'İzinsiz'; break;
+                      }
+                      final isSelected = selectedStatus == status;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(label),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setModalState(() => selectedStatus = status);
+                            }
+                          },
+                          selectedColor: const Color(0xFF011627),
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : const Color(0xFF011627),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: isSelected ? Colors.transparent : Colors.grey.shade300),
+                          ),
+                          showCheckmark: false,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: noteController,
+                  decoration: InputDecoration(
+                    labelText: 'Not / Açıklama',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
                   value: selectedProjectId,
@@ -541,46 +626,58 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                     )),
                   ],
                   onChanged: (v) => setModalState(() => selectedProjectId = v),
-                  decoration: const InputDecoration(labelText: 'İlgili Proje'),
+                  decoration: InputDecoration(
+                    labelText: 'İlgili Proje',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
                   isExpanded: true,
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  children: [
-                    if (existingPuantaj != null)
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () async {
-                            await DatabaseHelper.instance.deletePuantaj(existingPuantaj.id!);
-                            Navigator.pop(context);
-                            _loadAttendance();
-                          },
-                          child: const Text('KAYDI SİL', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final p = Puantaj(
-                            id: existingPuantaj?.id,
-                            workerId: widget.worker.id!,
-                            tarih: date,
-                            saat: double.tryParse(hourController.text) ?? 8.0,
-                            mesai: double.tryParse(mesaiController.text) ?? 0.0,
-                            aciklama: noteController.text,
-                            projectId: selectedProjectId,
-                          );
-                          await DatabaseHelper.instance.insertPuantaj(p);
-                          Navigator.pop(context);
-                          _loadAttendance();
-                        },
-                        child: const Text('KAYDET'),
-                      ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final p = Puantaj(
+                        id: existingPuantaj?.id,
+                        workerId: widget.worker.id!,
+                        tarih: date,
+                        saat: double.tryParse(hourController.text) ?? 8.0,
+                        mesai: double.tryParse(mesaiController.text) ?? 0.0,
+                        aciklama: noteController.text,
+                        projectId: selectedProjectId,
+                        status: selectedStatus,
+                      );
+                      await DatabaseHelper.instance.insertPuantaj(p);
+                      if (mounted) {
+                        Navigator.pop(context);
+                        _loadAttendance();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF011627),
+                      foregroundColor: Colors.white,
+                      elevation: 4,
+                      shadowColor: const Color(0xFF011627).withOpacity(0.4),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
-                  ],
+                    child: const Text('KAYDET', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                  ),
                 ),
+                if (existingPuantaj != null) ...[
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () async {
+                      await DatabaseHelper.instance.deletePuantaj(existingPuantaj.id!);
+                      if (mounted) {
+                        Navigator.pop(context);
+                        _loadAttendance();
+                      }
+                    },
+                    child: const Text('KAYDI SİL', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ],
             ),
           ),
@@ -634,21 +731,70 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                 itemBuilder: (context, index) {
                   if (index < firstDayOffset) return const SizedBox.shrink();
                   final day = index - firstDayOffset + 1;
-                  final isWorked = _attendance.containsKey(day);
+                  final date = DateTime(_viewDate.year, _viewDate.month, day);
+                  final puantaj = _attendance[_dateKey(date)];
+                  
+                  Color bgColor = Colors.white;
+                  Color textColor = const Color(0xFF011627);
+                  
+                  // Sunday Streak Logic for Visualization
+                  bool isBonusSunday = false;
+                  if (date.weekday == DateTime.sunday) {
+                    bool earned = true;
+                    for (int i = 1; i <= 6; i++) {
+                      DateTime checkDate = date.subtract(Duration(days: i));
+                      final p = _attendance[_dateKey(checkDate)];
+                      if (p == null || p.status == PuantajStatus.izinsiz) {
+                        earned = false;
+                        break;
+                      }
+                    }
+                    if (earned) {
+                      // Rule: If sunday itself has a paid leave record, it's not a "Bonus" highlighting
+                      bool isPaidHolidayRecord = puantaj != null && 
+                        [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(puantaj.status);
+                      if (!isPaidHolidayRecord) {
+                        isBonusSunday = true;
+                      }
+                    }
+                  }
+
+                  if (puantaj != null) {
+                    switch (puantaj.status) {
+                      case PuantajStatus.normal:
+                        bgColor = const Color(0xFF2EC4B6);
+                        textColor = Colors.white;
+                        break;
+                      case PuantajStatus.izinli:
+                      case PuantajStatus.raporlu:
+                      case PuantajStatus.mazeretli:
+                        bgColor = Colors.blue.shade600;
+                        textColor = Colors.white;
+                        break;
+                      case PuantajStatus.izinsiz:
+                        bgColor = Colors.red.shade600;
+                        textColor = Colors.white;
+                        break;
+                    }
+                  } else if (isBonusSunday) {
+                    bgColor = Colors.amber.shade400; // Earned Sunday is Yellow
+                    textColor = Colors.white;
+                  }
+
                   return GestureDetector(
                     onTap: () => _showPuantajEditDialog(day),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       decoration: BoxDecoration(
-                        color: isWorked ? const Color(0xFF2EC4B6) : Colors.white,
+                        color: bgColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: isWorked ? Colors.transparent : Colors.black.withOpacity(0.05)),
-                        boxShadow: isWorked ? [BoxShadow(color: const Color(0xFF2EC4B6).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : null,
+                        border: Border.all(color: puantaj != null ? Colors.transparent : Colors.black.withOpacity(0.05)),
+                        boxShadow: puantaj != null ? [BoxShadow(color: bgColor.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : null,
                       ),
                       child: Center(
                         child: Text(
                           day.toString(),
-                          style: TextStyle(color: isWorked ? Colors.white : const Color(0xFF011627), fontWeight: FontWeight.w900, fontSize: 16),
+                          style: TextStyle(color: textColor, fontWeight: FontWeight.w900, fontSize: 16),
                         ),
                       ),
                     ),
@@ -663,27 +809,76 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
   }
 
   Widget _buildInfoFooter() {
-    int workedDays = _attendance.length;
+    int daysInMonth = DateTime(_viewDate.year, _viewDate.month + 1, 0).day;
+    int workedDays = 0;
+    int leaveDays = 0;
+    int absentDays = 0;
+    int sundayBonuses = 0;
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(_viewDate.year, _viewDate.month, day);
+      final p = _attendance[_dateKey(date)];
+      if (p != null) {
+        if (p.status == PuantajStatus.normal) workedDays++;
+        else if ([PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)) leaveDays++;
+        else if (p.status == PuantajStatus.izinsiz) absentDays++;
+      }
+      
+      if (date.weekday == DateTime.sunday) {
+        bool earned = true;
+        for (int i = 1; i <= 6; i++) {
+          final cp = _attendance[_dateKey(date.subtract(Duration(days: i)))];
+          if (cp == null || cp.status == PuantajStatus.izinsiz) {
+            earned = false;
+            break;
+          }
+        }
+        if (earned) {
+          final ps = _attendance[_dateKey(date)];
+          bool isPaidHolidayRecord = ps != null && 
+            [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(ps.status);
+          if (!isPaidHolidayRecord) {
+            sundayBonuses++;
+          }
+        }
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: const Color(0xFFF0F2F5)))),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('AYLIK ÖZET', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 0.5)),
-              Text('$workedDays GÜN ÇALIŞTI', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
+              _buildMiniSummary('ÇALIŞMA', workedDays, const Color(0xFF2EC4B6)),
+              _buildMiniSummary('İZİN/RAPOR', leaveDays, Colors.blue.shade600),
+              _buildMiniSummary('İZSİNSİZ', absentDays, Colors.red.shade600),
+              _buildMiniSummary('PAZAR', sundayBonuses, Colors.amber.shade700),
             ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF011627), padding: const EdgeInsets.symmetric(horizontal: 32)),
-            child: const Text('KAPAT'),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF011627), padding: const EdgeInsets.symmetric(vertical: 16)),
+              child: const Text('KAPAT'),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMiniSummary(String label, int value, Color color) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+        Text(value.toString(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+      ],
     );
   }
 }

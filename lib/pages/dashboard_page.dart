@@ -187,7 +187,7 @@ class _DashboardPageState extends State<DashboardPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'NET NAKİT DURUMU',
+                'NET NAKİT (KASA)',
                 style: TextStyle(
                   color: Colors.white70,
                   fontWeight: FontWeight.w900,
@@ -229,13 +229,13 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             children: [
               _MiniStat(
-                label: 'GELİR',
+                label: 'TAHSİLAT',
                 value: _formatPara(_ozetBilgiler['toplamGelir']!),
                 color: const Color(0xFF2EC4B6),
               ),
               const SizedBox(width: 24),
               _MiniStat(
-                label: 'GİDER',
+                label: 'KALAN BORÇ',
                 value: _formatPara(_ozetBilgiler['toplamGider']!),
                 color: const Color(0xFFE71D36),
               ),

@@ -564,16 +564,31 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: EdgeInsets.zero,
                 onExpansionChanged: (expanded) => setState(() => _isLaborExpanded = expanded),
-                children: items.map((item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(item['name'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                      Text(_formatPara(item['amount'].toDouble()), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                )).toList(),
+                children: items.map((item) {
+                  final worked = item['worked'] ?? 0;
+                  final leave = item['leave'] ?? 0;
+                  final sunday = item['sunday'] ?? 0;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(item['name'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                            Text(_formatPara(item['amount'].toDouble()), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$worked Çalışma + $leave İzin + $sunday Pazar',
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ]

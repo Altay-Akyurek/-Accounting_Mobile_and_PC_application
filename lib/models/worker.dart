@@ -103,6 +103,8 @@ class Worker {
   }
 }
 
+enum PuantajStatus { normal, izinli, raporlu, mazeretli, izinsiz }
+
 class Puantaj {
   final int? id;
   final int workerId;
@@ -111,6 +113,7 @@ class Puantaj {
   final double mesai; // Fazla mesai saati
   final String? aciklama;
   final int? projectId; // Hangi projede çalıştı
+  final PuantajStatus status;
 
   Puantaj({
     this.id,
@@ -120,6 +123,7 @@ class Puantaj {
     this.mesai = 0.0,
     this.aciklama,
     this.projectId,
+    this.status = PuantajStatus.normal,
   });
 
   Map<String, dynamic> toMap() {
@@ -131,6 +135,7 @@ class Puantaj {
       'mesai': mesai,
       'aciklama': aciklama ?? '',
       'project_id': projectId,
+      'status': status.name,
     };
   }
 
@@ -143,6 +148,10 @@ class Puantaj {
       mesai: (map['mesai'] as num?)?.toDouble() ?? 0.0,
       aciklama: map['aciklama'] as String?,
       projectId: map['project_id'] as int?,
+      status: PuantajStatus.values.firstWhere(
+        (e) => e.name == map['status'],
+        orElse: () => PuantajStatus.normal,
+      ),
     );
   }
 }

@@ -17,7 +17,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
   DateTime? _bitisTarihi;
   Map<String, double> _genelOzet = {'gelir': 0.0, 'gider': 0.0, 'kar': 0.0};
   Map<String, double> _kategoriler = {};
-  Map<String, double> _workerBreakdown = {};
+  Map<String, dynamic> _workerBreakdown = {};
   List<Map<String, dynamic>> _projeRaporlari = [];
   List<Project> _projeler = [];
   int? _seciliProjeId;
@@ -60,7 +60,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
           'kar': analysis['kar'],
         };
         _kategoriler = Map<String, double>.from(analysis['kategoriler']);
-        _workerBreakdown = Map<String, double>.from(analysis['worker_breakdown'] ?? {});
+        _workerBreakdown = Map<String, dynamic>.from(analysis['worker_breakdown'] ?? {});
         _projeRaporlari = projeler;
         _isLoading = false;
       });
@@ -374,16 +374,34 @@ class _RaporlarPageState extends State<RaporlarPage> {
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: const EdgeInsets.symmetric(horizontal: 12),
                 title: row,
-                children: _workerBreakdown.entries.map((wb) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(wb.key, style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
-                      Text(_formatPara(wb.value), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.purple)),
-                    ],
-                  ),
-                )).toList(),
+                children: _workerBreakdown.entries.map((wb) {
+                  final data = wb.value as Map<String, dynamic>;
+                  final amount = data['amount'] as double;
+                  final worked = data['worked'] as int;
+                  final leave = data['leave'] as int;
+                  final sunday = data['sunday'] as int;
+                  
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(wb.key, style: TextStyle(fontSize: 13, color: Colors.grey.shade800, fontWeight: FontWeight.bold)),
+                            Text(_formatPara(amount), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.purple)),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$worked Çalışma + $leave İzin + $sunday Pazar',
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
             );
           }
