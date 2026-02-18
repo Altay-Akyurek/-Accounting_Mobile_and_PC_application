@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -14,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final _authService = AuthService();
   bool _isLoading = false;
   bool _isLogin = true;
+  bool _obscurePassword = true;
 
   Future<void> _handleAuth() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -32,28 +34,64 @@ class _LoginPageState extends State<LoginPage> {
           _passwordController.text.trim(),
         );
       } else {
-        await _authService.signUp(
+        final response = await _authService.signUp(
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
+        
+        // Debug için response içeriğini yazdıralım
+        debugPrint('Sign Up Response User: ${response.user}');
+        debugPrint('Sign Up Response Metadata: ${response.user?.appMetadata}');
+        
+        // Supabase bazen sessizce başarılı döner (güvenlik için), 
+        // ancak kullanıcı zaten varsa session boş gelir veya metadata farklı olur.
+        if (response.user != null && response.session == null && 
+            response.user!.identities != null && response.user!.identities!.isEmpty) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Bu hesapla daha önce kayıt yapılmış.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          setState(() => _isLogin = true);
+          return;
+        }
+
         if (mounted) {
           _showEmailConfirmationDialog();
           setState(() => _isLogin = true);
         }
       }
     } catch (e) {
+      debugPrint('Auth Error: $e');
       if (mounted) {
         String message = e.toString();
-        if (message.contains('Email not confirmed')) {
-          _showEmailNotConfirmedDialog();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Hata: $message'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
+        
+        final lowerMessage = message.toLowerCase();
+        // Giriş hatası kontrolü (E-posta veya şifre yanlış)
+        if (lowerMessage.contains('invalid login credentials') || 
+            lowerMessage.contains('invalid email or password')) {
+          message = 'E-posta adresi veya şifre hatalı.';
         }
+        // Mükerrer kayıt hatası kontrolü
+        else if (lowerMessage.contains('user already registered') || 
+            lowerMessage.contains('already exists') ||
+            (e is AuthException && (e.message.toLowerCase().contains('already registered') || e.message.toLowerCase().contains('already exists')))) {
+          message = 'Bu hesapla daha önce kayıt yapılmış.';
+        } else if (lowerMessage.contains('email not confirmed')) {
+          _showEmailNotConfirmedDialog();
+          return;
+        } else if (lowerMessage.contains('email rate limit exceeded') || 
+                   lowerMessage.contains('over_email_send_rate_limit')) {
+          message = 'Çok fazla e-posta gönderim denemesi yaptınız. Lütfen bir süre sonra tekrar deneyin.';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message.contains('Exception:') ? message.split('Exception:')[1].trim() : message),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -116,6 +154,62 @@ class _LoginPageState extends State<LoginPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleForgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen şifre sıfırlama için e-posta adresinizi girin')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await _authService.resetPassword(email);
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            icon: const Icon(Icons.mark_email_read_rounded, size: 60, color: Color(0xFF2EC4B6)),
+            title: const Text('E-posta Gönderildi', style: TextStyle(fontWeight: FontWeight.w900)),
+            content: const Text(
+              'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi. Lütfen kontrol edin.',
+              textAlign: TextAlign.center,
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Tamam'),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage = e.toString();
+        if (errorMessage.contains('Error sending recovery email')) {
+          errorMessage = 'E-posta gönderilemedi. Lütfen SMTP ayarlarınızı kontrol edin veya 5 dakika sonra tekrar deneyin.';
+        } else if (errorMessage.contains('over_email_send_rate_limit')) {
+          errorMessage = 'E-posta gönderim limiti aşıldı. Lütfen bekleyin.';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -227,13 +321,28 @@ class _LoginPageState extends State<LoginPage> {
                             keyboardType: TextInputType.emailAddress,
                           ),
                           const SizedBox(height: 20),
-                          _buildTextField(
-                            controller: _passwordController,
-                            label: 'Şifre',
-                            icon: Icons.lock_outline_rounded,
-                            isPassword: true,
-                          ),
-                          const SizedBox(height: 32),
+                            _buildTextField(
+                              controller: _passwordController,
+                              label: 'Şifre',
+                              icon: Icons.lock_outline_rounded,
+                              isPassword: true,
+                            ),
+                            if (_isLogin)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: _isLoading ? null : _handleForgotPassword,
+                                  child: Text(
+                                    'Şifremi Unuttum',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 24),
                           
                           SizedBox(
                             width: double.infinity,
@@ -334,11 +443,20 @@ class _LoginPageState extends State<LoginPage> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          obscureText: isPassword,
+          obscureText: isPassword ? _obscurePassword : false,
           keyboardType: keyboardType,
           style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF011627)),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: const Color(0xFF011627).withOpacity(0.5)),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: const Color(0xFF011627).withOpacity(0.5),
+                    ),
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  )
+                : null,
             filled: true,
             fillColor: Colors.grey.shade50,
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),

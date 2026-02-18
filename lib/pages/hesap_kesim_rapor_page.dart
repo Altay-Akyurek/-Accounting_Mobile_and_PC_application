@@ -135,38 +135,49 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'HESAP DÖNEMİ',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'HESAP DÖNEMİ',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${DateFormat('dd MMM', 'tr_TR').format(_startDate)} - ${DateFormat('dd MMM yyyy', 'tr_TR').format(_endDate)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${DateFormat('dd MMM', 'tr_TR').format(_startDate)} - ${DateFormat('dd MMM yyyy', 'tr_TR').format(_endDate)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          ElevatedButton.icon(
-            onPressed: _selectDate,
-            icon: const Icon(Icons.calendar_month_rounded, size: 18),
-            label: const Text('TARİH SEÇ'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2EC4B6),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          const SizedBox(width: 8),
+          Flexible(
+            child: ElevatedButton.icon(
+              onPressed: _selectDate,
+              icon: const Icon(Icons.calendar_month_rounded, size: 16),
+              label: const FittedBox(child: Text('TARİH SEÇ')),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2EC4B6),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
@@ -262,17 +273,19 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
         children: [
           Icon(icon, size: 18, color: const Color(0xFF011627)),
           const SizedBox(width: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 13,
-              letterSpacing: 0.5,
-              color: Color(0xFF011627),
+          const Expanded(
+            child: Text(
+              'PERSONEL & MAAŞ DURUMU',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+                letterSpacing: 0.5,
+                color: Color(0xFF011627),
+              ),
             ),
           ),
           if (action != null) ...[
-            const Spacer(),
+            const SizedBox(width: 8),
             action,
           ],
         ],

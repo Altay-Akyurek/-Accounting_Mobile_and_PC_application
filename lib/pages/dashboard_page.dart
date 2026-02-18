@@ -317,7 +317,7 @@ class _DashboardPageState extends State<DashboardPage> {
         maxCrossAxisExtent: 200,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        childAspectRatio: 1.6,
+        childAspectRatio: 1.4,
       ),
       children: [
         _StatusCard(
@@ -356,20 +356,25 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Gelir / Gider Dengesi',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14,
-                  color: Color(0xFF011627),
+              const Expanded(
+                child: Text(
+                  'Gelir / Gider Dengesi',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    color: Color(0xFF011627),
+                  ),
                 ),
               ),
-              Text(
-                '%${(profitRatio * 100).toStringAsFixed(1)} Pozitif',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
-                  color: Color(0xFF2EC4B6),
+              const SizedBox(width: 8),
+              FittedBox(
+                child: Text(
+                  '%${(profitRatio * 100).toStringAsFixed(1)} Pozitif',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    color: Color(0xFF2EC4B6),
+                  ),
                 ),
               ),
             ],
@@ -446,6 +451,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               const SizedBox(width: 16),
               Expanded(
+                flex: 2,
                 child: Text(
                   proj['projeAd'],
                   style: const TextStyle(
@@ -455,39 +461,46 @@ class _DashboardPageState extends State<DashboardPage> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Container(
-                margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: (proj['durum'] == ProjectStatus.tamamlandi.name
-                          ? Colors.green
-                          : proj['durum'] == ProjectStatus.aktif.name
-                              ? Colors.blue
-                              : Colors.amber)
-                      .withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  (proj['durum'] as String? ?? 'Aktif').toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
                     color: (proj['durum'] == ProjectStatus.tamamlandi.name
-                        ? Colors.green
-                        : proj['durum'] == ProjectStatus.aktif.name
-                            ? Colors.blue
-                            : Colors.amber),
+                            ? Colors.green
+                            : proj['durum'] == ProjectStatus.aktif.name
+                                ? Colors.blue
+                                : Colors.amber)
+                        .withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: FittedBox(
+                    child: Text(
+                      (proj['durum'] as String? ?? 'Aktif').toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: (proj['durum'] == ProjectStatus.tamamlandi.name
+                            ? Colors.green
+                            : proj['durum'] == ProjectStatus.aktif.name
+                                ? Colors.blue
+                                : Colors.amber),
+                      ),
+                    ),
                   ),
                 ),
               ),
-              Text(
-                _formatPara(proj['kar']),
-                style: TextStyle(
-                  color: isPositive
-                      ? const Color(0xFF2EC4B6)
-                      : const Color(0xFFE71D36),
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14,
+              const SizedBox(width: 8),
+              FittedBox(
+                child: Text(
+                  _formatPara(proj['kar']),
+                  style: TextStyle(
+                    color: isPositive
+                        ? const Color(0xFF2EC4B6)
+                        : const Color(0xFFE71D36),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],
@@ -601,7 +614,7 @@ class _StatusCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -610,28 +623,35 @@ class _StatusCard extends StatelessWidget {
         child: Row(
           children: [
             Icon(icon, color: Colors.grey.shade400, size: 24),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  deger,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF011627),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      deger,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF011627),
+                      ),
+                    ),
                   ),
-                ),
-                Text(
-                  baslik,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.w700,
+                  Text(
+                    baslik,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

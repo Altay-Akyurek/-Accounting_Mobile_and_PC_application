@@ -607,15 +607,20 @@ class _ProjectReportItem extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _MiniValue(
-                label: 'GELİR',
-                value: report['gelir'] ?? 0.0,
-                color: const Color(0xFF2EC4B6),
+              Expanded(
+                child: _MiniValue(
+                  label: 'GELİR',
+                  value: report['gelir'] ?? 0.0,
+                  color: const Color(0xFF2EC4B6),
+                ),
               ),
-              _MiniValue(
-                label: 'GİDER',
-                value: report['gider'] ?? 0.0,
-                color: const Color(0xFFE71D36),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _MiniValue(
+                  label: 'GİDER',
+                  value: report['gider'] ?? 0.0,
+                  color: const Color(0xFFE71D36),
+                ),
               ),
             ],
           ),
@@ -803,20 +808,25 @@ extension on _RaporlarPageState {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Dönem Gelir / Gider Dengesi',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14,
-                  color: Color(0xFF011627),
+              const Expanded(
+                child: Text(
+                  'Dönem Gelir / Gider Dengesi',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    color: Color(0xFF011627),
+                  ),
                 ),
               ),
-              Text(
-                '%${(profitRatio * 100).toStringAsFixed(1)} Pozitif',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
-                  color: Color(0xFF2EC4B6),
+              const SizedBox(width: 8),
+              FittedBox(
+                child: Text(
+                  '%${(profitRatio * 100).toStringAsFixed(1)} Pozitif',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    color: Color(0xFF2EC4B6),
+                  ),
                 ),
               ),
             ],

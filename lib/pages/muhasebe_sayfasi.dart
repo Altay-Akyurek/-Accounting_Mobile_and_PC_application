@@ -284,7 +284,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                               isGlass: true,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: _OzetKartModern(
                               baslik: 'Çıkacak (Alacak)',

@@ -26,6 +26,16 @@ class AuthService {
 
   // Şifre sıfırlama e-postası gönder
   Future<void> resetPassword(String email) async {
-    await _supabase.auth.resetPasswordForEmail(email);
+    await _supabase.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'io.supabase.flutter://reset-password',
+    );
+  }
+
+  // Şifre güncelle
+  Future<void> updatePassword(String newPassword) async {
+    await _supabase.auth.updateUser(
+      UserAttributes(password: newPassword),
+    );
   }
 }

@@ -11,6 +11,7 @@ import 'pages/labor_management_page.dart';
 import 'pages/finance_management_page.dart';
 import 'pages/splash_screen.dart';
 import 'pages/cari_hesap_liste_page.dart';
+import 'pages/reset_password_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -110,11 +111,20 @@ class MyApp extends StatelessWidget {
         Locale('en', 'US'),
       ],
       home: const AuthWrapper(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.noScaling,
+          ),
+          child: child!,
+        );
+      },
       routes: {
         '/projects': (context) => const ProjectsPage(),
         '/labor': (context) => const LaborManagementPage(),
         '/finance': (context) => const FinanceManagementPage(),
         '/cari_liste': (context) => const CariHesapListePage(),
+        '/reset_password': (context) => const ResetPasswordPage(),
       },
     );
   }
@@ -148,7 +158,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        final session = snapshot.data?.session;
+        final authState = snapshot.data;
+        final session = authState?.session;
+        final event = authState?.event;
+
+        // Şifre sıfırlama linkine tıklandıysa
+        if (event == AuthChangeEvent.passwordRecovery) {
+          return const ResetPasswordPage();
+        }
+
         if (session != null) {
           return const HomePage();
         } else {

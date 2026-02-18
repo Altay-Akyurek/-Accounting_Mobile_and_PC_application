@@ -14,3 +14,7 @@
 
 # Keep business logic models
 -keep class com.example.muhasebe_app.models.** { *; }
+
+# Google Play Core
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }

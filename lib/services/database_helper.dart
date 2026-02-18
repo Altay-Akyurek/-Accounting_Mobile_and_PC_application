@@ -13,6 +13,11 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  String? _testUserId;
+  void setTestUserId(String? id) => _testUserId = id;
+
+  String? get currentUserId => _testUserId ?? _supabase.auth.currentUser?.id;
+
   DatabaseHelper._init();
 
   Future<void> init() async {
@@ -22,7 +27,7 @@ class DatabaseHelper {
   // ========== CARİ HESAP İŞLEMLERİ ==========
   Future<int> insertCariHesap(CariHesap cariHesap) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       final map = cariHesap.toMap()..remove('id');
       if (userId != null) map['user_id'] = userId;
 
@@ -39,7 +44,7 @@ class DatabaseHelper {
   }
 
   Future<List<CariHesap>> getAllCariHesaplar() async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase.from('cari_hesaplar').select().eq('user_id', userId);
     return data.map((map) => CariHesap.fromMap(map)).toList()
@@ -47,7 +52,7 @@ class DatabaseHelper {
   }
 
   Future<CariHesap?> getCariHesap(int id) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return null;
     final data = await _supabase.from('cari_hesaplar').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? CariHesap.fromMap(data) : null;
@@ -55,7 +60,7 @@ class DatabaseHelper {
 
   Future<int> updateCariHesap(CariHesap cariHesap) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase
           .from('cari_hesaplar')
@@ -71,7 +76,7 @@ class DatabaseHelper {
 
   Future<int> deleteCariHesap(int id) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       
       // 1. İlişkili Kayıtları Sil (Cascade Data - Onaylı)
@@ -116,7 +121,7 @@ class DatabaseHelper {
   // ========== FATURA İŞLEMLERİ ==========
   Future<int> insertFatura(Fatura fatura) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       final map = fatura.toMap()..remove('id');
       if (userId != null) map['user_id'] = userId;
 
@@ -133,7 +138,7 @@ class DatabaseHelper {
   }
 
   Future<List<Fatura>> getAllFaturalar({DateTime? baslangic, DateTime? bitis}) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     var query = _supabase.from('faturalar').select().eq('user_id', userId);
     if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
@@ -145,7 +150,7 @@ class DatabaseHelper {
   }
 
   Future<List<Fatura>> getFaturalarByTipi(FaturaTipi tipi) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase
         .from('faturalar')
@@ -156,7 +161,7 @@ class DatabaseHelper {
   }
 
   Future<Fatura?> getFatura(int id) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return null;
     final data = await _supabase.from('faturalar').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? Fatura.fromMap(data) : null;
@@ -164,7 +169,7 @@ class DatabaseHelper {
 
   Future<int> updateFatura(Fatura fatura) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase
           .from('faturalar')
@@ -180,7 +185,7 @@ class DatabaseHelper {
 
   Future<int> deleteFatura(int id) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase.from('faturalar').delete().eq('id', id).eq('user_id', userId);
       return id;
@@ -193,7 +198,7 @@ class DatabaseHelper {
   // ========== STOK İŞLEMLERİ ==========
   Future<int> insertStok(Stok stok) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       final map = stok.toMap()..remove('id');
       if (userId != null) map['user_id'] = userId;
 
@@ -210,7 +215,7 @@ class DatabaseHelper {
   }
 
   Future<List<Stok>> getAllStoklar() async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase.from('stoklar').select().eq('user_id', userId);
     return data.map((map) => Stok.fromMap(map)).toList()
@@ -218,7 +223,7 @@ class DatabaseHelper {
   }
 
   Future<Stok?> getStok(int id) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return null;
     final data = await _supabase.from('stoklar').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? Stok.fromMap(data) : null;
@@ -226,7 +231,7 @@ class DatabaseHelper {
 
   Future<int> updateStok(Stok stok) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase
           .from('stoklar')
@@ -242,7 +247,7 @@ class DatabaseHelper {
 
   Future<int> deleteStok(int id) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase.from('stoklar').delete().eq('id', id).eq('user_id', userId);
       return id;
@@ -266,7 +271,7 @@ class DatabaseHelper {
   // ========== GELİR/GİDER İŞLEMLERİ ==========
   Future<int> insertGelirGider(GelirGider gelirGider) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       final map = gelirGider.toMap()..remove('id');
       if (userId != null) map['user_id'] = userId;
 
@@ -283,7 +288,7 @@ class DatabaseHelper {
   }
 
   Future<List<GelirGider>> getAllGelirGider({DateTime? baslangic, DateTime? bitis}) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     var query = _supabase.from('gelir_giderler').select().eq('user_id', userId);
     if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
@@ -295,7 +300,7 @@ class DatabaseHelper {
   }
 
   Future<List<GelirGider>> getGelirGiderByTipi(GelirGiderTipi tipi) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase
         .from('gelir_giderler')
@@ -306,7 +311,7 @@ class DatabaseHelper {
   }
 
   Future<List<GelirGider>> getGelirGiderByProjectId(int projectId) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase
         .from('gelir_giderler')
@@ -317,7 +322,7 @@ class DatabaseHelper {
   }
 
   Future<GelirGider?> getGelirGider(int id) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return null;
     final data = await _supabase.from('gelir_giderler').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? GelirGider.fromMap(data) : null;
@@ -325,7 +330,7 @@ class DatabaseHelper {
 
   Future<int> updateGelirGider(GelirGider gelirGider) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase
           .from('gelir_giderler')
@@ -341,7 +346,7 @@ class DatabaseHelper {
 
   Future<int> deleteGelirGider(int id) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase.from('gelir_giderler').delete().eq('id', id).eq('user_id', userId);
       return id;
@@ -382,6 +387,7 @@ class DatabaseHelper {
       getAllCariIslemler(),
       _getAllPuantajlar(),
       getAllWorkers(),
+      getAllCariHesaplar(),
     ]);
 
     final hakedisler = results[0] as List<Hakedis>;
@@ -389,61 +395,56 @@ class DatabaseHelper {
     final cariIslemler = results[2] as List<CariIslem>;
     final puantajlar = results[3] as List<Puantaj>;
     final workers = results[4] as List<Worker>;
+    final cariler = results[5] as List<CariHesap>;
 
-    final workerCariIds = workers.map((w) => w.cariHesapId).where((id) => id != null).toSet();
     final Map<int, int> cariToWorker = {for (var w in workers) if (w.cariHesapId != null) w.cariHesapId!: w.id!};
+    final workerCariIds = cariToWorker.keys.toSet();
+    final kasaCariIds = cariler.where((c) => c.isKasa).map((c) => c.id).where((id) => id != null).toSet();
 
-    double toplamGelir = 0.0;
-    double toplamGider = 0.0;
+    double realizedIncome = 0; // Kasa Giriş
+    double realizedExpense = 0; // Kasa Çıkış
 
-    // 1. Hakedişler (Sadece Tahsil Edilenler - Üretilen toplam gelir)
+    // 1. Hakedişler (Realized Collections)
     for (var h in hakedisler) {
       if (h.durum == HakedisDurum.tahsilEdildi) {
-        toplamGelir += h.netTutar;
+        realizedIncome += h.netTutar;
       }
     }
 
-    // 2. Gelir/Gider (Labor categorized payments will be handled via max() logic)
-    double unassignedLaborPayment = 0;
+    // 2. Gelir/Gider (Other Direct Cash items)
     for (var gg in gelirGiderler) {
       if (gg.tipi == GelirGiderTipi.gelir) {
-        toplamGelir += gg.tutar;
+        realizedIncome += gg.tutar;
       } else {
-        bool isLabor = (gg.kategori?.contains('İşçi') ?? false) || (gg.kategori?.contains('Maaş') ?? false);
-        if (isLabor) {
-          unassignedLaborPayment += gg.tutar;
-        } else {
-          toplamGider += gg.tutar;
-        }
+        realizedExpense += gg.tutar;
       }
     }
 
-    // 3. Cari İşlemler (Labor handled via max() logic)
+    // 3. Cari İşlemler (In/Out)
     Map<int, double> workerPayments = {};
     for (var islem in cariIslemler) {
-      // Hakediş tahsilatlarını geç (Çift saymamak için)
-      bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || 
-                         islem.aciklama.contains('#H:[');
-      
-      if (!isSettlement) {
-        toplamGelir += islem.borc;
-      }
+      // Skip hakedis tahsilatlari (already in realizedIncome via hakedis table)
+      bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || islem.aciklama.contains('#H:[');
+      if (isSettlement) continue;
 
-      bool isWorker = workerCariIds.contains(islem.cariHesapId);
-      if (isWorker && islem.alacak > 0) {
-        int wId = cariToWorker[islem.cariHesapId]!;
-        workerPayments[wId] = (workerPayments[wId] ?? 0) + islem.alacak;
-      } else if (!isWorker && islem.alacak > 0) {
-        // Maaş ödemelerini ve hesap kapatmaları giderden düş (Labor cost içinde sayılıyor)
-        bool isExcl = islem.aciklama.toLowerCase().contains('maaş ödemesi') || 
-                    islem.aciklama == 'Hesap Kapatma';
-        if (!isExcl) {
-          toplamGider += islem.alacak;
+      bool isKasa = kasaCariIds.contains(islem.cariHesapId);
+
+      // Expense Tracking
+      if (islem.alacak > 0) {
+        realizedExpense += islem.alacak;
+        if (workerCariIds.contains(islem.cariHesapId)) {
+          int wId = cariToWorker[islem.cariHesapId]!;
+          workerPayments[wId] = (workerPayments[wId] ?? 0) + islem.alacak;
         }
+      }
+      
+      // Income Tracking
+      if (isKasa && islem.borc > 0) {
+        realizedIncome += islem.borc;
       }
     }
 
-    // 4. Puantaj & Sunday Bonuses (Work Value)
+    // 4. Puantaj & Sunday Bonuses (Work Produced)
     Map<int, double> workerAccruals = {};
     for (var p in puantajlar) {
       final worker = workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
@@ -465,52 +466,20 @@ class DatabaseHelper {
       }
     }
 
-    // New Cash Flow & Liability Calculation
-    double realizedIncome = 0; // Kasa Giriş
-    double realizedExpense = 0; // Kasa Çıkış
-    
-    // Hakediş tahsilatları -> Giriş
-    for (var h in hakedisler) {
-      if (h.durum == HakedisDurum.tahsilEdildi) {
-        realizedIncome += h.netTutar;
-      }
-    }
-    
-    // Gelir/Gider -> Giriş/Çıkış
-    for (var gg in gelirGiderler) {
-      if (gg.tipi == GelirGiderTipi.gelir) {
-        realizedIncome += gg.tutar;
-      } else {
-        realizedExpense += gg.tutar;
-      }
-    }
-    
-    // Cari İşlemler -> Giriş/Çıkış
-    // Kural: Alacak(Ç) = Ödeme (Dışarı giden nakit)
-    // Borç(G) = Gelecek (Bekleyen olduğu için realizedIncome'a eklemiyoruz)
-    for (var islem in cariIslemler) {
-      bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || islem.aciklama.contains('#H:[');
-      if (isSettlement) continue;
-      
-      // Alacak (Ç) = Şirketten çıkan nakit (Ödeme)
-      realizedExpense += islem.alacak;
-    }
-
-    // Pending Liability (Borçlarımız)
-    // İşçilik Borcu: Toplam Hakediş - Toplam Ödeme
+    // 5. Final Calculations
     double totalWorkerAccrual = workerAccruals.values.fold(0, (a, b) => a + b);
     double totalWorkerPayment = workerPayments.values.fold(0, (a, b) => a + b);
     double pendingLaborDebt = totalWorkerAccrual > totalWorkerPayment ? (totalWorkerAccrual - totalWorkerPayment) : 0;
-    
+
     return {
-      'gelir': realizedIncome, // Gerçek Tahsilatlar (Realized Cash In)
-      'gider': pendingLaborDebt, // Bekleyen Borç (Liability - Decreases on payment)
-      'kar': realizedIncome - realizedExpense, // Gerçek Kasa Bakiyesi (Actual Cash Box)
+      'gelir': realizedIncome, // Gerçek Tahsilatlar
+      'gider': pendingLaborDebt, // Bekleyen Borçlerimiz
+      'kar': realizedIncome - realizedExpense, // Net Kasa (Real Cash)
     };
   }
 
   Future<List<Puantaj>> _getAllPuantajlar({DateTime? baslangic, DateTime? bitis}) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     var query = _supabase.from('puantajlar').select().eq('user_id', userId);
     if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
@@ -554,6 +523,7 @@ class DatabaseHelper {
       _getAllPuantajlar(baslangic: start.subtract(const Duration(days: 6)), bitis: end),
       getAllWorkers(),
       getAllHakedisler(baslangic: start, bitis: end),
+      getAllCariHesaplar(),
     ]);
 
     final gelirGiderler = (results[0] as List<GelirGider>).where((gg) => projectId == null || gg.projectId == projectId).toList();
@@ -561,8 +531,10 @@ class DatabaseHelper {
     final puantajlar = results[2] as List<Puantaj>;
     final workers = results[3] as List<Worker>;
     final hakedisler = results[4] as List<Hakedis>;
+    final cariler = results[5] as List<CariHesap>;
     
     final workerCariIds = workers.map((w) => w.cariHesapId).where((id) => id != null).toSet();
+    final kasaCariIds = cariler.where((c) => c.isKasa).map((c) => c.id).where((id) => id != null).toSet();
     final Map<int, int> cariToWorker = {for (var w in workers) if (w.cariHesapId != null) w.cariHesapId!: w.id!};
 
     double toplamGelir = 0;
@@ -580,15 +552,15 @@ class DatabaseHelper {
     Map<int, double> cumulativeAccrualUntilEnd = {};
     Map<int, double> cumulativePaymentUntilEnd = {};
     double totalUnassignedLaborPaymentUntilEnd = 0;
-
     Map<String, double> giderKategorileri = {
       'Malzeme/Hizmet': 0,
       'İşçilik (Ödenen)': 0,
       'İşçilik (Bekleyen)': 0,
       'Cari Ödemeler': 0,
+      'Kasa Çıkışları': 0,
     };
 
-    // 1. Hakedişler (Sadece Tahsil Edilenler)
+    // 1. Hakedişler ... [omitted for brevity in ReplacementChunk, will match target content]
     for (var h in hakedisler) {
       if (projectId != null && h.projectId != projectId) continue;
       
@@ -599,7 +571,7 @@ class DatabaseHelper {
       }
     }
 
-    // 2. Gelir/Gider
+    // 2. Gelir/Gider ...
     for (var gg in gelirGiderler) {
       bool isLabor = (gg.kategori?.contains('İşçi') ?? false) || (gg.kategori?.contains('Maaş') ?? false);
       if (gg.tarih.isBefore(end.add(const Duration(days: 1)))) {
@@ -625,19 +597,27 @@ class DatabaseHelper {
     // 3. Cari İşlemler
     for (var islem in cariIslemler) {
       bool isWorker = workerCariIds.contains(islem.cariHesapId);
+      bool isKasa = kasaCariIds.contains(islem.cariHesapId);
+
       if (islem.tarih.isBefore(end.add(const Duration(days: 1)))) {
         bool inPeriod = islem.tarih.isAfter(start.subtract(const Duration(days: 1)));
         if (inPeriod) {
           // Hakediş tahsilatlarını geç (Çift saymamak için)
           bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || 
                              islem.aciklama.contains('#H:[');
+          
           if (!isSettlement) {
+            // Kasa hesabı ise para girişi (borç) gelirdir
             toplamGelir += islem.borc;
           }
           
           if (islem.alacak > 0) {
             if (isWorker) {
               odenenIscilikThisPeriod += islem.alacak;
+            } else if (isKasa) {
+              // Kasa çıkışlarını gidere ekle
+              toplamGider += islem.alacak;
+              giderKategorileri['Kasa Çıkışları'] = (giderKategorileri['Kasa Çıkışları'] ?? 0) + islem.alacak;
             } else {
               // Maaş ödemelerini ve hesap kapatmaları giderden düş
               if (islem.aciklama != 'Maaş Ödemesi' && islem.aciklama != 'Hesap Kapatma') {
@@ -680,12 +660,13 @@ class DatabaseHelper {
       final workerPuantaj = puantajlar.where((p) => p.workerId == worker.id).toList();
       if (workerPuantaj.isEmpty) continue;
 
-      // Calculate bonuses for the period to get the count
+      // Calculate surpluses for the period to get the count
       int periodBonusCount = 0;
       DateTime current = DateTime(start.year, start.month, start.day);
       while (current.isBefore(end.add(const Duration(seconds: 1)))) {
         if (current.weekday == DateTime.sunday) {
           bool earnedBonus = true;
+          int? lastProjectId;
           for (int i = 1; i <= 6; i++) {
             DateTime checkDate = current.subtract(Duration(days: i));
             final dayPuantajlar = workerPuantaj.where((p) => 
@@ -695,11 +676,18 @@ class DatabaseHelper {
               earnedBonus = false;
               break;
             }
+            if (lastProjectId == null && dayPuantajlar.isNotEmpty) {
+              lastProjectId = dayPuantajlar.last.projectId;
+            }
+          }
+          if (earnedBonus) {
+            // Apply project filter to bonuses as well
+            if (projectId != null && lastProjectId != projectId) {
+              earnedBonus = false;
+            }
           }
           if (earnedBonus) {
             // Check if Sunday itself has a paid leave record (Izinli/Raporlu/Mazeretli)
-            // If so, we don't add a "bonus" because the record already provides the day's pay.
-            // If it has 'normal' status (worked), we DO add it (resulting in 2x pay for sunday work).
             final sundayRecords = workerPuantaj.where((p) => 
               p.tarih.year == current.year && p.tarih.month == current.month && p.tarih.day == current.day
             ).toList();
@@ -935,7 +923,7 @@ class DatabaseHelper {
   // ========== CARİ İŞLEM İŞLEMLERİ ==========
   Future<int> insertCariIslem(CariIslem islem) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       final map = islem.toMap()..remove('id');
       if (userId != null) map['user_id'] = userId;
 
@@ -961,7 +949,7 @@ class DatabaseHelper {
   }
 
   Future<List<CariIslem>> getAllCariIslemler({DateTime? baslangic, DateTime? bitis}) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     var query = _supabase.from('cari_islemler').select().eq('user_id', userId);
     if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
@@ -977,7 +965,7 @@ class DatabaseHelper {
   }
 
   Future<List<CariIslem>> getCariIslemlerByCariId(int cariId) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase
         .from('cari_islemler')
@@ -988,7 +976,7 @@ class DatabaseHelper {
   }
 
   Future<List<CariIslem>> getCariIslemlerByProjectId(int projectId) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase
         .from('cari_islemler')
@@ -999,7 +987,7 @@ class DatabaseHelper {
   }
 
   Future<CariIslem?> getCariIslem(int id) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return null;
     final data = await _supabase.from('cari_islemler').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? CariIslem.fromMap(data) : null;
@@ -1016,7 +1004,7 @@ class DatabaseHelper {
       }
     }
 
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
     await _supabase
         .from('cari_islemler')
@@ -1035,7 +1023,7 @@ class DatabaseHelper {
   }
 
   Future<int> deleteCariIslem(int id) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
 
     final islem = await getCariIslem(id);
@@ -1099,7 +1087,7 @@ class DatabaseHelper {
   // ========== PROJE İŞLEMLERİ ==========
   Future<int> insertProject(Project project) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       final map = project.toMap()..remove('id');
       if (userId != null) map['user_id'] = userId;
 
@@ -1118,7 +1106,7 @@ class DatabaseHelper {
   }
 
   Future<List<Project>> getAllProjects() async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase.from('projects').select().eq('user_id', userId);
     return data.map((map) => Project.fromMap(map)).toList()
@@ -1126,7 +1114,7 @@ class DatabaseHelper {
   }
 
   Future<Project?> getProject(int id) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return null;
     final data = await _supabase.from('projects').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? Project.fromMap(data) : null;
@@ -1134,7 +1122,7 @@ class DatabaseHelper {
 
   Future<int> updateProject(Project project) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase
           .from('projects')
@@ -1150,7 +1138,7 @@ class DatabaseHelper {
 
   Future<int> deleteProject(int id) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       
       // 1. İlişkili Cari İşlemleri al ve Cari Bakiyelerini güncelle
@@ -1183,7 +1171,7 @@ class DatabaseHelper {
   // ========== HAKEDİŞ İŞLEMLERİ ==========
   Future<int> insertHakedis(Hakedis hakedis) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       final map = hakedis.toMap()..remove('id');
       if (userId != null) map['user_id'] = userId;
 
@@ -1200,7 +1188,7 @@ class DatabaseHelper {
   }
 
   Future<List<Hakedis>> getAllHakedisler({DateTime? baslangic, DateTime? bitis}) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     var query = _supabase.from('hakedisler').select().eq('user_id', userId);
     if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
@@ -1211,7 +1199,7 @@ class DatabaseHelper {
   }
 
   Future<List<Hakedis>> getHakedisByProjectId(int projectId) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase
         .from('hakedisler')
@@ -1223,7 +1211,7 @@ class DatabaseHelper {
 
   Future<int> deleteHakedis(int id) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase.from('hakedisler').delete().eq('id', id).eq('user_id', userId);
       return id;
@@ -1235,7 +1223,7 @@ class DatabaseHelper {
 
   Future<void> updateHakedis(Hakedis hakedis) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase
           .from('hakedisler')
@@ -1251,7 +1239,7 @@ class DatabaseHelper {
   // ========== İŞÇİ VE PUANTAJ İŞLEMLERİ ==========
   Future<int> insertWorker(Worker worker) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       final map = worker.toMap()..remove('id');
       if (userId != null) map['user_id'] = userId;
 
@@ -1269,7 +1257,7 @@ class DatabaseHelper {
 
   Future<int> updateWorker(Worker worker) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase
           .from('workers')
@@ -1308,7 +1296,7 @@ class DatabaseHelper {
 
   Future<int> deleteWorker(int id) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await deletePuantajByWorkerId(id);
       await _supabase.from('workers').delete().eq('id', id).eq('user_id', userId);
@@ -1321,7 +1309,7 @@ class DatabaseHelper {
 
   Future<void> deletePuantajByWorkerId(int workerId) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase.from('puantajlar').delete().eq('worker_id', workerId).eq('user_id', userId);
     } catch (e) {
@@ -1331,14 +1319,14 @@ class DatabaseHelper {
   }
 
   Future<List<Worker>> getAllWorkers() async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase.from('workers').select().eq('user_id', userId);
     return data.map((map) => Worker.fromMap(map)).toList();
   }
 
   Future<Worker?> getWorker(int id) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return null;
     final data = await _supabase.from('workers').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? Worker.fromMap(data) : null;
@@ -1346,10 +1334,45 @@ class DatabaseHelper {
 
   Future<int> insertPuantaj(Puantaj puantaj) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      final map = puantaj.toMap()..remove('id');
-      if (userId != null) map['user_id'] = userId;
+      final userId = currentUserId;
+      if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
+      
+      final map = puantaj.toMap();
+      map['user_id'] = userId;
 
+      // 1. Eğer ID zaten varsa direkt update yap
+      if (puantaj.id != null) {
+        await _supabase
+            .from('puantajlar')
+            .update(map)
+            .eq('id', puantaj.id!)
+            .eq('user_id', userId);
+        return puantaj.id!;
+      }
+
+      // 2. ID yoksa, aynı gün ve işçi için kayıt var mı kontrol et (Mükerrer önleme)
+      // Tarih hassasiyetini temizleyerek arama yapıyoruz
+      final dateStr = _stripTimePrecision(puantaj.tarih);
+      final existing = await _supabase
+          .from('puantajlar')
+          .select('id')
+          .eq('worker_id', puantaj.workerId)
+          .eq('tarih', dateStr)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (existing != null) {
+        final existingId = existing['id'] as int;
+        await _supabase
+            .from('puantajlar')
+            .update(map)
+            .eq('id', existingId)
+            .eq('user_id', userId);
+        return existingId;
+      }
+
+      // 3. Hiç kayıt yoksa yeni ekle
+      map.remove('id');
       final response = await _supabase
           .from('puantajlar')
           .insert(map)
@@ -1363,7 +1386,7 @@ class DatabaseHelper {
   }
 
   Future<List<Puantaj>> getPuantajByWorkerId(int workerId, DateTime? baslangic, DateTime? bitis) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     var query = _supabase.from('puantajlar').select().eq('user_id', userId).eq('worker_id', workerId);
     if (baslangic != null) query = query.gte('tarih', baslangic.toIso8601String());
@@ -1374,7 +1397,7 @@ class DatabaseHelper {
   }
 
   Future<List<Puantaj>> getPuantajByProjectId(int projectId) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = currentUserId;
     if (userId == null) return [];
     final List<dynamic> data = await _supabase
         .from('puantajlar')
@@ -1386,7 +1409,7 @@ class DatabaseHelper {
 
   Future<int> deletePuantaj(int id) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       await _supabase.from('puantajlar').delete().eq('id', id).eq('user_id', userId);
       return id;
@@ -1407,7 +1430,9 @@ class DatabaseHelper {
     } else if (w.maasTuru == WorkerSalaryType.aylik) {
       hourlyRate = w.maasTutari / 240; // 30 gün * 8 saat = 240 saat
     }
-    return (p.saat + p.mesai) * hourlyRate;
+    
+    // Normal çalışma normal ücret, fazla mesai 1.5 katı ücret
+    return (p.saat * hourlyRate) + (p.mesai * hourlyRate * 1.5);
   }
 
   double _getDailyRate(Worker w) {
@@ -1589,6 +1614,7 @@ class DatabaseHelper {
       while (current.isBefore(rangeEnd.add(const Duration(seconds: 1)))) {
         if (current.weekday == DateTime.sunday) {
           bool earnedBonus = true;
+          int? lastProjectId;
           for (int i = 1; i <= 6; i++) {
             DateTime checkDate = current.subtract(Duration(days: i));
             final dayPuantajlar = workerPuantaj.where((p) => 
@@ -1597,6 +1623,15 @@ class DatabaseHelper {
             if (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz)) {
               earnedBonus = false;
               break;
+            }
+            if (lastProjectId == null && dayPuantajlar.isNotEmpty) {
+              lastProjectId = dayPuantajlar.last.projectId;
+            }
+          }
+          if (earnedBonus) {
+            // Project filter check for bonus
+            if (projectIds != null && (lastProjectId == null || !projectIds.contains(lastProjectId))) {
+              earnedBonus = false;
             }
           }
           if (earnedBonus) {
@@ -1632,13 +1667,16 @@ class DatabaseHelper {
           };
         }
         workerDuesMap[w.id!]!['amount'] += bonusTotal;
-        workerDuesMap[w.id!]!['sunday'] = bonusCount;
+        workerDuesMap[w.id!]!['sunday'] = (workerDuesMap[w.id!]!['sunday'] ?? 0) + bonusCount;
       }
     }
 
     for (var islem in cariIslemler) {
       if (inRange(islem.tarih)) {
-        if (projectIds != null && islem.projectId != null && !projectIds.contains(islem.projectId)) continue;
+        // Fix: When projectIds is provided, we must strictly include only those projects.
+        // This excluded Null projectIds (general payments) which was causing the discrepancy.
+        if (projectIds != null && (islem.projectId == null || !projectIds.contains(islem.projectId))) continue;
+        
         if (workerCariIds.contains(islem.cariHesapId)) {
           toplamIscilikOdeme += islem.alacak;
           // Find worker for this cariId
@@ -1826,7 +1864,7 @@ class DatabaseHelper {
 
   Future<void> bulkUpdateHakedisStatusByProject(List<int> projectIds, DateTime start, DateTime end, HakedisDurum newStatus) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
+      final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       
       final rangeStart = DateTime(start.year, start.month, start.day);

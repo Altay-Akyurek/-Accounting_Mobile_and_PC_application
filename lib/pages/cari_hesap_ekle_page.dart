@@ -22,6 +22,7 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
   final _bakiyeController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isKasa = false;
 
   @override
   void initState() {
@@ -34,6 +35,7 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
       _emailController.text = widget.cariHesap!.email ?? '';
       _adresController.text = widget.cariHesap!.adres ?? '';
       _bakiyeController.text = widget.cariHesap!.bakiye.toString();
+      _isKasa = widget.cariHesap!.isKasa;
     }
   }
 
@@ -64,6 +66,7 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
         email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
         adres: _adresController.text.trim().isEmpty ? null : _adresController.text.trim(),
         bakiye: bakiye,
+        isKasa: _isKasa,
         olusturmaTarihi: widget.cariHesap?.olusturmaTarihi,
       );
 
@@ -129,6 +132,15 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
                         _sectionTitle('Finansal Ayarlar'),
                         _buildCard([
                           _buildTextField(_bakiyeController, 'Başlangıç Bakiyesi', Icons.account_balance_wallet_rounded, keyboardType: const TextInputType.numberWithOptions(decimal: true)),
+                          const SizedBox(height: 16),
+                          SwitchListTile(
+                            title: const Text('Kasa Hesabı', style: TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: const Text('Bu hesabı kasa olarak işaretle (Girişler gelire eklenir)'),
+                            value: _isKasa,
+                            onChanged: (val) => setState(() => _isKasa = val),
+                            activeColor: const Color(0xFF003399),
+                            contentPadding: EdgeInsets.zero,
+                          ),
                         ]),
                         const SizedBox(height: 48),
                         ElevatedButton(

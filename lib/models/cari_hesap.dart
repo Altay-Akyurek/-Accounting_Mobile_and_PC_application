@@ -7,6 +7,7 @@ class CariHesap {
   final String? email;
   final String? adres;
   final double bakiye;
+  final bool isKasa;
   final DateTime olusturmaTarihi;
 
   CariHesap({
@@ -18,6 +19,7 @@ class CariHesap {
     this.email,
     this.adres,
     this.bakiye = 0.0,
+    this.isKasa = false,
     DateTime? olusturmaTarihi,
   }) : olusturmaTarihi = olusturmaTarihi ?? DateTime.now();
 
@@ -31,6 +33,7 @@ class CariHesap {
       'email': email ?? '',
       'adres': adres ?? '',
       'bakiye': bakiye,
+      'is_kasa': isKasa ? 1 : 0,
       'olusturma_tarihi': olusturmaTarihi.toIso8601String(),
     };
   }
@@ -45,6 +48,7 @@ class CariHesap {
       email: map['email'] as String?,
       adres: map['adres'] as String?,
       bakiye: (map['bakiye'] as num?)?.toDouble() ?? 0.0,
+      isKasa: map['is_kasa'] == 1 || map['is_kasa'] == true,
       olusturmaTarihi: map['olusturma_tarihi'] != null 
           ? DateTime.parse(map['olusturma_tarihi'] as String) 
           : DateTime.now(),
@@ -60,6 +64,7 @@ class CariHesap {
     String? email,
     String? adres,
     double? bakiye,
+    bool? isKasa,
     DateTime? olusturmaTarihi,
   }) {
     return CariHesap(
@@ -71,6 +76,7 @@ class CariHesap {
       email: email ?? this.email,
       adres: adres ?? this.adres,
       bakiye: bakiye ?? this.bakiye,
+      isKasa: isKasa ?? this.isKasa,
       olusturmaTarihi: olusturmaTarihi ?? this.olusturmaTarihi,
     );
   }
