@@ -388,6 +388,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
         transactions.add(CariIslem(
           cariHesapId: item['cariId'],
           cariHesapUnvan: item['name'],
+          projectId: _selectedProjectIds.length == 1 ? _selectedProjectIds.first : null,
           tarih: DateTime.now(),
           aciklama: 'Maaş Ödemesi: ${item['name']}',
           hesapTipi: 'Nakit',

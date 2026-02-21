@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/cari_islem.dart';
+import '../models/cari_hesap.dart';
+import '../models/worker.dart';
+import '../models/project.dart';
 import '../services/database_helper.dart';
 
 class CariDetaySayfasi extends StatefulWidget {
@@ -19,6 +22,10 @@ class CariDetaySayfasi extends StatefulWidget {
 
 class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
   List<CariIslem> _islemler = [];
+  CariHesap? _cari;
+  Worker? _worker;
+  List<Puantaj> _workerPuantaj = [];
+  Map<int, String> _projectNames = {};
   bool _isLoading = true;
   Map<String, double> _toplamlar = {'borc': 0.0, 'alacak': 0.0, 'bakiye': 0.0};
 
@@ -36,13 +43,34 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
     try {
       final islemler = await DatabaseHelper.instance.getCariIslemlerByCariId(widget.cariId);
       final toplamlar = await DatabaseHelper.instance.getCariToplamlar(widget.cariId);
+      final cariler = await DatabaseHelper.instance.getAllCariHesaplar();
+      final cari = cariler.firstWhere((c) => c.id == widget.cariId);
+      
+      Worker? worker = await DatabaseHelper.instance.getWorkerByCariId(widget.cariId);
+      List<Puantaj> puantaj = [];
+      Map<int, String> projectNames = {};
+      
+      if (worker != null && worker.id != null) {
+        puantaj = await DatabaseHelper.instance.getPuantajByWorkerId(worker.id!, null, null);
+        puantaj.sort((a, b) => b.tarih.compareTo(a.tarih));
+        
+        final projects = await DatabaseHelper.instance.getAllProjects();
+        for (var p in projects) {
+          if (p.id != null) projectNames[p.id!] = p.ad;
+        }
+      }
 
       setState(() {
         _islemler = islemler;
         _toplamlar = toplamlar;
+        _cari = cari;
+        _worker = worker;
+        _workerPuantaj = puantaj;
+        _projectNames = projectNames;
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('DEBUG: Error loading data: $e');
       setState(() {
         _isLoading = false;
       });
@@ -59,183 +87,254 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Cari Detay: ${widget.cariUnvan.toUpperCase()}'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _yukleVeriler,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Üst Özet Paneli
-          Container(
-            color: const Color(0xFF003399),
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _OzetKart(
-                    baslik: 'GELECEK (BORÇ):',
-                    deger: _formatPara(_toplamlar['borc']!),
-                    renk: Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: _OzetKart(
-                    baslik: 'ÇIKACAK (ALACAK):',
-                    deger: _formatPara(_toplamlar['alacak']!),
-                    renk: Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: _OzetKart(
-                    baslik: 'BAKİYE:',
-                    deger: _formatPara(_toplamlar['bakiye']!),
-                    renk: Colors.yellow,
-                  ),
-                ),
-              ],
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Cari Detay: ${widget.cariUnvan.toUpperCase()}'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _yukleVeriler,
             ),
+          ],
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Ekstre (Ledger)', icon: Icon(Icons.receipt_long)),
+              Tab(text: 'İşçilik Özeti', icon: Icon(Icons.engineering)),
+            ],
+            indicatorColor: Colors.white,
+            labelStyle: TextStyle(fontWeight: FontWeight.bold),
           ),
-          // Tablo
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _islemler.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Henüz işlem eklenmemiş',
-                              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                            ),
-                          ],
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: DataTable(
-                          headingRowColor: MaterialStateProperty.all(const Color(0xFFE6EBF5)),
-                          columns: const [
-                            DataColumn(label: Text('ID', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('TARİH', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('AÇIKLAMA', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('İŞLEM TİPİ', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('EVRAK NO', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('VADE', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('VADE BİTİŞ', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('BORÇ (G)', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('ALACAK (Ç)', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('BAKİYE', style: TextStyle(fontWeight: FontWeight.bold))),
-                          ],
-                          rows: _islemler.map((islem) {
-                            return DataRow(
-                              cells: [
-                                DataCell(Text('${islem.id}')),
-                                DataCell(Text(DateFormat('dd.MM.yyyy', 'tr_TR').format(islem.tarih))),
-                                DataCell(Text(islem.displayAciklama)),
-                                DataCell(Text(islem.hesapTipi)),
-                                DataCell(Text(islem.evrakNo ?? '')),
-                                DataCell(Text(islem.vade != null ? DateFormat('dd.MM.yyyy', 'tr_TR').format(islem.vade!) : '')),
-                                DataCell(Text(islem.vadeBitis != null ? DateFormat('dd.MM.yyyy', 'tr_TR').format(islem.vadeBitis!) : '')),
-                                DataCell(Text(
-                                  islem.borc > 0 ? _formatPara(islem.borc) : '',
-                                  style: TextStyle(color: Colors.red[700], fontWeight: FontWeight.bold),
-                                )),
-                                DataCell(Text(
-                                  islem.alacak > 0 ? _formatPara(islem.alacak) : '',
-                                  style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold),
-                                )),
-                                DataCell(Text(_formatPara(islem.bakiye))),
-                              ],
-                            );
-                          }).toList(),
-                        ),
+        ),
+        body: Column(
+          children: [
+            // Üst Özet Paneli
+            Container(
+              color: const Color(0xFF003399),
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _OzetKart(
+                      baslik: _cari?.isKasa == true ? 'TAHSİLAT (GİRİŞ):' : 'GELECEK (BORÇ):',
+                      deger: _formatPara(_toplamlar['borc']!),
+                      renk: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: _OzetKart(
+                      baslik: _cari?.isKasa == true ? 'ÖDEME (ÇIKIŞ):' : 'ÇIKACAK (ALACAK):',
+                      deger: _formatPara(_toplamlar['alacak']!),
+                      renk: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: _OzetKart(
+                      baslik: _cari?.isKasa == true ? 'NET NAKİT (KASA):' : 'BAKİYE (NET NAKİT):',
+                      deger: _formatPara(_toplamlar['bakiye']!),
+                      renk: Colors.yellow,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Tab İçeriği
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _buildEkstreTab(),
+                  _buildIscilikOzetiTab(),
+                ],
+              ),
+            ),
+            // Alt Butonlar
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: 45,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Excel çıktı özelliği yakında eklenecek')),
+                        );
+                      },
+                      icon: const Icon(Icons.file_download, size: 18),
+                      label: const Text('Excel Çıktı Al'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
-          ),
-          // Alt Butonlar
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  height: 45,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Excel export - basit bir implementasyon
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Excel çıktı özelliği yakında eklenecek')),
-                      );
-                    },
-                    icon: const Icon(Icons.file_download, size: 18),
-                    label: const Text('Excel (CSV) Çıktı Al'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  height: 45,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Print - basit bir implementasyon
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Yazdırma özelliği yakında eklenecek')),
-                      );
-                    },
-                    icon: const Icon(Icons.print, size: 18),
-                    label: const Text('Yazdır'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    height: 45,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Yazdırma özelliği yakında eklenecek')),
+                        );
+                      },
+                      icon: const Icon(Icons.print, size: 18),
+                      label: const Text('Yazdır'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  height: 45,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Makbuz oluştur
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Makbuz özelliği yakında eklenecek')),
-                      );
-                    },
-                    icon: const Icon(Icons.receipt, size: 18),
-                    label: const Text('Makbuz / Ekstre Oluştur'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0066CC),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    height: 45,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Makbuz özelliği yakında eklenecek')),
+                        );
+                      },
+                      icon: const Icon(Icons.receipt, size: 18),
+                      label: const Text('Makbuz Oluştur'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0066CC),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                SizedBox(
-                  height: 45,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    height: 45,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                      child: const Text('Geri'),
                     ),
-                    child: const Text('Geri'),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEkstreTab() {
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_islemler.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text('Henüz işlem eklenmemiş', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        child: DataTable(
+          headingRowColor: MaterialStateProperty.all(const Color(0xFFE6EBF5)),
+          columns: const [
+            DataColumn(label: Text('TARİH', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('AÇIKLAMA', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('İŞLEM TİPİ', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('BORÇ (G)', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('ALACAK (Ç)', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('BAKİYE', style: TextStyle(fontWeight: FontWeight.bold))),
+          ],
+          rows: _islemler.map((islem) {
+            return DataRow(
+              cells: [
+                DataCell(Text(DateFormat('dd.MM.yyyy', 'tr_TR').format(islem.tarih))),
+                DataCell(Text(islem.displayAciklama)),
+                DataCell(Text(islem.hesapTipi)),
+                DataCell(Text(
+                  islem.borc > 0 ? _formatPara(islem.borc) : '',
+                  style: TextStyle(color: Colors.red[700], fontWeight: FontWeight.bold),
+                )),
+                DataCell(Text(
+                  islem.alacak > 0 ? _formatPara(islem.alacak) : '',
+                  style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold),
+                )),
+                DataCell(Text(_formatPara(islem.bakiye))),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIscilikOzetiTab() {
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_worker == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.person_off_rounded, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text('Bu hesap bir personele bağlı değil', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+          ],
+        ),
+      );
+    }
+
+    if (_workerPuantaj.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.engineering_outlined, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text('Henüz çalışma kaydı bulunmuyor', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        child: DataTable(
+          headingRowColor: MaterialStateProperty.all(const Color(0xFFF0F2F5)),
+          columns: const [
+            DataColumn(label: Text('TARİH', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('PROJE', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('SAAT', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('MESAİ', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('DURUM', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('HAKEDİŞ', style: TextStyle(fontWeight: FontWeight.bold))),
+          ],
+          rows: _workerPuantaj.map((p) {
+            final cost = DatabaseHelper.instance.calculateLaborCost(p, _worker!);
+            return DataRow(
+              cells: [
+                DataCell(Text(DateFormat('dd.MM.yyyy', 'tr_TR').format(p.tarih))),
+                DataCell(Text(_projectNames[p.projectId] ?? 'Belirtilmemiş')),
+                DataCell(Text(p.saat.toString())),
+                DataCell(Text(p.mesai.toString())),
+                DataCell(Text(p.status.name.toUpperCase())),
+                DataCell(Text(
+                  _formatPara(cost),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                )),
+              ],
+            );
+          }).toList(),
+        ),
       ),
     );
   }

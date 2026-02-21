@@ -12,6 +12,7 @@ import 'pages/finance_management_page.dart';
 import 'pages/splash_screen.dart';
 import 'pages/cari_hesap_liste_page.dart';
 import 'pages/reset_password_page.dart';
+import 'pages/labor_summary_report_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -125,6 +126,7 @@ class MyApp extends StatelessWidget {
         '/finance': (context) => const FinanceManagementPage(),
         '/cari_liste': (context) => const CariHesapListePage(),
         '/reset_password': (context) => const ResetPasswordPage(),
+        '/labor_summary': (context) => const LaborSummaryReportPage(),
       },
     );
   }

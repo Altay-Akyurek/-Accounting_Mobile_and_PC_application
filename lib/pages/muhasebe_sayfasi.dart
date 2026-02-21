@@ -277,7 +277,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                         children: [
                           Expanded(
                             child: _OzetKartModern(
-                              baslik: 'Gelecek (Borç)',
+                              baslik: _seciliCari?.isKasa == true ? 'Tahsilat (Giriş)' : 'Gelecek (Borç)',
                               deger: _formatPara(_toplamlar['borc']!),
                               icon: Icons.south_east_rounded,
                               renk: const Color(0xFFFF5252),
@@ -287,7 +287,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _OzetKartModern(
-                              baslik: 'Çıkacak (Alacak)',
+                              baslik: _seciliCari?.isKasa == true ? 'Ödeme (Çıkış)' : 'Çıkacak (Alacak)',
                               deger: _formatPara(_toplamlar['alacak']!),
                               icon: Icons.north_east_rounded,
                               renk: const Color(0xFF00E676),
@@ -298,7 +298,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                       ),
                       const SizedBox(height: 16),
                       _OzetKartModern(
-                        baslik: 'Net Durum (Bakiye)',
+                        baslik: _seciliCari?.isKasa == true ? 'Net Nakit (Kasa)' : 'Net Durum (Bakiye)',
                         deger: _formatPara(_toplamlar['bakiye']!),
                         icon: Icons.account_balance_wallet_rounded,
                         renk: Colors.amber.shade400,
@@ -378,7 +378,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                                         DataCell(Text(DateFormat('dd.MM.yy').format(islem.tarih), style: const TextStyle(fontWeight: FontWeight.w500))),
                                         DataCell(Text(islem.cariHesapUnvan ?? '---', style: const TextStyle(fontWeight: FontWeight.w600))),
                                         DataCell(Text(islem.displayAciklama, style: const TextStyle(fontSize: 11))),
-                                        DataCell(_StatusBadge(isBorc: islem.borc > 0)),
+                                        DataCell(_StatusBadge(isBorc: islem.borc > 0, isKasa: _seciliCari?.isKasa ?? false)),
                                         DataCell(FittedBox(fit: BoxFit.scaleDown, child: Text(islem.borc > 0 ? _formatPara(islem.borc) : '-', style: TextStyle(color: islem.borc > 0 ? Colors.red.shade700 : Colors.grey, fontWeight: FontWeight.w900)))),
                                         DataCell(FittedBox(fit: BoxFit.scaleDown, child: Text(islem.alacak > 0 ? _formatPara(islem.alacak) : '-', style: TextStyle(color: islem.alacak > 0 ? Colors.green.shade700 : Colors.grey, fontWeight: FontWeight.w900)))),
                                         DataCell(FittedBox(fit: BoxFit.scaleDown, child: Text(_formatPara(islem.bakiye), style: const TextStyle(fontWeight: FontWeight.w700)))),
@@ -575,9 +575,18 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
 
 class _StatusBadge extends StatelessWidget {
   final bool isBorc;
-  const _StatusBadge({required this.isBorc});
+  final bool isKasa;
+  const _StatusBadge({required this.isBorc, this.isKasa = false});
+
   @override
   Widget build(BuildContext context) {
+    String label;
+    if (isKasa) {
+      label = isBorc ? 'GİRİŞ' : 'ÇIKIŞ';
+    } else {
+      label = isBorc ? 'BORÇ' : 'ALACAK';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -585,7 +594,7 @@ class _StatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        isBorc ? 'BORÇ' : 'ALACAK',
+        label,
         style: TextStyle(color: isBorc ? Colors.red.shade700 : Colors.green.shade700, fontWeight: FontWeight.w900, fontSize: 10),
       ),
     );

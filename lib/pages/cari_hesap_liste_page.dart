@@ -242,16 +242,19 @@ class _CariCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('GÜNCEL BAKİYE', style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-                      Text(
-                        NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(cari.bakiye),
-                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: bakiyeColor),
-                      ),
-                    ],
-                  ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          cari.isKasa ? 'NET NAKİT (KASA)' : 'GÜNCEL BAKİYE', 
+                          style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)
+                        ),
+                        Text(
+                          NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(cari.bakiye),
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: bakiyeColor),
+                        ),
+                      ],
+                    ),
                   const Icon(Icons.chevron_right_rounded, color: Colors.grey),
                 ],
               ),

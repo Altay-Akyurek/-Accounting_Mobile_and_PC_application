@@ -424,7 +424,9 @@ class DatabaseHelper {
     Map<int, double> workerPayments = {};
     for (var islem in cariIslemler) {
       // Skip hakedis tahsilatlari (already in realizedIncome via hakedis table)
-      bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || islem.aciklama.contains('#H:[');
+      bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || 
+                         islem.aciklama.toLowerCase().contains('tahsilat') ||
+                         islem.aciklama.contains('#H:[');
       if (isSettlement) continue;
 
       bool isKasa = kasaCariIds.contains(islem.cariHesapId);
@@ -602,8 +604,18 @@ class DatabaseHelper {
       if (islem.tarih.isBefore(end.add(const Duration(days: 1)))) {
         bool inPeriod = islem.tarih.isAfter(start.subtract(const Duration(days: 1)));
         if (inPeriod) {
+          // Proje filtresi varsa, projesiz işlemleri dahil etme 
+          // (İşçi ödemeleri hariç - onlar genel/unassigned olabilir ve bakiye kapatabilir)
+          if (projectId != null && islem.projectId == null) {
+            bool isWorker = workerCariIds.contains(islem.cariHesapId);
+            if (!isWorker) continue;
+          }
+
+          if (projectId != null && islem.projectId != null && islem.projectId != projectId) continue;
+
           // Hakediş tahsilatlarını geç (Çift saymamak için)
           bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || 
+                             islem.aciklama.toLowerCase().contains('tahsilat') ||
                              islem.aciklama.contains('#H:[');
           
           if (!isSettlement) {
@@ -619,11 +631,16 @@ class DatabaseHelper {
               toplamGider += islem.alacak;
               giderKategorileri['Kasa Çıkışları'] = (giderKategorileri['Kasa Çıkışları'] ?? 0) + islem.alacak;
             } else {
-              // Maaş ödemelerini ve hesap kapatmaları giderden düş
-              if (islem.aciklama != 'Maaş Ödemesi' && islem.aciklama != 'Hesap Kapatma') {
-                toplamGider += islem.alacak;
-                giderKategorileri['Cari Ödemeler'] = (giderKategorileri['Cari Ödemeler'] ?? 0) + islem.alacak;
-              }
+              // Maaş ödemelerini ve hesap kapatmaları giderden düş (İşçilik başlığında ayrıca sayılıyor)
+            bool isLaborPayment = islem.aciklama.toLowerCase().contains('maaş ödemesi') ||
+                                 islem.aciklama.toLowerCase().contains('avans') ||
+                                 islem.aciklama.toLowerCase().contains('işçi ödemesi') ||
+                                 islem.aciklama == 'Hesap Kapatma';
+
+            if (!isLaborPayment) {
+              toplamGider += islem.alacak;
+              giderKategorileri['Cari Ödemeler'] = (giderKategorileri['Cari Ödemeler'] ?? 0) + islem.alacak;
+            }  
             }
           }
         }
@@ -812,8 +829,10 @@ class DatabaseHelper {
       // Projeye bağlı Cari İşlemler
       for (var islem in islemler) {
         if (islem.projectId == project.id) {
-          // Hakediş tahsilatlarını geç (Çünkü yukarıda hakedisler tablosundan netTutar'ı zaten ekledik)
-          if (!islem.aciklama.contains('Hakediş Tahsilatı')) {
+          // Hakediş tahsilatlarını geç (Çünkü hakedisler tablosundan zaten ekleniyor)
+          bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || 
+                             islem.aciklama.contains('#H:[');
+          if (!isSettlement) {
             gelir += islem.borc;
           }
           
@@ -823,8 +842,13 @@ class DatabaseHelper {
               int wId = cariToWorker[islem.cariHesapId]!;
               projectWorkerPayment[wId] = (projectWorkerPayment[wId] ?? 0) + islem.alacak;
             } else {
-              // Maaş ödemelerini ve hesap kapatmaları zaten labor cost içinde max(Work, Paid) olarak sayıyoruz
-              if (islem.aciklama != 'Maaş Ödemesi' && islem.aciklama != 'Hesap Kapatma') {
+              // Maaş ve avans ödemelerini projeye bağlıysa Labor Cost içinde max(Work, Paid) olarak sayıyoruz
+              bool isLaborPayment = islem.aciklama.toLowerCase().contains('maaş ödemesi') ||
+                                   islem.aciklama.toLowerCase().contains('avans') ||
+                                   islem.aciklama.toLowerCase().contains('işçi ödemesi') ||
+                                   islem.aciklama == 'Hesap Kapatma';
+
+              if (!isLaborPayment) {
                 nonLaborGider += islem.alacak;
               }
             }
@@ -1332,6 +1356,13 @@ class DatabaseHelper {
     return data != null ? Worker.fromMap(data) : null;
   }
 
+  Future<Worker?> getWorkerByCariId(int cariId) async {
+    final userId = currentUserId;
+    if (userId == null) return null;
+    final data = await _supabase.from('workers').select().eq('cari_hesap_id', cariId).eq('user_id', userId).maybeSingle();
+    return data != null ? Worker.fromMap(data) : null;
+  }
+
   Future<int> insertPuantaj(Puantaj puantaj) async {
     try {
       final userId = currentUserId;
@@ -1673,9 +1704,13 @@ class DatabaseHelper {
 
     for (var islem in cariIslemler) {
       if (inRange(islem.tarih)) {
-        // Fix: When projectIds is provided, we must strictly include only those projects.
-        // This excluded Null projectIds (general payments) which was causing the discrepancy.
-        if (projectIds != null && (islem.projectId == null || !projectIds.contains(islem.projectId))) continue;
+        // Fix: Ensure we include unassigned (projectId == null) worker payments even when filtering by project
+        // This ensures settlements made in the general account offset project-specific labor costs.
+        if (projectIds != null && islem.projectId != null && !projectIds.contains(islem.projectId)) continue;
+        if (projectIds != null && islem.projectId == null) {
+          bool isWorker = workerCariIds.contains(islem.cariHesapId);
+          if (!isWorker) continue;
+        }
         
         if (workerCariIds.contains(islem.cariHesapId)) {
           toplamIscilikOdeme += islem.alacak;
@@ -1698,6 +1733,9 @@ class DatabaseHelper {
     
     for (var f in faturalar) {
       if (inRange(f.tarih)) {
+        // Faturalarda şu an proje ID'si yok, bu yüzden bir proje seçiliyse faturaları dahil etmiyoruz
+        if (projectIds != null && projectIds.isNotEmpty) continue;
+
         if (f.tipi == FaturaTipi.satis) {
           toplamSatis += f.toplamTutar;
           satisKdv += f.kdvTutari;
@@ -1748,7 +1786,12 @@ class DatabaseHelper {
 
     for (var islem in cariIslemler) {
       if (inRange(islem.tarih)) {
-        if (projectIds != null && islem.projectId != null && !projectIds.contains(islem.projectId)) continue;
+        // Fix: Ensure unassigned (projesiz) transactions are excluded ONLY for non-worker items
+        if (projectIds != null && (islem.projectId == null || !projectIds.contains(islem.projectId))) {
+           bool isWorker = workerCariIds.contains(islem.cariHesapId);
+           if (!isWorker) continue;
+        }
+        
         if (!workerCariIds.contains(islem.cariHesapId)) {
           toplamCariBorcValue += islem.borc;
           toplamCariAlacakValue += islem.alacak;
@@ -1762,9 +1805,11 @@ class DatabaseHelper {
           }
           cariBalances[islem.cariHesapId]!['balance'] += (islem.borc - islem.alacak);
 
-          // Kar/Zarar hesabı için manuel girişleri say (Hesap kesim kayıtlarını geç)
+          // Kar/Zarar hesabı için manuel girişleri say (Maaş ve Hakediş ödemelerini geç)
           bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || 
                              islem.aciklama.toLowerCase().contains('maaş ödemesi') || 
+                             islem.aciklama.toLowerCase().contains('avans') ||
+                             islem.aciklama.toLowerCase().contains('işçi ödemesi') ||
                              islem.aciklama.contains('#H:[') ||
                              islem.aciklama == 'Hesap Kapatma';
           
@@ -1784,6 +1829,9 @@ class DatabaseHelper {
     
     for (var h in hakedisler) {
       if (inRange(h.tarih)) {
+        // Proje filtresi kontrolü
+        if (projectIds != null && !projectIds.contains(h.projectId)) continue;
+
         if (h.durum != HakedisDurum.iptal) {
           producedHakedisTotal += h.netTutar;
         }
@@ -1791,8 +1839,6 @@ class DatabaseHelper {
         if (h.durum == HakedisDurum.tahsilEdildi) {
           toplamHakedisNetValue += h.netTutar;
         }
-        
-        if (projectIds != null && !projectIds.contains(h.projectId)) continue;
 
         final project = projects.firstWhere((p) => p.id == h.projectId, orElse: () => Project(ad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
         if (!projectHakedisMap.containsKey(h.projectId)) {

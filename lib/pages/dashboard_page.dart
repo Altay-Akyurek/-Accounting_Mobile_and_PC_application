@@ -166,6 +166,14 @@ class _DashboardPageState extends State<DashboardPage> {
                       );
                     },
                   ),
+                  _buildDrawerItem(
+                    icon: Icons.engineering_rounded,
+                    label: 'İşçilik Özeti',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/labor_summary');
+                    },
+                  ),
                   const Divider(indent: 20, endIndent: 20),
                   _buildDrawerItem(
                     icon: Icons.logout_rounded,
