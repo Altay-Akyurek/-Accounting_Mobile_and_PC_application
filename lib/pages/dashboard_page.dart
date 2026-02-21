@@ -7,6 +7,8 @@ import 'muhasebe_sayfasi.dart';
 import 'hesap_kesim_rapor_page.dart';
 import 'fatura_liste_page.dart';
 import 'stok_liste_page.dart';
+import 'worker_analysis_page.dart';
+import 'portfolio_page.dart';
 import '../models/project.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -99,6 +101,97 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           const SizedBox(width: 8),
         ],
+      ),
+      drawer: Drawer(
+        backgroundColor: const Color(0xFFF0F2F5),
+        child: Column(
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                color: Color(0xFF011627),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.account_balance_rounded,
+                        color: Color(0xFF2EC4B6),
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'MUHASEBE PRO',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildDrawerItem(
+                    icon: Icons.analytics_rounded,
+                    label: 'İşçi Analizi',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WorkerAnalysisPage()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.cases_rounded,
+                    label: 'Portföyümüz',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PortfolioPage()),
+                      );
+                    },
+                  ),
+                  const Divider(indent: 20, endIndent: 20),
+                  _buildDrawerItem(
+                    icon: Icons.logout_rounded,
+                    label: 'Çıkış Yap',
+                    color: const Color(0xFFE71D36),
+                    onTap: () {
+                      Navigator.pop(context);
+                      AuthService().signOut();
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Text(
+                'v1.0.0',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -507,6 +600,30 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color color = const Color(0xFF011627),
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 15,
+        ),
+      ),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
     );
   }
 }

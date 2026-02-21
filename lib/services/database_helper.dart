@@ -385,7 +385,7 @@ class DatabaseHelper {
       getAllHakedisler(),
       getAllGelirGider(),
       getAllCariIslemler(),
-      _getAllPuantajlar(),
+      getAllPuantajlar(),
       getAllWorkers(),
       getAllCariHesaplar(),
     ]);
@@ -478,7 +478,7 @@ class DatabaseHelper {
     };
   }
 
-  Future<List<Puantaj>> _getAllPuantajlar({DateTime? baslangic, DateTime? bitis}) async {
+  Future<List<Puantaj>> getAllPuantajlar({DateTime? baslangic, DateTime? bitis}) async {
     final userId = currentUserId;
     if (userId == null) return [];
     var query = _supabase.from('puantajlar').select().eq('user_id', userId);
@@ -520,7 +520,7 @@ class DatabaseHelper {
     final results = await Future.wait([
       getAllGelirGider(baslangic: start, bitis: end),
       getAllCariIslemler(baslangic: start, bitis: end),
-      _getAllPuantajlar(baslangic: start.subtract(const Duration(days: 6)), bitis: end),
+      getAllPuantajlar(baslangic: start.subtract(const Duration(days: 6)), bitis: end),
       getAllWorkers(),
       getAllHakedisler(baslangic: start, bitis: end),
       getAllCariHesaplar(),
@@ -763,7 +763,7 @@ class DatabaseHelper {
       getAllHakedisler(),
       getAllGelirGider(),
       getAllCariIslemler(),
-      _getAllPuantajlar(),
+      getAllPuantajlar(),
       getAllWorkers(),
     ]);
 
@@ -1490,7 +1490,7 @@ class DatabaseHelper {
 
   Future<Map<String, dynamic>> getPersonnelSummary() async {
     final workers = await getAllWorkers();
-    final puantajlar = await _getAllPuantajlar();
+    final puantajlar = await getAllPuantajlar();
     final cariIslemler = await getAllCariIslemler();
 
     int totalWorkers = workers.length;
@@ -1543,8 +1543,8 @@ class DatabaseHelper {
     final rangeEnd = end.add(const Duration(hours: 23, minutes: 59, seconds: 59));
     final rangeStart = DateTime(start.year, start.month, start.day);
     
-    final results = await Future.wait([
-      _getAllPuantajlar(baslangic: rangeStart.subtract(const Duration(days: 6)), bitis: rangeEnd),
+    final results = await Future.wait<List<dynamic>>([
+      getAllPuantajlar(baslangic: rangeStart.subtract(const Duration(days: 6)), bitis: rangeEnd),
       getAllWorkers(),
       getAllFaturalar(baslangic: rangeStart, bitis: rangeEnd),
       getAllGelirGider(baslangic: rangeStart, bitis: rangeEnd),
