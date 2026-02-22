@@ -1,0 +1,18 @@
+﻿--- Volume Test Started ---
+Logging in as altayfbak@gmail.com...
+Login successful.
+Creating test Cari Hesap for volume data...
+Scale Account created with ID: 94
+Inserting 1000 records in 200 size batches...
+Batch 1 (200 records) took: 427 ms
+Batch 2 (200 records) took: 309 ms
+Batch 3 (200 records) took: 204 ms
+Batch 4 (200 records) took: 209 ms
+Batch 5 (200 records) took: 239 ms
+Total Volume Insertion (1000 records) took: 1410 ms
+Executing analytical queries on high volume data...
+Querying for specific range (found 750 records) took: 230 ms
+Fetching IDs for 1000 records in account took: 198 ms (Count: 1000)
+Cleaning up volume test data...
+Cleanup took: 365 ms
+--- Volume Test Finished Successfully ---

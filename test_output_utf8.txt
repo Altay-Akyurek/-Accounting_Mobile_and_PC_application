@@ -1,0 +1,3 @@
+﻿--- Standalone Stress Test Started ---
+Searching for an existing Cari Hesap...
+No existing Cari Hesap found. RLS prevents creating new ones. Test aborted.
