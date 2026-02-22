@@ -109,13 +109,12 @@ class DatabaseHelper {
     }).toList();
   }
 
+  DateTime _normalizeDate(DateTime d) {
+    return DateTime(d.year, d.month, d.day);
+  }
+
   String _stripTimePrecision(DateTime d) {
-    // Truncate to seconds to avoid issues with some backend parsers or URL length
-    final s = d.toIso8601String();
-    if (s.contains('.')) {
-      return s.split('.').first;
-    }
-    return s;
+    return d.toIso8601String().split('.').first;
   }
 
   // ========== FATURA İŞLEMLERİ ==========
@@ -484,8 +483,12 @@ class DatabaseHelper {
     final userId = currentUserId;
     if (userId == null) return [];
     var query = _supabase.from('puantajlar').select().eq('user_id', userId);
-    if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
-    if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
+    
+    if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(_normalizeDate(baslangic)));
+    if (bitis != null) {
+      final endNormalized = _normalizeDate(bitis).add(const Duration(hours: 23, minutes: 59, seconds: 59));
+      query = query.lte('tarih', _stripTimePrecision(endNormalized));
+    }
     
     final List<dynamic> data = await query;
     return data.map((map) => Puantaj.fromMap(map)).toList();
@@ -736,34 +739,49 @@ class DatabaseHelper {
       }
     }
 
-    // Bekleyen hesapla
-    double personBasedPending = 0;
+    // Bekleyen hesapla (Dönem içi hak edilen vs Ödenen)
+    double laborCostThisPeriod = workValueProducedThisPeriod > odenenIscilikThisPeriod 
+        ? workValueProducedThisPeriod 
+        : odenenIscilikThisPeriod;
+
+    double totalPendingLabor = workValueProducedThisPeriod - odenenIscilikThisPeriod;
+    if (totalPendingLabor < 0) totalPendingLabor = 0;
+
+    // Worker breakdown for the period UI
     Map<String, Map<String, dynamic>> workerBreakdown = {};
-    for (var wId in cumulativeAccrualUntilEnd.keys) {
-      double diff = (cumulativeAccrualUntilEnd[wId] ?? 0) - (cumulativePaymentUntilEnd[wId] ?? 0);
-      if (diff > 0) {
-        personBasedPending += diff;
-        final name = workers.firstWhere((w) => w.id == wId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now())).adSoyad;
+    for (var wId in workedCounts.keys.toSet().followedBy(sundayCounts.keys.toSet())) {
+      final name = workers.firstWhere((w) => w.id == wId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now())).adSoyad;
+      
+      // Calculate individual accrual in period for breakdown
+      double personAccrualInPeriod = 0;
+      for (var p in puantajlar) {
+        if (p.workerId == wId && (projectId == null || p.projectId == projectId)) {
+          if (p.tarih.isAfter(start.subtract(const Duration(days: 1))) && p.tarih.isBefore(end.add(const Duration(days: 1)))) {
+               final worker = workers.firstWhere((w) => w.id == wId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
+               personAccrualInPeriod += calculateLaborCost(p, worker);
+          }
+        }
+      }
+      
+      // Add bonuses to breakdown accrual
+      final worker = workers.firstWhere((w) => w.id == wId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
+      personAccrualInPeriod += (sundayCounts[wId] ?? 0) * _getDailyRate(worker);
+
+      if (personAccrualInPeriod > 0) {
         workerBreakdown[name] = {
-          'amount': diff,
+          'amount': personAccrualInPeriod,
           'worked': workedCounts[wId] ?? 0,
           'leave': leaveCounts[wId] ?? 0,
           'sunday': sundayCounts[wId] ?? 0,
         };
       }
     }
-    double totalPendingLabor = personBasedPending - totalUnassignedLaborPaymentUntilEnd;
-    if (totalPendingLabor < 0) totalPendingLabor = 0;
 
-    // Labor Gider logic for period: What we paid + any increase in debt (Accrual balance adjustment)
-    // For local reports, we use a simpler addition: Gider = All Payments + Pending
-    // But since Gider represents 'cost', we'll use: Paid + Pending
-    // This month's Labor Cost = Paid in month + Pending (current)
-    // Actually, user Wants to see everything they spent.
     giderKategorileri['İşçilik (Ödenen)'] = odenenIscilikThisPeriod;
     giderKategorileri['İşçilik (Bekleyen)'] = totalPendingLabor;
     
-    toplamGider += odenenIscilikThisPeriod + totalPendingLabor;
+    // Final Gider = Non-Labor Expenses + max(Accruals, Payments)
+    toplamGider += laborCostThisPeriod;
 
     return {
       'gelir': toplamGelir,
@@ -1363,13 +1381,16 @@ class DatabaseHelper {
     return data != null ? Worker.fromMap(data) : null;
   }
 
+
   Future<int> insertPuantaj(Puantaj puantaj) async {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
       
+      final normalizedDate = _normalizeDate(puantaj.tarih);
       final map = puantaj.toMap();
       map['user_id'] = userId;
+      map['tarih'] = normalizedDate.toIso8601String();
 
       // 1. Eğer ID zaten varsa direkt update yap
       if (puantaj.id != null) {
@@ -1382,23 +1403,34 @@ class DatabaseHelper {
       }
 
       // 2. ID yoksa, aynı gün ve işçi için kayıt var mı kontrol et (Mükerrer önleme)
-      // Tarih hassasiyetini temizleyerek arama yapıyoruz
-      final dateStr = _stripTimePrecision(puantaj.tarih);
+      // Tarih aralığı kullanarak (o günün başı ve sonu) daha güvenli arama yapıyoruz
+      final dayStart = normalizedDate;
+      final dayEnd = dayStart.add(const Duration(hours: 23, minutes: 59, seconds: 59));
+
       final existing = await _supabase
           .from('puantajlar')
           .select('id')
           .eq('worker_id', puantaj.workerId)
-          .eq('tarih', dateStr)
-          .eq('user_id', userId)
-          .maybeSingle();
+          .gte('tarih', dayStart.toIso8601String())
+          .lte('tarih', dayEnd.toIso8601String())
+          .eq('user_id', userId);
 
-      if (existing != null) {
-        final existingId = existing['id'] as int;
+      if (existing != null && (existing as List).isNotEmpty) {
+        final List existingList = existing;
+        final existingId = existingList.first['id'] as int;
+        
+        // Eğer birden fazla varsa (mükerrer), ilkini güncelle diğerlerini sil
         await _supabase
             .from('puantajlar')
             .update(map)
             .eq('id', existingId)
             .eq('user_id', userId);
+
+        if (existingList.length > 1) {
+          for (int i = 1; i < existingList.length; i++) {
+            await _supabase.from('puantajlar').delete().eq('id', existingList[i]['id']).eq('user_id', userId);
+          }
+        }
         return existingId;
       }
 
@@ -1420,8 +1452,11 @@ class DatabaseHelper {
     final userId = currentUserId;
     if (userId == null) return [];
     var query = _supabase.from('puantajlar').select().eq('user_id', userId).eq('worker_id', workerId);
-    if (baslangic != null) query = query.gte('tarih', baslangic.toIso8601String());
-    if (bitis != null) query = query.lte('tarih', bitis.toIso8601String());
+    if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(_normalizeDate(baslangic)));
+    if (bitis != null) {
+      final endNormalized = _normalizeDate(bitis).add(const Duration(hours: 23, minutes: 59, seconds: 59));
+      query = query.lte('tarih', _stripTimePrecision(endNormalized));
+    }
     
     final List<dynamic> data = await query;
     return data.map((map) => Puantaj.fromMap(map)).toList();

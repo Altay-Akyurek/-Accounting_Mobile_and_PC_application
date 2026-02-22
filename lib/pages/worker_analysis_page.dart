@@ -94,15 +94,28 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
     for (int i = 0; i < dayCount; i++) {
       final date = _startDate.add(Duration(days: i));
       double dailyTotal = 0;
+      bool isIzinsiz = false;
 
       final dayPuantajs = _allPuantajs.where((Puantaj p) => 
         p.workerId == worker.id && 
         p.tarih.year == date.year && p.tarih.month == date.month && p.tarih.day == date.day
       );
+      
       for (Puantaj p in dayPuantajs) {
-        if (p.status == PuantajStatus.normal) dailyTotal += p.saat;
+        if (p.status == PuantajStatus.normal || 
+            [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)) {
+          dailyTotal += p.saat + p.mesai;
+        } else if (p.status == PuantajStatus.izinsiz) {
+          isIzinsiz = true;
+        }
       }
-      _lineSpots.add(FlSpot(i.toDouble(), dailyTotal));
+      
+      // If izinsiz, show as negative dip
+      if (isIzinsiz) {
+        _lineSpots.add(FlSpot(i.toDouble(), -5));
+      } else {
+        _lineSpots.add(FlSpot(i.toDouble(), dailyTotal));
+      }
     }
 
     // 2. Bar Chart & Pie Chart Data (Selected Range Statistics)
@@ -122,7 +135,6 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
       final w = _workers[i];
       final workerPuantajs = _allPuantajs.where((Puantaj p) => p.workerId == w.id);
       
-      // Calculate unique worked and leave days (Date only, no hours/multiple entries)
       final Set<String> workedDates = {};
       final Set<String> leaveDates = {};
 
@@ -130,7 +142,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
         final dateKey = "${p.tarih.year}-${p.tarih.month}-${p.tarih.day}";
         if (p.status == PuantajStatus.normal) {
           workedDates.add(dateKey);
-        } else if ([PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)) {
+        } else if ([PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli, PuantajStatus.izinsiz].contains(p.status)) {
           leaveDates.add(dateKey);
         }
       }
@@ -221,7 +233,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                       ),
                       const SizedBox(height: 16),
                       _buildBarChart(),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 48),
                       const Text(
                         'GENEL VERİMLİLİK',
                         style: TextStyle(
@@ -231,7 +243,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                           letterSpacing: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                       _buildPieChart(),
                       const SizedBox(height: 40),
                     ],
@@ -393,7 +405,6 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                   int idx = value.toInt();
                   if (idx >= 0 && idx < _lineSpots.length) {
                     final date = _startDate.add(Duration(days: idx));
-                    // Only show title for every few days if range is large
                     bool shouldShow = true;
                     if (_lineSpots.length > 7) {
                       shouldShow = idx % (_lineSpots.length ~/ 5 + 1) == 0 || idx == _lineSpots.length - 1;
@@ -423,16 +434,40 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
           ),
           borderData: FlBorderData(show: false),
           minX: 0, maxX: (_lineSpots.length - 1).toDouble().clamp(0, 1000), 
-          minY: 0, 
+          minY: -10, 
           maxY: 25,
           lineBarsData: [
+            // Base Zero Line
+            LineChartBarData(
+              spots: [FlSpot(0, 0), FlSpot(_lineSpots.length.toDouble(), 0)],
+              isCurved: false,
+              color: Colors.grey.withOpacity(0.2),
+              barWidth: 1,
+              dotData: FlDotData(show: false),
+            ),
             LineChartBarData(
               spots: _lineSpots,
               isCurved: true,
               color: const Color(0xFF2EC4B6),
               barWidth: 4,
               isStrokeCapRound: true,
-              dotData: const FlDotData(show: false),
+              dotData: FlDotData(
+                show: true,
+                getDotPainter: (spot, percent, barData, index) {
+                  if (spot.y < 0) {
+                    return FlDotCirclePainter(
+                      radius: 4,
+                      color: Colors.red,
+                      strokeWidth: 2,
+                      strokeColor: Colors.white,
+                    );
+                  }
+                  return FlDotCirclePainter(radius: 0);
+                },
+              ),
+              gradient: LinearGradient(
+                colors: [const Color(0xFF2EC4B6), const Color(0xFF2EC4B6)],
+              ),
               belowBarData: BarAreaData(
                 show: true,
                 gradient: LinearGradient(
@@ -443,6 +478,11 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
               ),
             ),
           ],
+          extraLinesData: ExtraLinesData(
+            horizontalLines: [
+              HorizontalLine(y: 0, color: Colors.black12, strokeWidth: 1),
+            ],
+          ),
         ),
         duration: const Duration(milliseconds: 600),
         curve: Curves.easeInOut,
@@ -512,38 +552,84 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
       return const SizedBox(height: 200, child: Center(child: Text('Bu ay henüz veri girişi yok.')));
     }
 
-    return Container(
-      height: 250,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 8)),
-        ],
-      ),
-      child: PieChart(
-        PieChartData(
-          sectionsSpace: 4,
-          centerSpaceRadius: 50,
-          sections: [
-            PieChartSectionData(
-              color: const Color(0xFF2EC4B6),
-              value: _totalWorkedDays.toDouble(),
-              title: 'Çalışma\n$_totalWorkedDays',
-              radius: 60,
-              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+    final double total = (_totalWorkedDays + _totalLeaveDays).toDouble();
+    final double productivity = total > 0 ? (_totalWorkedDays / total * 100) : 0;
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          height: 280,
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10)),
+            ],
+          ),
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 6,
+              centerSpaceRadius: 65,
+              startDegreeOffset: -90,
+              sections: [
+                PieChartSectionData(
+                  color: const Color(0xFF2EC4B6),
+                  value: _totalWorkedDays.toDouble(),
+                  title: '',
+                  radius: 22,
+                  badgeWidget: _buildPieBadge(Icons.check_circle_rounded, const Color(0xFF2EC4B6)),
+                  badgePositionPercentageOffset: 1.3,
+                ),
+                PieChartSectionData(
+                  color: const Color(0xFFE71D36).withOpacity(0.8),
+                  value: _totalLeaveDays.toDouble(),
+                  title: '',
+                  radius: 18,
+                  badgeWidget: _buildPieBadge(Icons.cancel_rounded, const Color(0xFFE71D36)),
+                  badgePositionPercentageOffset: 1.3,
+                ),
+              ],
             ),
-            PieChartSectionData(
-              color: const Color(0xFFE71D36).withOpacity(0.7),
-              value: _totalLeaveDays.toDouble(),
-              title: 'İzin/Rapor\n$_totalLeaveDays',
-              radius: 50,
-              titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '%${productivity.toStringAsFixed(1)}',
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF011627),
+                letterSpacing: -1,
+              ),
+            ),
+            const Text(
+              'VERİMLİLİK',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: Colors.grey,
+                letterSpacing: 1.5,
+              ),
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildPieBadge(IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
       ),
+      child: Icon(icon, color: color, size: 16),
     );
   }
 }
