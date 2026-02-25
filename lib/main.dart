@@ -6,6 +6,7 @@ import 'pages/home_page.dart';
 import 'pages/login_page.dart';
 import 'services/database_helper.dart';
 import 'services/auth_service.dart';
+import 'services/protocol_service.dart';
 import 'pages/projects_page.dart';
 import 'pages/labor_management_page.dart';
 import 'pages/finance_management_page.dart';
@@ -21,6 +22,15 @@ void main() async {
     url: 'https://dwyeynurzyhjxncafqnz.supabase.co',
     anonKey: 'sb_publishable_v6VWwf7RZtHT7521pcpohQ_-ayN2OdC',
   );
+
+  /* 
+  // Windows için protokol kaydını otomatik yap
+  try {
+    await ProtocolService.register();
+  } catch (e) {
+    debugPrint('Protokol kaydı sırasında hata oluştu: $e');
+  }
+  */
 
   await initializeDateFormatting('tr_TR', null);
   await DatabaseHelper.instance.init();
@@ -145,6 +155,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
+    
     // Animasyonun (2.5 sn) tamamlanması için bekle
     Future.delayed(const Duration(milliseconds: 2500), () {
       if (mounted) setState(() => _showSplash = false);

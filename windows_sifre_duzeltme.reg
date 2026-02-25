@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\io.supabase.flutter]
+@="URL:Muhasebe Pro Protocol"
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\io.supabase.flutter\shell\open\command]
+@="\"C:\\Users\\Monster\\Desktop\\flutter\\project\\Muhasebe\\muhasebe_app\\build\\windows\\x64\\runner\\Release\\muhasebe_app.exe\" \"%1\""

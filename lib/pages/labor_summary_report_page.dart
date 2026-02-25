@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../services/database_helper.dart';
 import '../models/worker.dart';
 import '../models/project.dart';
+import '../services/worker_export_service.dart';
 
 class LaborSummaryReportPage extends StatefulWidget {
   const LaborSummaryReportPage({super.key});
@@ -118,6 +119,52 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
             onPressed: _loadData,
             tooltip: 'Yenile',
           ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) async {
+              if (value == 'pdf') {
+                await WorkerExportService.exportToPDF(
+                  startDate: _startDate,
+                  endDate: _endDate,
+                  puantajlar: _puantajlar,
+                  workerMap: _workerMap,
+                  projectNames: _projectNames,
+                  totalCost: totalCost,
+                  totalHours: totalHours,
+                );
+              } else if (value == 'excel') {
+                await WorkerExportService.exportToExcel(
+                  startDate: _startDate,
+                  endDate: _endDate,
+                  puantajlar: _puantajlar,
+                  workerMap: _workerMap,
+                  projectNames: _projectNames,
+                );
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'pdf',
+                child: Row(
+                  children: [
+                    Icon(Icons.picture_as_pdf, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('PDF İndir'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'excel',
+                child: Row(
+                  children: [
+                    Icon(Icons.table_chart, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text('Excel İndir'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       body: Column(
@@ -185,9 +232,44 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                                 worker?.adSoyad ?? 'Bilinmiyor',
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
-                              subtitle: Text(
-                                'Toplam: $workerTotalHours Saat  |  ${_formatPara(workerTotalCost)}',
-                                style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600),
+                              subtitle: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Toplam: $workerTotalHours Saat  |  ${_formatPara(workerTotalCost)}',
+                                      style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.picture_as_pdf, size: 20, color: Colors.red),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => WorkerExportService.exportToPDF(
+                                      startDate: _startDate,
+                                      endDate: _endDate,
+                                      puantajlar: puantajs,
+                                      workerMap: _workerMap,
+                                      projectNames: _projectNames,
+                                      totalCost: workerTotalCost,
+                                      totalHours: workerTotalHours,
+                                      filterWorkerId: workerId,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    icon: const Icon(Icons.table_chart, size: 20, color: Colors.green),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => WorkerExportService.exportToExcel(
+                                      startDate: _startDate,
+                                      endDate: _endDate,
+                                      puantajlar: puantajs,
+                                      workerMap: _workerMap,
+                                      projectNames: _projectNames,
+                                      filterWorkerId: workerId,
+                                    ),
+                                  ),
+                                ],
                               ),
                               children: [
                                 const Divider(height: 1),
@@ -196,7 +278,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                                   child: DataTable(
                                     headingRowHeight: 40,
                                     columnSpacing: 24,
-                                    headingRowColor: MaterialStateProperty.all(const Color(0xFFF8F9FA)),
+                                    headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
                                     columns: const [
                                       DataColumn(label: Text('TARİH', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
                                       DataColumn(label: Text('PROJE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
@@ -229,14 +311,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Excel dışa aktarımı yakında eklenecek')),
-          );
-        },
-        child: const Icon(Icons.file_download),
-      ),
+      floatingActionButton: null,
     );
   }
 }

@@ -6,6 +6,7 @@ import '../models/gelir_gider.dart';
 import '../models/cari_islem.dart';
 import '../models/worker.dart';
 import '../services/database_helper.dart';
+import '../services/project_export_service.dart';
 
 class ProjectDetailPage extends StatefulWidget {
   final Project project;
@@ -24,7 +25,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
   List<Worker> _workers = [];
   bool _isLoading = true;
 
-  double _toplamGelir = 0;
   double _toplamGider = 0;
   double _netKar = 0;
   double _tahsilEdilenHakedis = 0;
@@ -85,7 +85,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
       _cariIslemler = cariIslemler;
       _puantajlar = puantajlar;
       _workers = workers;
-      _toplamGelir = gelir;
       _toplamGider = gider;
       _netKar = gelir - gider;
       _tahsilEdilenHakedis = tahsilEdilen;
@@ -176,7 +175,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.1)),
+        border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,110 +278,146 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
     // Sort: newest first
     final sortedHakedisler = List<Hakedis>.from(_hakedisler)..sort((a, b) => b.tarih.compareTo(a.tarih));
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: sortedHakedisler.length,
-      itemBuilder: (context, index) {
-        final h = sortedHakedisler[index];
-        final isTahsilEdildi = h.durum == HakedisDurum.tahsilEdildi;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => ProjectExportService.exportProjectHakedislerPDF(widget.project, sortedHakedisler),
+              icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.red),
+              label: const Text('TÜM HAKEDİŞLERİ PDF İNDİR', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(20),
+            itemCount: sortedHakedisler.length,
+            itemBuilder: (context, index) {
+              final h = sortedHakedisler[index];
+              final isTahsilEdildi = h.durum == HakedisDurum.tahsilEdildi;
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: Colors.grey.withOpacity(0.1))),
-          elevation: 0,
-          child: Column(
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                title: Row(
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+                ),
+                elevation: 0,
+                child: Column(
                   children: [
-                    Text(h.baslik, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isTahsilEdildi ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      title: Row(
+                        children: [
+                          Text(h.baslik, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isTahsilEdildi ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isTahsilEdildi ? 'TAHSİL EDİLDİ' : 'BEKLİYOR',
+                              style: TextStyle(
+                                color: isTahsilEdildi ? Colors.green : Colors.orange,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 9,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        isTahsilEdildi ? 'TAHSİL EDİLDİ' : 'BEKLİYOR',
-                        style: TextStyle(
-                          color: isTahsilEdildi ? Colors.green : Colors.orange,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 9,
-                          letterSpacing: 0.5,
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          DateFormat('dd MMMM yyyy', 'tr_TR').format(h.tarih),
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    DateFormat('dd MMMM yyyy', 'tr_TR').format(h.tarih),
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-                  ),
-                ),
-                trailing: PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
-                  onSelected: (val) {
-                    if (val == 'status') _toggleHakedisStatus(h);
-                    if (val == 'delete') _deleteHakedis(h);
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'status',
-                      child: Row(
-                        children: [
-                          Icon(isTahsilEdildi ? Icons.pending_actions_rounded : Icons.check_circle_outline_rounded, size: 20),
-                          const SizedBox(width: 12),
-                          Text(isTahsilEdildi ? 'Bekliyor İşaretle' : 'Tahsil Edildi İşaretle'),
+                      trailing: PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
+                        onSelected: (val) {
+                          if (val == 'status') _toggleHakedisStatus(h);
+                          if (val == 'pdf') ProjectExportService.exportHakedisPDF(h, widget.project);
+                          if (val == 'delete') _deleteHakedis(h);
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'status',
+                            child: Row(
+                              children: [
+                                Icon(isTahsilEdildi ? Icons.pending_actions_rounded : Icons.check_circle_outline_rounded, size: 20),
+                                const SizedBox(width: 12),
+                                Text(isTahsilEdildi ? 'Bekliyor İşaretle' : 'Tahsil Edildi İşaretle'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'pdf',
+                            child: Row(
+                              children: [
+                                Icon(Icons.picture_as_pdf_outlined, color: Colors.red, size: 20),
+                                const SizedBox(width: 12),
+                                Text('PDF İndir'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                                const SizedBox(width: 12),
+                                Text('Hakedişi Sil', style: TextStyle(color: Colors.red)),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
-                      value: 'delete',
+                    if (h.aciklama != null && h.aciklama!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 12),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            h.aciklama!,
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontStyle: FontStyle.italic),
+                          ),
+                        ),
+                      ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20)),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
-                          const SizedBox(width: 12),
-                          Text('Hakedişi Sil', style: TextStyle(color: Colors.red)),
+                          _buildHakedisDetailItem('Brüt', _formatPara(h.tutar)),
+                          _buildHakedisDetailItem('Kesintiler', _formatPara(h.stopajTutari + h.teminatTutari)),
+                          _buildHakedisDetailItem('Net Tahsilat', _formatPara(h.netTutar), isBold: true, color: Colors.green),
                         ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              if (h.aciklama != null && h.aciklama!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 20, bottom: 12),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      h.aciklama!,
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontStyle: FontStyle.italic),
-                    ),
-                  ),
-                ),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20)),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildHakedisDetailItem('Brüt', _formatPara(h.tutar)),
-                    _buildHakedisDetailItem('Kesintiler', _formatPara(h.stopajTutari + h.teminatTutari)),
-                    _buildHakedisDetailItem('Net Tahsilat', _formatPara(h.netTutar), isBold: true, color: Colors.green),
-                  ],
-                ),
-              ),
-            ],
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 
@@ -506,7 +541,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: (exp['color'] as Color).withOpacity(0.1),
+              backgroundColor: (exp['color'] as Color).withValues(alpha: 0.1),
               child: Icon(exp['icon'] as IconData, color: exp['color'] as Color, size: 20),
             ),
             title: Text(exp['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -695,10 +730,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                             aciklama: noteController.text,
                           );
                           await DatabaseHelper.instance.insertHakedis(h);
-                          if (!mounted) return;
-                          Navigator.pop(context);
-                          _loadData();
+                          if (mounted) {
+                            Navigator.pop(context);
+                            _loadData();
+                          }
                         } else {
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lütfen başlık ve tutar giriniz.')));
                         }
                       },

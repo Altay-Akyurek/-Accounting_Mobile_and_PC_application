@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
@@ -26,9 +27,15 @@ class AuthService {
 
   // Şifre sıfırlama e-postası gönder
   Future<void> resetPassword(String email) async {
+    // Hem Telefon (Mobil) hem de Masaüstü (Windows) için aynı global protokol kullanılır.
+    // Windows tarafında bu protokol ProtocolService ile otomatik olarak kaydedilir.
+    final String redirectTo = kIsWeb 
+        ? Uri.base.origin 
+        : 'io.supabase.flutter://reset-password';
+
     await _supabase.auth.resetPasswordForEmail(
       email,
-      redirectTo: 'io.supabase.flutter://reset-password',
+      redirectTo: redirectTo,
     );
   }
 
