@@ -28,9 +28,9 @@ class ProtocolService {
         '/f'
       ]);
       
-      debugPrint('Deep Link Kaydı Başarılı (HKCU): $exePath');
+      // debugPrint('Deep Link Kaydı Başarılı (HKCU): $exePath');
     } catch (e) {
-      debugPrint('Deep Link Kaydı Başarısız: $e');
+      // debugPrint('Deep Link Kaydı Başarısız: $e');
     }
   }
 

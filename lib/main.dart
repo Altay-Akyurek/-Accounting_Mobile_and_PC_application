@@ -34,7 +34,7 @@ void main() async {
   try {
     await ProtocolService.register();
   } catch (e) {
-    debugPrint('Protokol kaydı sırasında hata oluştu: $e');
+    // debugPrint('Protokol kaydı sırasında hata oluştu: $e');
   }
   */
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
 import '../l10n/app_localizations.dart';
 import '../services/database_helper.dart';
 import '../models/worker.dart';
@@ -52,7 +53,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
 
       _processData();
     } catch (e) {
-      print('DEBUG: Worker Analysis load error: $e');
+      // Hata sessizce geçiliyor, loading durduruluyor
     } finally {
       setState(() => _isLoading = false);
     }
@@ -520,12 +521,23 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
+                reservedSize: 40,
                 getTitlesWidget: (value, meta) {
                   if (value.toInt() < _workerMonthlyStats.length) {
                     final name = _workerMonthlyStats[value.toInt()]['name'].split(' ')[0];
                     return Padding(
                       padding: const EdgeInsets.only(top: 8),
-                      child: Text(name, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF495057))),
+                      child: Transform.rotate(
+                        angle: -45 * math.pi / 180,
+                        child: Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF495057),
+                          ),
+                        ),
+                      ),
                     );
                   }
                   return const Text('');

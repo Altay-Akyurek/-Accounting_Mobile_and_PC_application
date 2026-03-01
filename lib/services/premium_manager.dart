@@ -21,7 +21,7 @@ class PremiumManager {
     
     /* // Geliştirme aşamasında (Debug mode) reklamları devre dışı bırakıyoruz
     if (kDebugMode) {
-      debugPrint('Debug modunda reklamlar devre dışı bırakıldı.');
+      // debugPrint('Debug modunda reklamlar devre dışı bırakıldı.');
       return;
     } */
 
@@ -34,7 +34,7 @@ class PremiumManager {
         // 10 dakikalık döngüyü başlat
         _startAdTimer();
       } catch (e) {
-        debugPrint('MobileAds initialization error: $e');
+        // debugPrint('MobileAds initialization error: $e');
       }
     }
   }
@@ -85,7 +85,7 @@ class PremiumManager {
       // Şimdilik varsayılan olarak false
       _isPremium = false; 
     } catch (e) {
-      debugPrint('Abonelik kontrolü hatası: $e');
+      // debugPrint('Abonelik kontrolü hatası: $e');
       _isPremium = false;
     }
   }

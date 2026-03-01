@@ -62,7 +62,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('DEBUG: Labor Summary load error: $e');
+      // debugPrint('DEBUG: Labor Summary load error: $e');
       setState(() => _isLoading = false);
     }
   }

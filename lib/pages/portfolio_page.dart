@@ -144,7 +144,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
       _timelineEvents = _timelineEvents.take(10).toList();
 
     } catch (e) {
-      debugPrint('Portföy veri yükleme hatası: $e');
+      // debugPrint('Portföy veri yükleme hatası: $e');
     } finally {
       setState(() => _isLoading = false);
     }

@@ -49,13 +49,13 @@ class AdHelper {
             ad.show();
           },
           onAdFailedToLoad: (error) {
-            debugPrint('InterstitialAd failed to load: $error');
+            // debugPrint('InterstitialAd failed to load: $error');
             onAdDismissed?.call();
           },
         ),
       );
     } catch (e) {
-      debugPrint('Error showing InterstitialAd: $e');
+      // debugPrint('Error showing InterstitialAd: $e');
       onAdDismissed?.call();
     }
   }

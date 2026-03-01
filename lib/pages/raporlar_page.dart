@@ -45,7 +45,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
         _projeler = projeler;
       });
     } catch (e) {
-      debugPrint('Proje yükleme hatası: $e');
+      // debugPrint('Proje yükleme hatası: $e');
     }
   }
 

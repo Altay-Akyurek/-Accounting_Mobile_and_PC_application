@@ -71,7 +71,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('DEBUG: Error loading data: $e');
+      // debugPrint('DEBUG: Error loading data: $e');
       setState(() {
         _isLoading = false;
       });

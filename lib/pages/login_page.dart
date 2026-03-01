@@ -41,8 +41,8 @@ class _LoginPageState extends State<LoginPage> {
         );
         
         // Debug için response içeriğini yazdıralım
-        debugPrint('Sign Up Response User: ${response.user}');
-        debugPrint('Sign Up Response Metadata: ${response.user?.appMetadata}');
+        // debugPrint('Sign Up Response User: ${response.user}');
+        // debugPrint('Sign Up Response Metadata: ${response.user?.appMetadata}');
         
         // Supabase bazen sessizce başarılı döner (güvenlik için), 
         // ancak kullanıcı zaten varsa session boş gelir veya metadata farklı olur.
@@ -64,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
         }
       }
     } catch (e) {
-      debugPrint('Auth Error: $e');
+      // debugPrint('Auth Error: $e');
       if (mounted) {
         String message = e.toString();
         
