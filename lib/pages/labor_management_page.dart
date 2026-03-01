@@ -223,7 +223,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.dismissWorker),
-        content: Text('${worker.adSoyad} ${AppLocalizations.of(context)!.dismissConfirmNote}'),
+        content: Text(AppLocalizations.of(context)!.dismissConfirmNote(worker.adSoyad)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancel.toUpperCase())),
           ElevatedButton(

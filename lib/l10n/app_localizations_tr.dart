@@ -1394,7 +1394,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get currentBalance_caps => 'currentBalance_caps';
 
   @override
-  String get totalExpenses => 'totalExpenses';
+  String get totalExpenses => 'Toplam Giderler';
 
   @override
   String get mustAddAtLeastOneItem => 'mustAddAtLeastOneItem';

@@ -379,6 +379,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ],
     );
   }
+  int _touchedPieIndex = -1;
 
   Widget _buildGelirGiderChart() {
     double gelir = _ozetBilgiler['toplamGelir']!;
@@ -401,20 +402,34 @@ class _DashboardPageState extends State<DashboardPage> {
               PieChartData(
                 sectionsSpace: 4,
                 centerSpaceRadius: 40,
+                pieTouchData: PieTouchData(
+                  enabled: true,
+                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                    setState(() {
+                      if (!event.isInterestedForInteractions ||
+                          pieTouchResponse == null ||
+                          pieTouchResponse.touchedSection == null) {
+                        _touchedPieIndex = -1;
+                        return;
+                      }
+                      _touchedPieIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                    });
+                  },
+                ),
                 sections: [
                   PieChartSectionData(
                     value: gelir,
-                    title: '%${total > 0 ? (gelir / total * 100).toStringAsFixed(0) : 0}',
+                    title: _touchedPieIndex == 0 ? _formatPara(gelir) : '%${total > 0 ? (gelir / total * 100).toStringAsFixed(0) : 0}',
                     color: const Color(0xFF2EC4B6),
-                    radius: 25,
-                    titleStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+                    radius: _touchedPieIndex == 0 ? 30 : 25,
+                    titleStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: _touchedPieIndex == 0 ? 10 : 12),
                   ),
                   PieChartSectionData(
                     value: gider,
-                    title: '%${total > 0 ? (gider / total * 100).toStringAsFixed(0) : 0}',
+                    title: _touchedPieIndex == 1 ? _formatPara(gider) : '%${total > 0 ? (gider / total * 100).toStringAsFixed(0) : 0}',
                     color: const Color(0xFFE71D36),
-                    radius: 25,
-                    titleStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+                    radius: _touchedPieIndex == 1 ? 30 : 25,
+                    titleStyle: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: _touchedPieIndex == 1 ? 10 : 12),
                   ),
                 ],
               ),
@@ -472,24 +487,42 @@ class _DashboardPageState extends State<DashboardPage> {
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
                 maxY: _topProjeler.isEmpty ? 100 : _topProjeler.map((e) => e['kar'] as double).reduce((a, b) => a > b ? a : b) * 1.2,
-                barTouchData: BarTouchData(enabled: false),
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (_) => Colors.blueGrey.shade900,
+                    tooltipRoundedRadius: 8,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      String projectName = _topProjeler[groupIndex]['projeAd'];
+                      return BarTooltipItem(
+                        '$projectName\n${_formatPara(rod.toY)}',
+                        const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                      );
+                    },
+                  ),
+                ),
                 titlesData: FlTitlesData(
                   show: true,
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: 32, // Give more room for the text underneath
                       getTitlesWidget: (value, meta) {
                         int index = value.toInt();
-                        if (index < _topProjeler.length) {
+                        if (index >= 0 && index < _topProjeler.length) {
+                          String fullName = _topProjeler[index]['projeAd'].toString();
+                          // Display a reasonable chunk of the name without extreme clipping
+                          String displayName = fullName.length > 10 ? '${fullName.substring(0, 8)}..' : fullName;
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
-                              _topProjeler[index]['projeAd'].toString().substring(0, 3).toUpperCase(),
+                              displayName,
                               style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                              textAlign: TextAlign.center,
                             ),
                           );
                         }
-                        return const SizedBox();
+                        return const SizedBox.shrink();
                       },
                     ),
                   ),

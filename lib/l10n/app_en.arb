@@ -612,7 +612,7 @@
   "deleteFailed": "Failed to delete {arg}.",
   "taxNo_short": "taxNo_short",
   "currentBalance_caps": "currentBalance_caps",
-  "totalExpenses": "totalExpenses",
+  "totalExpenses": "Total Expenses",
   "mustAddAtLeastOneItem": "mustAddAtLeastOneItem",
   "invoiceAdded": "invoiceAdded",
   "invoiceUpdated": "invoiceUpdated",

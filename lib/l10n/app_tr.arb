@@ -612,7 +612,7 @@
   "deleteFailed": "{arg} silinemedi.",
   "taxNo_short": "taxNo_short",
   "currentBalance_caps": "currentBalance_caps",
-  "totalExpenses": "totalExpenses",
+  "totalExpenses": "Toplam Giderler",
   "mustAddAtLeastOneItem": "mustAddAtLeastOneItem",
   "invoiceAdded": "invoiceAdded",
   "invoiceUpdated": "invoiceUpdated",

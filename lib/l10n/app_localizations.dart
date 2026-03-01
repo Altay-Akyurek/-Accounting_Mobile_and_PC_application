@@ -2733,7 +2733,7 @@ abstract class AppLocalizations {
   /// No description provided for @totalExpenses.
   ///
   /// In tr, this message translates to:
-  /// **'totalExpenses'**
+  /// **'Toplam Giderler'**
   String get totalExpenses;
 
   /// No description provided for @mustAddAtLeastOneItem.
