@@ -756,10 +756,8 @@ class DatabaseHelper {
       }
     }
 
-    // Bekleyen hesapla (Dönem içi hak edilen vs Ödenen)
-    double laborCostThisPeriod = workValueProducedThisPeriod > odenenIscilikThisPeriod
-        ? workValueProducedThisPeriod
-        : odenenIscilikThisPeriod;
+    // laborCostThisPeriod is calculated as the exact sum of paid and pending
+
 
     // Remove old totalPendingLabor calculation
     // double totalPendingLabor = workValueProducedThisPeriod - odenenIscilikThisPeriod;
@@ -788,8 +786,12 @@ class DatabaseHelper {
 
       if (personAccrualInPeriod > 0) {
         double personPending = personAccrualInPeriod - (personPaymentInPeriod[wId] ?? 0);
+        double finalPending = personPending < 0 ? 0.0 : personPending;
+        
+        sumOfWorkerPendingAmounts += finalPending;
+
         workerBreakdown[name] = {
-          'amount': personPending < 0 ? 0.0 : personPending,
+          'amount': finalPending,
           'worked': workedCounts[wId] ?? 0,
           'leave': leaveCounts[wId] ?? 0,
           'sunday': sundayCounts[wId] ?? 0,
@@ -799,12 +801,11 @@ class DatabaseHelper {
 
     giderKategorileri['İşçilik (Ödenen)'] = odenenIscilikThisPeriod;
     
-    // Restore the original totalPendingLabor calculation
-    double totalPendingLabor = workValueProducedThisPeriod - odenenIscilikThisPeriod;
-    if (totalPendingLabor < 0) totalPendingLabor = 0;
-    giderKategorileri['İşçilik (Bekleyen)'] = totalPendingLabor;
+    // Set the category total to exactly match the sum of individual breakdowns
+    giderKategorileri['İşçilik (Bekleyen)'] = sumOfWorkerPendingAmounts;
 
-    // Final Gider = Non-Labor Expenses + max(Accruals, Payments)
+    // Final Gider = Non-Labor Expenses + exact sum of labor categories
+    double laborCostThisPeriod = odenenIscilikThisPeriod + sumOfWorkerPendingAmounts;
     toplamGider += laborCostThisPeriod;
 
     return {
@@ -963,21 +964,21 @@ class DatabaseHelper {
         }
       }
 
-      // Proje Labor Cost = Sum per worker Max(Accrual, Paid) + unassigned
-      double projectLaborCost = unassignedLaborPayment;
       double totalPaidLabor = unassignedLaborPayment;
-      double totalAccruedLabor = 0;
+      double totalBekleyen = 0;
 
       for (var w in workers) {
         double acc = projectWorkerAccrual[w.id] ?? 0;
         double paid = projectWorkerPayment[w.id] ?? 0;
-        totalAccruedLabor += acc;
         totalPaidLabor += paid;
-        projectLaborCost += acc > paid ? acc : paid;
+        
+        double pending = acc - paid;
+        if (pending > 0) {
+          totalBekleyen += pending;
+        }
       }
 
-      double totalBekleyen = projectLaborCost - totalPaidLabor;
-      if (totalBekleyen < 0) totalBekleyen = 0;
+      double projectLaborCost = totalPaidLabor + totalBekleyen;
 
       reports.add({
         'projeId': project.id,
