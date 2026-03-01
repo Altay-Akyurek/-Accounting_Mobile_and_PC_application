@@ -1377,7 +1377,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get cancel_caps => 'cancel_caps';
+  String get cancel_caps => 'CANCEL';
 
   @override
   String get delete_caps => 'delete_caps';
@@ -1600,7 +1600,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cariAccountBalancesClosed => 'cariAccountBalancesClosed';
 
   @override
-  String get confirm_caps => 'confirm_caps';
+  String get confirm_caps => 'CONFIRM';
 
   @override
   String get periodNetProfit_caps => 'PERIOD NET PROFIT';

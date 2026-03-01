@@ -607,7 +607,7 @@
   "noResultsFound": "noResultsFound",
   "deleteConfirmTitle": "deleteConfirmTitle",
   "deleteCariConfirm": "Are you sure you want to delete account {arg}?",
-  "cancel_caps": "cancel_caps",
+  "cancel_caps": "CANCEL",
   "delete_caps": "delete_caps",
   "deleteFailed": "Failed to delete {arg}.",
   "taxNo_short": "taxNo_short",
@@ -731,7 +731,7 @@
     }
   },
   "cariAccountBalancesClosed": "cariAccountBalancesClosed",
-  "confirm_caps": "confirm_caps",
+  "confirm_caps": "CONFIRM",
   "periodNetProfit_caps": "PERIOD NET PROFIT",
   "totalRevenue_caps": "TOTAL REVENUE",
   "totalCost_caps": "TOTAL COST",

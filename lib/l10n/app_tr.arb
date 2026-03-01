@@ -607,7 +607,7 @@
   "noResultsFound": "noResultsFound",
   "deleteConfirmTitle": "deleteConfirmTitle",
   "deleteCariConfirm": "{arg} carisini silmek istediğinize emin misiniz?",
-  "cancel_caps": "cancel_caps",
+  "cancel_caps": "İPTAL",
   "delete_caps": "delete_caps",
   "deleteFailed": "{arg} silinemedi.",
   "taxNo_short": "taxNo_short",
@@ -731,7 +731,7 @@
     }
   },
   "cariAccountBalancesClosed": "cariAccountBalancesClosed",
-  "confirm_caps": "confirm_caps",
+  "confirm_caps": "ONAYLA",
   "periodNetProfit_caps": "DÖNEM NET KARI",
   "totalRevenue_caps": "TOPLAM GELİR",
   "totalCost_caps": "TOPLAM MALİYET",

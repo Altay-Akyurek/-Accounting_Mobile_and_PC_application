@@ -2703,7 +2703,7 @@ abstract class AppLocalizations {
   /// No description provided for @cancel_caps.
   ///
   /// In tr, this message translates to:
-  /// **'cancel_caps'**
+  /// **'İPTAL'**
   String get cancel_caps;
 
   /// No description provided for @delete_caps.
@@ -3105,7 +3105,7 @@ abstract class AppLocalizations {
   /// No description provided for @confirm_caps.
   ///
   /// In tr, this message translates to:
-  /// **'confirm_caps'**
+  /// **'ONAYLA'**
   String get confirm_caps;
 
   /// No description provided for @periodNetProfit_caps.
