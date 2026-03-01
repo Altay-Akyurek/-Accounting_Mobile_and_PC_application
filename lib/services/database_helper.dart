@@ -693,7 +693,7 @@ class DatabaseHelper {
       while (current.isBefore(end.add(const Duration(seconds: 1)))) {
         if (current.weekday == DateTime.sunday) {
           bool earnedBonus = true;
-          int? lastProjectId;
+          Map<int, int> projectCounts = {};
           for (int i = 0; i <= 6; i++) {
             DateTime checkDate = current.subtract(Duration(days: i));
             final dayPuantajlar = workerPuantaj.where((p) =>
@@ -705,13 +705,21 @@ class DatabaseHelper {
                 break;
               }
             }
-            if (lastProjectId == null && dayPuantajlar.isNotEmpty) {
-              lastProjectId = dayPuantajlar.last.projectId;
+            if (dayPuantajlar.isNotEmpty && dayPuantajlar.last.projectId != null) {
+              int pid = dayPuantajlar.last.projectId!;
+              projectCounts[pid] = (projectCounts[pid] ?? 0) + 1;
             }
           }
+          
           if (earnedBonus) {
+            // Find the project worked on the most during this week
+            int? majorityProjectId;
+            if (projectCounts.isNotEmpty) {
+              majorityProjectId = projectCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+            }
+            
             // Apply project filter to bonuses as well
-            if (projectId != null && lastProjectId != projectId) {
+            if (projectId != null && majorityProjectId != projectId) {
               earnedBonus = false;
             }
           }
@@ -761,7 +769,7 @@ class DatabaseHelper {
     Map<String, Map<String, dynamic>> workerBreakdown = {};
     double sumOfWorkerPendingAmounts = 0;
 
-    for (var wId in workedCounts.keys.toSet().followedBy(sundayCounts.keys.toSet())) {
+    for (var wId in workedCounts.keys.toSet().union(sundayCounts.keys.toSet())) {
       final worker = workers.firstWhere((w) => w.id == wId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
       final name = worker.adSoyad;
 
@@ -780,12 +788,8 @@ class DatabaseHelper {
 
       if (personAccrualInPeriod > 0) {
         double personPending = personAccrualInPeriod - (personPaymentInPeriod[wId] ?? 0);
-        double finalPending = personPending < 0 ? 0.0 : personPending;
-        
-        sumOfWorkerPendingAmounts += finalPending;
-
         workerBreakdown[name] = {
-          'amount': finalPending,
+          'amount': personPending < 0 ? 0.0 : personPending,
           'worked': workedCounts[wId] ?? 0,
           'leave': leaveCounts[wId] ?? 0,
           'sunday': sundayCounts[wId] ?? 0,
@@ -794,8 +798,11 @@ class DatabaseHelper {
     }
 
     giderKategorileri['İşçilik (Ödenen)'] = odenenIscilikThisPeriod;
-    // Set the category total to exactly match the sum of individual breakdowns
-    giderKategorileri['İşçilik (Bekleyen)'] = sumOfWorkerPendingAmounts;
+    
+    // Restore the original totalPendingLabor calculation
+    double totalPendingLabor = workValueProducedThisPeriod - odenenIscilikThisPeriod;
+    if (totalPendingLabor < 0) totalPendingLabor = 0;
+    giderKategorileri['İşçilik (Bekleyen)'] = totalPendingLabor;
 
     // Final Gider = Non-Labor Expenses + max(Accruals, Payments)
     toplamGider += laborCostThisPeriod;
@@ -914,7 +921,7 @@ class DatabaseHelper {
         while (current.isBefore(maxDate.add(const Duration(seconds: 1)))) {
           if (current.weekday == DateTime.sunday) {
             bool earnedBonus = true;
-            int? lastProjectId;
+            Map<int, int> projectCounts = {};
             for (int i = 0; i <= 6; i++) {
               DateTime checkDate = current.subtract(Duration(days: i));
               final dayPuantajlar = workerPuantaj.where((p) =>
@@ -927,8 +934,9 @@ class DatabaseHelper {
                   break;
                 }
               }
-              if (lastProjectId == null && dayPuantajlar.isNotEmpty) {
-                lastProjectId = dayPuantajlar.last.projectId;
+              if (dayPuantajlar.isNotEmpty && dayPuantajlar.last.projectId != null) {
+                int pid = dayPuantajlar.last.projectId!;
+                projectCounts[pid] = (projectCounts[pid] ?? 0) + 1;
               }
             }
 
@@ -939,7 +947,13 @@ class DatabaseHelper {
               bool isPaidHolidayRecord = sundayRecords.any((p) =>
                 [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)
               );
-              if (!isPaidHolidayRecord && lastProjectId == project.id) {
+              
+              int? majorityProjectId;
+              if (projectCounts.isNotEmpty) {
+                majorityProjectId = projectCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+              }
+
+              if (!isPaidHolidayRecord && majorityProjectId == project.id) {
                 double dailyRate = _getDailyRate(w);
                 projectWorkerAccrual[w.id!] = (projectWorkerAccrual[w.id!] ?? 0) + dailyRate;
               }
@@ -953,7 +967,6 @@ class DatabaseHelper {
       double projectLaborCost = unassignedLaborPayment;
       double totalPaidLabor = unassignedLaborPayment;
       double totalAccruedLabor = 0;
-      double totalBekleyen = 0; // Directly sum pending amounts
 
       for (var w in workers) {
         double acc = projectWorkerAccrual[w.id] ?? 0;
@@ -961,12 +974,10 @@ class DatabaseHelper {
         totalAccruedLabor += acc;
         totalPaidLabor += paid;
         projectLaborCost += acc > paid ? acc : paid;
-        
-        double pending = acc - paid;
-        if (pending > 0) {
-          totalBekleyen += pending;
-        }
       }
+
+      double totalBekleyen = projectLaborCost - totalPaidLabor;
+      if (totalBekleyen < 0) totalBekleyen = 0;
 
       reports.add({
         'projeId': project.id,
@@ -1704,7 +1715,7 @@ class DatabaseHelper {
       while (current.isBefore(rangeEnd.add(const Duration(seconds: 1)))) {
         if (current.weekday == DateTime.sunday) {
           bool earnedBonus = true;
-          int? lastProjectId;
+          Map<int, int> projectCounts = {};
           for (int i = 0; i <= 6; i++) {
             DateTime checkDate = current.subtract(Duration(days: i));
             final dayPuantajlar = workerPuantaj.where((p) =>
@@ -1716,13 +1727,20 @@ class DatabaseHelper {
                 break;
               }
             }
-            if (lastProjectId == null && dayPuantajlar.isNotEmpty) {
-              lastProjectId = dayPuantajlar.last.projectId;
+            if (dayPuantajlar.isNotEmpty && dayPuantajlar.last.projectId != null) {
+              int pid = dayPuantajlar.last.projectId!;
+              projectCounts[pid] = (projectCounts[pid] ?? 0) + 1;
             }
           }
+          
           if (earnedBonus) {
+            int? majorityProjectId;
+            if (projectCounts.isNotEmpty) {
+              majorityProjectId = projectCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+            }
+            
             // Project filter check for bonus
-            if (projectIds != null && (lastProjectId == null || !projectIds.contains(lastProjectId))) {
+            if (projectIds != null && (majorityProjectId == null || !projectIds.contains(majorityProjectId))) {
               earnedBonus = false;
             }
           }
