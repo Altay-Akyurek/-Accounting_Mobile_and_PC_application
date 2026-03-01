@@ -37,4 +37,4 @@ You can delete your account and all associated data at any time through the app 
 We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page.
 
 ## 7. Contact Us
-If you have any questions about this Privacy Policy, please contact us at: **support@muhasebepro.com** (Replace with your actual email).
+If you have any questions about this Privacy Policy, please contact us at: **altayfbak@gmail.com** (Replace with your actual email).

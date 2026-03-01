@@ -1564,10 +1564,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settleAccount_caps => 'SETTLE ACCOUNT';
 
   @override
-  String get noPendingHakedisFound => 'noPendingHakedisFound';
+  String get noPendingHakedisFound => 'No pending collection found';
 
   @override
-  String get processHakedisCollection => 'processHakedisCollection';
+  String get processHakedisCollection => 'Process Collection';
 
   @override
   String hakedisSettleConfirm(int count, String amount) {
@@ -1575,10 +1575,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get hakedisCollectionsProcessed => 'hakedisCollectionsProcessed';
+  String get hakedisCollectionsProcessed =>
+      'Collections processed successfully.';
 
   @override
-  String get settlePersonnelAccount => 'settlePersonnelAccount';
+  String get settlePersonnelAccount => 'Settle Personnel Account';
 
   @override
   String laborSettleConfirm(int count, String amount) {
@@ -1586,10 +1587,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get personnelPaymentsProcessed => 'personnelPaymentsProcessed';
+  String get personnelPaymentsProcessed =>
+      'Personnel payments processed successfully.';
 
   @override
-  String get closeCariAccounts => 'closeCariAccounts';
+  String get closeCariAccounts => 'Close Current Accounts';
 
   @override
   String cariSettleConfirm(int count) {
@@ -1597,7 +1599,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get cariAccountBalancesClosed => 'cariAccountBalancesClosed';
+  String get cariAccountBalancesClosed => 'Current account balances closed.';
 
   @override
   String get confirm_caps => 'CONFIRM';

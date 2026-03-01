@@ -1564,10 +1564,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settleAccount_caps => 'HESABI KAPAT';
 
   @override
-  String get noPendingHakedisFound => 'noPendingHakedisFound';
+  String get noPendingHakedisFound => 'Bekleyen hakediş bulunamadı';
 
   @override
-  String get processHakedisCollection => 'processHakedisCollection';
+  String get processHakedisCollection => 'Hakediş Tahsilatı';
 
   @override
   String hakedisSettleConfirm(int count, String amount) {
@@ -1575,10 +1575,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get hakedisCollectionsProcessed => 'hakedisCollectionsProcessed';
+  String get hakedisCollectionsProcessed =>
+      'Hakediş tahsilatları başarıyla işlendi.';
 
   @override
-  String get settlePersonnelAccount => 'settlePersonnelAccount';
+  String get settlePersonnelAccount => 'Personel Hesabını Kapat';
 
   @override
   String laborSettleConfirm(int count, String amount) {
@@ -1586,10 +1587,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get personnelPaymentsProcessed => 'personnelPaymentsProcessed';
+  String get personnelPaymentsProcessed =>
+      'Personel ödemeleri başarıyla işlendi.';
 
   @override
-  String get closeCariAccounts => 'closeCariAccounts';
+  String get closeCariAccounts => 'Cari Hesapları Kapat';
 
   @override
   String cariSettleConfirm(int count) {
@@ -1597,7 +1599,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get cariAccountBalancesClosed => 'cariAccountBalancesClosed';
+  String get cariAccountBalancesClosed => 'Cari hesap bakiyeleri kapatıldı.';
 
   @override
   String get confirm_caps => 'ONAYLA';

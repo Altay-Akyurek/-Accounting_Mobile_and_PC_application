@@ -694,8 +694,8 @@
   "personnelSalaryStatus_caps": "PERSONEL MAAŞ DURUMU",
   "projectHakedis_caps": "PROJE HAKEDİŞLERİ",
   "settleAccount_caps": "HESABI KAPAT",
-  "noPendingHakedisFound": "noPendingHakedisFound",
-  "processHakedisCollection": "processHakedisCollection",
+  "noPendingHakedisFound": "Bekleyen hakediş bulunamadı",
+  "processHakedisCollection": "Hakediş Tahsilatı",
   "hakedisSettleConfirm": "{count} adet hakediş ve toplam {amount} tutarı tahsil edilecek. Onaylıyor musunuz?",
   "@hakedisSettleConfirm": {
     "placeholders": {
@@ -707,8 +707,8 @@
       }
     }
   },
-  "hakedisCollectionsProcessed": "hakedisCollectionsProcessed",
-  "settlePersonnelAccount": "settlePersonnelAccount",
+  "hakedisCollectionsProcessed": "Hakediş tahsilatları başarıyla işlendi.",
+  "settlePersonnelAccount": "Personel Hesabını Kapat",
   "laborSettleConfirm": "{count} adet işçilik ve toplam {amount} tutarı ödenecek. Onaylıyor musunuz?",
   "@laborSettleConfirm": {
     "placeholders": {
@@ -720,8 +720,8 @@
       }
     }
   },
-  "personnelPaymentsProcessed": "personnelPaymentsProcessed",
-  "closeCariAccounts": "closeCariAccounts",
+  "personnelPaymentsProcessed": "Personel ödemeleri başarıyla işlendi.",
+  "closeCariAccounts": "Cari Hesapları Kapat",
   "cariSettleConfirm": "{count} adet cari işlem kapatılacak. Onaylıyor musunuz?",
   "@cariSettleConfirm": {
     "placeholders": {
@@ -730,7 +730,7 @@
       }
     }
   },
-  "cariAccountBalancesClosed": "cariAccountBalancesClosed",
+  "cariAccountBalancesClosed": "Cari hesap bakiyeleri kapatıldı.",
   "confirm_caps": "ONAYLA",
   "periodNetProfit_caps": "DÖNEM NET KARI",
   "totalRevenue_caps": "TOPLAM GELİR",

@@ -3045,13 +3045,13 @@ abstract class AppLocalizations {
   /// No description provided for @noPendingHakedisFound.
   ///
   /// In tr, this message translates to:
-  /// **'noPendingHakedisFound'**
+  /// **'Bekleyen hakediş bulunamadı'**
   String get noPendingHakedisFound;
 
   /// No description provided for @processHakedisCollection.
   ///
   /// In tr, this message translates to:
-  /// **'processHakedisCollection'**
+  /// **'Hakediş Tahsilatı'**
   String get processHakedisCollection;
 
   /// No description provided for @hakedisSettleConfirm.
@@ -3063,13 +3063,13 @@ abstract class AppLocalizations {
   /// No description provided for @hakedisCollectionsProcessed.
   ///
   /// In tr, this message translates to:
-  /// **'hakedisCollectionsProcessed'**
+  /// **'Hakediş tahsilatları başarıyla işlendi.'**
   String get hakedisCollectionsProcessed;
 
   /// No description provided for @settlePersonnelAccount.
   ///
   /// In tr, this message translates to:
-  /// **'settlePersonnelAccount'**
+  /// **'Personel Hesabını Kapat'**
   String get settlePersonnelAccount;
 
   /// No description provided for @laborSettleConfirm.
@@ -3081,13 +3081,13 @@ abstract class AppLocalizations {
   /// No description provided for @personnelPaymentsProcessed.
   ///
   /// In tr, this message translates to:
-  /// **'personnelPaymentsProcessed'**
+  /// **'Personel ödemeleri başarıyla işlendi.'**
   String get personnelPaymentsProcessed;
 
   /// No description provided for @closeCariAccounts.
   ///
   /// In tr, this message translates to:
-  /// **'closeCariAccounts'**
+  /// **'Cari Hesapları Kapat'**
   String get closeCariAccounts;
 
   /// No description provided for @cariSettleConfirm.
@@ -3099,7 +3099,7 @@ abstract class AppLocalizations {
   /// No description provided for @cariAccountBalancesClosed.
   ///
   /// In tr, this message translates to:
-  /// **'cariAccountBalancesClosed'**
+  /// **'Cari hesap bakiyeleri kapatıldı.'**
   String get cariAccountBalancesClosed;
 
   /// No description provided for @confirm_caps.

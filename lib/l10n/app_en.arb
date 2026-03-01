@@ -694,8 +694,8 @@
   "personnelSalaryStatus_caps": "PERSONNEL SALARY STATUS",
   "projectHakedis_caps": "PROJECT PAYMENTS",
   "settleAccount_caps": "SETTLE ACCOUNT",
-  "noPendingHakedisFound": "noPendingHakedisFound",
-  "processHakedisCollection": "processHakedisCollection",
+  "noPendingHakedisFound": "No pending collection found",
+  "processHakedisCollection": "Process Collection",
   "hakedisSettleConfirm": "{count} progress payments totaling {amount} will be collected. Confirm?",
   "@hakedisSettleConfirm": {
     "placeholders": {
@@ -707,8 +707,8 @@
       }
     }
   },
-  "hakedisCollectionsProcessed": "hakedisCollectionsProcessed",
-  "settlePersonnelAccount": "settlePersonnelAccount",
+  "hakedisCollectionsProcessed": "Collections processed successfully.",
+  "settlePersonnelAccount": "Settle Personnel Account",
   "laborSettleConfirm": "{count} labor payments totaling {amount} will be paid. Confirm?",
   "@laborSettleConfirm": {
     "placeholders": {
@@ -720,8 +720,8 @@
       }
     }
   },
-  "personnelPaymentsProcessed": "personnelPaymentsProcessed",
-  "closeCariAccounts": "closeCariAccounts",
+  "personnelPaymentsProcessed": "Personnel payments processed successfully.",
+  "closeCariAccounts": "Close Current Accounts",
   "cariSettleConfirm": "{count} account operations will be closed. Confirm?",
   "@cariSettleConfirm": {
     "placeholders": {
@@ -730,7 +730,7 @@
       }
     }
   },
-  "cariAccountBalancesClosed": "cariAccountBalancesClosed",
+  "cariAccountBalancesClosed": "Current account balances closed.",
   "confirm_caps": "CONFIRM",
   "periodNetProfit_caps": "PERIOD NET PROFIT",
   "totalRevenue_caps": "TOTAL REVENUE",
