@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../models/gelir_gider.dart';
 import '../models/cari_hesap.dart';
@@ -36,7 +37,7 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
       _baslikController.text = widget.gelirGider!.baslik;
       _tutarController.text = widget.gelirGider!.tutar.toString();
       _tarih = widget.gelirGider!.tarih;
-      _tarihController.text = DateFormat('dd.MM.yyyy', 'tr_TR').format(_tarih);
+      _tarihController.text = DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_tarih);
       _kategoriController.text = widget.gelirGider!.kategori ?? '';
       _aciklamaController.text = widget.gelirGider!.aciklama ?? '';
       _faturaNoController.text = widget.gelirGider!.faturaNo ?? '';
@@ -47,7 +48,7 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
         _yukleProje(widget.gelirGider!.projectId!);
       }
     } else {
-      _tarihController.text = DateFormat('dd.MM.yyyy', 'tr_TR').format(_tarih);
+      _tarihController.text = DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_tarih);
     }
   }
 
@@ -81,7 +82,7 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
     if (secilen != null) {
       setState(() {
         _tarih = secilen;
-        _tarihController.text = DateFormat('dd.MM.yyyy', 'tr_TR').format(_tarih);
+        _tarihController.text = DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_tarih);
       });
     }
   }
@@ -126,14 +127,14 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
         await DatabaseHelper.instance.insertGelirGider(gelirGider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kayıt başarıyla eklendi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.recordAdded)),
           );
         }
       } else {
         await DatabaseHelper.instance.updateGelirGider(gelirGider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kayıt başarıyla güncellendi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.recordUpdated)),
           );
         }
       }
@@ -144,7 +145,7 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
+          SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')),
         );
       }
     } finally {
@@ -159,11 +160,11 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
   @override
   Widget build(BuildContext context) {
     final tipi = widget.gelirGider?.tipi ?? widget.tipi ?? GelirGiderTipi.gelir;
-    final tipiText = tipi == GelirGiderTipi.gelir ? 'Gelir' : 'Gider';
+    final tipiText = tipi == GelirGiderTipi.gelir ? AppLocalizations.of(context)!.income : AppLocalizations.of(context)!.expense;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.gelirGider == null ? 'Yeni $tipiText' : '$tipiText Düzenle'),
+        title: Text(widget.gelirGider == null ? AppLocalizations.of(context)!.newItemType(tipiText) : AppLocalizations.of(context)!.editItemType(tipiText)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -176,13 +177,13 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
                   children: [
                     TextFormField(
                       controller: _baslikController,
-                      decoration: const InputDecoration(
-                        labelText: 'Başlık *',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: '${AppLocalizations.of(context)!.titleLabel} *',
+                        border: const OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Başlık zorunludur';
+                          return AppLocalizations.of(context)!.titleRequired;
                         }
                         return null;
                       },
@@ -190,18 +191,18 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _tutarController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tutar *',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: '${AppLocalizations.of(context)!.amountLabel} *',
+                        border: const OutlineInputBorder(),
                       ),
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Tutar zorunludur';
+                          return AppLocalizations.of(context)!.amountRequired;
                         }
                         final tutar = double.tryParse(value.replaceAll(',', '.'));
                         if (tutar == null || tutar <= 0) {
-                          return 'Geçerli bir tutar giriniz';
+                          return AppLocalizations.of(context)!.pleaseEnterValidAmount;
                         }
                         return null;
                       },
@@ -209,16 +210,16 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _tarihController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tarih *',
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.calendar_today),
+                      decoration: InputDecoration(
+                        labelText: '${AppLocalizations.of(context)!.tableDate} *',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: const Icon(Icons.calendar_today),
                       ),
                       readOnly: true,
                       onTap: _tarihSec,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Tarih seçiniz';
+                          return AppLocalizations.of(context)!.pleaseSelectDate;
                         }
                         return null;
                       },
@@ -226,14 +227,14 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _kategoriController,
-                      decoration: const InputDecoration(
-                        labelText: 'Kategori',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.categoryLabel,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 16),
                     ListTile(
-                      title: Text(_seciliCariHesap?.unvan ?? 'Cari Hesap Seç (Opsiyonel)'),
+                      title: Text(_seciliCariHesap?.unvan ?? AppLocalizations.of(context)!.selectCariAccountOptional),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () async {
                         final cariHesaplar = await DatabaseHelper.instance.getAllCariHesaplar();
@@ -241,7 +242,7 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
                           final secilen = await showDialog<CariHesap>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text('Cari Hesap Seç'),
+                              title: Text(AppLocalizations.of(context)!.selectCariAccount),
                               content: SizedBox(
                                 width: double.maxFinite,
                                 child: ListView.builder(
@@ -272,7 +273,7 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
                     ),
                     const SizedBox(height: 16),
                     ListTile(
-                      title: Text(_seciliProje?.ad ?? 'Proje Seç (Opsiyonel)'),
+                      title: Text(_seciliProje?.ad ?? AppLocalizations.of(context)!.selectProjectOptional),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () async {
                         final projects = await DatabaseHelper.instance.getAllProjects();
@@ -280,7 +281,7 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
                           final secilen = await showDialog<Project>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text('Proje Seç'),
+                              title: Text(AppLocalizations.of(context)!.selectProject),
                               content: SizedBox(
                                 width: double.maxFinite,
                                 child: ListView.builder(
@@ -312,17 +313,17 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _faturaNoController,
-                      decoration: const InputDecoration(
-                        labelText: 'Fatura No',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.invoiceNo,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _aciklamaController,
-                      decoration: const InputDecoration(
-                        labelText: 'Açıklama',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.description,
+                        border: const OutlineInputBorder(),
                       ),
                       maxLines: 3,
                     ),
@@ -332,7 +333,7 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('Kaydet'),
+                      child: Text(AppLocalizations.of(context)!.save),
                     ),
                   ],
                 ),

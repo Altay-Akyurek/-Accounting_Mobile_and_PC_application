@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 class SecondPage extends StatelessWidget {
   const SecondPage({super.key});
@@ -6,11 +7,11 @@ class SecondPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('İkinci Sayfa')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.secondPage)),
       body: Center(
         child: ElevatedButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Geri Dön'),
+          child: Text(AppLocalizations.of(context)!.goBack),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../models/cari_hesap.dart';
 import '../models/cari_islem.dart';
 import '../models/project.dart';
@@ -119,7 +120,12 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
 
   String _formatPara(double tutar) {
     try {
-      return NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(tutar);
+      final locale = Localizations.localeOf(context).toString();
+      return NumberFormat.currency(
+        locale: locale,
+        symbol: locale == 'tr' ? '₺' : '\$',
+        decimalDigits: 2,
+      ).format(tutar);
     } catch (e) {
       return '₺${tutar.toStringAsFixed(2)}';
     }
@@ -128,14 +134,14 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
   Future<void> _kaydet() async {
     if (_seciliCari == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen bir cari hesap seçiniz')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectCari)),
       );
       return;
     }
 
     if (_aciklamaController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Açıklama zorunludur')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.descriptionRequired)),
       );
       return;
     }
@@ -145,7 +151,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
 
     if (borc == 0.0 && alacak == 0.0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Borç veya Alacak tutarından biri girilmelidir')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.amountRequired)),
       );
       return;
     }
@@ -170,7 +176,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İşlem kaydedildi')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.transactionSaved)),
         );
         _temizle();
         _yukleVeriler();
@@ -179,7 +185,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
+          SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')),
         );
       }
     }
@@ -199,17 +205,17 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
     final onay = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Silme Onayı'),
-        content: const Text('Bu işlemi silmek istediğinize emin misiniz?'),
+        title: Text(AppLocalizations.of(context)!.deleteProject), // generic delete title
+        content: Text(AppLocalizations.of(context)!.deleteProjectConfirm('')), // modified confirm message should be added to ARB or generic one used
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('İptal'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Sil'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -220,7 +226,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
         await DatabaseHelper.instance.deleteCariIslem(islem.id!);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('İşlem silindi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.transactionDeleted)),
           );
           _yukleVeriler();
           _cariFiltrele(_seciliCari);
@@ -228,7 +234,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Hata: $e')),
+            SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')),
           );
         }
       }
@@ -239,12 +245,12 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MUHASEBE & CARİ'),
+        title: Text(AppLocalizations.of(context)!.accountingAndCurrent),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: _yukleVeriler,
-            tooltip: 'Yenile',
+            tooltip: AppLocalizations.of(context)!.refresh,
           ),
           const SizedBox(width: 8),
         ],
@@ -277,7 +283,9 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                         children: [
                           Expanded(
                             child: _OzetKartModern(
-                              baslik: _seciliCari?.isKasa == true ? 'Tahsilat (Giriş)' : 'Gelecek (Borç)',
+                              baslik: _seciliCari?.isKasa == true 
+                                  ? AppLocalizations.of(context)!.collectionIn 
+                                  : AppLocalizations.of(context)!.incomingDebt,
                               deger: _formatPara(_toplamlar['borc']!),
                               icon: Icons.south_east_rounded,
                               renk: const Color(0xFFFF5252),
@@ -287,7 +295,9 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _OzetKartModern(
-                              baslik: _seciliCari?.isKasa == true ? 'Ödeme (Çıkış)' : 'Çıkacak (Alacak)',
+                              baslik: _seciliCari?.isKasa == true 
+                                  ? AppLocalizations.of(context)!.paymentOut 
+                                  : AppLocalizations.of(context)!.outgoingCredit,
                               deger: _formatPara(_toplamlar['alacak']!),
                               icon: Icons.north_east_rounded,
                               renk: const Color(0xFF00E676),
@@ -298,7 +308,9 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                       ),
                       const SizedBox(height: 16),
                       _OzetKartModern(
-                        baslik: _seciliCari?.isKasa == true ? 'Net Nakit (Kasa)' : 'Net Durum (Bakiye)',
+                        baslik: _seciliCari?.isKasa == true 
+                            ? AppLocalizations.of(context)!.netCashKasa 
+                            : AppLocalizations.of(context)!.netStatusBalance,
                         deger: _formatPara(_toplamlar['bakiye']!),
                         icon: Icons.account_balance_wallet_rounded,
                         renk: Colors.amber.shade400,
@@ -362,15 +374,15 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                                   headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
                                   columnSpacing: 16,
                                   horizontalMargin: 12,
-                                    columns: const [
-                                      DataColumn(label: Text('TARİH', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text('CARİ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text('AÇIKLAMA', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text('DURUM', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text('GELECEK', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text('ÇIKACAK', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text('BAKİYE', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text(' ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
+                                     columns: [
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableDate, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableCari, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableDescription, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableStatus, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableIncoming, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableOutgoing, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableBalance, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
+                                      const DataColumn(label: Text(' ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
                                     ],
                                   rows: _filtrelenmisIslemler.map((islem) {
                                     return DataRow(
@@ -403,7 +415,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showIslemEkleBottomSheet,
-        label: const Text('YENİ İŞLEM EKLE'),
+        label: Text(AppLocalizations.of(context)!.addNewTransaction),
         icon: const Icon(Icons.add_rounded, size: 26),
         backgroundColor: const Color(0xFF003399),
         foregroundColor: Colors.white,
@@ -434,7 +446,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
             children: [
               Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 24),
-              const Text('Hızlı İşlem Girişi', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+              Text(AppLocalizations.of(context)!.quickTransactionEntry, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
               const SizedBox(height: 24),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -442,7 +454,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                   Expanded(
                     child: DropdownButtonFormField<CariHesap?>(
                       value: _seciliCari,
-                      decoration: const InputDecoration(labelText: 'Cari Hesap Seçimi'),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.cariAccountSelection),
                       items: _cariHesaplar.map((cari) => DropdownMenuItem(value: cari, child: Text(cari.unvan))).toList(),
                       onChanged: (cari) => setState(() => _seciliCari = cari),
                     ),
@@ -469,15 +481,15 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
               DropdownButtonFormField<Project?>(
                 value: _seciliProje,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Proje İlişkilendirme (Opsiyonel)'),
+                decoration: InputDecoration(labelText: '${AppLocalizations.of(context)!.selectProject} (${AppLocalizations.of(context)!.descriptionOptional})'),
                 items: [
-                   const DropdownMenuItem(value: null, child: Text('- Proje Yok -')),
+                   DropdownMenuItem(value: null, child: Text('- ${AppLocalizations.of(context)!.notEntered} -')),
                    ..._projeler.map((p) => DropdownMenuItem(value: p, child: Text(p.ad))).toList(),
                 ],
                 onChanged: (p) => setState(() => _seciliProje = p),
               ),
               const SizedBox(height: 16),
-              TextField(controller: _aciklamaController, decoration: const InputDecoration(labelText: 'Açıklama / Not')),
+              TextField(controller: _aciklamaController, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.descriptionNote)),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -485,7 +497,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                     child: TextField(
                       controller: _borcController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Borç (Alınacak)', prefixIcon: Icon(Icons.arrow_downward_rounded, color: Colors.red, size: 20)),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.debtIncoming, prefixIcon: const Icon(Icons.arrow_downward_rounded, color: Colors.red, size: 20)),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -493,7 +505,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                     child: TextField(
                       controller: _alacakController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Alacak (Verilen)', prefixIcon: Icon(Icons.arrow_upward_rounded, color: Colors.green, size: 20)),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.creditOutgoing, prefixIcon: const Icon(Icons.arrow_upward_rounded, color: Colors.green, size: 20)),
                     ),
                   ),
                 ],
@@ -506,7 +518,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                     _kaydet();
                     Navigator.pop(context);
                   },
-                  child: const Text('İŞLEMİ KAYDET'),
+                  child: Text(AppLocalizations.of(context)!.saveTransaction),
                 ),
               ),
             ],
@@ -528,14 +540,14 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
           isDense: true,
           isExpanded: true,
           value: _seciliCari,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             border: InputBorder.none,
-            prefixIcon: Icon(Icons.business_rounded, size: 16),
-            hintText: 'Cari Seç',
-            contentPadding: EdgeInsets.symmetric(horizontal: 4),
+            prefixIcon: const Icon(Icons.business_rounded, size: 16),
+            hintText: AppLocalizations.of(context)!.allCaris,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
           ),
           items: [
-            const DropdownMenuItem(value: null, child: Text('Tüm Cariler', style: TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
+            DropdownMenuItem(value: null, child: Text(AppLocalizations.of(context)!.allCaris, style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
             ..._cariHesaplar.map((c) => DropdownMenuItem(value: c, child: Text(c.unvan, style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis))),
           ],
           onChanged: _cariFiltrele,
@@ -556,14 +568,14 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
           isDense: true,
           isExpanded: true,
           value: _seciliProje,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             border: InputBorder.none,
-            prefixIcon: Icon(Icons.architecture_rounded, size: 16),
-            hintText: 'Proje Seç',
-            contentPadding: EdgeInsets.symmetric(horizontal: 4),
+            prefixIcon: const Icon(Icons.architecture_rounded, size: 16),
+            hintText: AppLocalizations.of(context)!.selectProject,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
           ),
           items: [
-            const DropdownMenuItem(value: null, child: Text('Tüm Projeler', style: TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
+            DropdownMenuItem(value: null, child: Text(AppLocalizations.of(context)!.allProjects, style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis)),
             ..._projeler.map((p) => DropdownMenuItem(value: p, child: Text(p.ad, style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis))),
           ],
           onChanged: _projeFiltrele,
@@ -582,9 +594,9 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     String label;
     if (isKasa) {
-      label = isBorc ? 'GİRİŞ' : 'ÇIKIŞ';
+      label = isBorc ? AppLocalizations.of(context)!.statusIn : AppLocalizations.of(context)!.statusOut;
     } else {
-      label = isBorc ? 'BORÇ' : 'ALACAK';
+      label = isBorc ? AppLocalizations.of(context)!.statusDebt : AppLocalizations.of(context)!.statusCredit;
     }
 
     return Container(
@@ -610,7 +622,7 @@ class _EmptyState extends StatelessWidget {
         children: [
           Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade200),
           const SizedBox(height: 16),
-          Text('Henüz işlem bulunmuyor', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w500)),
+          Text(AppLocalizations.of(context)!.noExpensesYet, style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w500)),
         ],
       ),
     );

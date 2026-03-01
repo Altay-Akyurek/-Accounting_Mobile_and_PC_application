@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../models/fatura.dart';
 import '../services/database_helper.dart';
@@ -57,7 +58,7 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
         );
       }
     }
@@ -70,10 +71,15 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
   }
 
   String _formatPara(double tutar) {
+    final locale = Localizations.localeOf(context).toString();
     try {
-      return NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(tutar);
+      return NumberFormat.currency(
+        locale: locale,
+        symbol: locale == 'tr' ? '₺' : '\$',
+        decimalDigits: 2,
+      ).format(tutar);
     } catch (e) {
-      return '₺${tutar.toStringAsFixed(2)}';
+      return (locale == 'tr' ? '₺' : '\$') + tutar.toStringAsFixed(2);
     }
   }
 
@@ -81,12 +87,12 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Faturalar'),
+        title: Text(AppLocalizations.of(context)!.invoices),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Satış Faturaları', icon: Icon(Icons.arrow_upward)),
-            Tab(text: 'Alış Faturaları', icon: Icon(Icons.arrow_downward)),
+          tabs: [
+            Tab(text: AppLocalizations.of(context)!.salesInvoices, icon: const Icon(Icons.arrow_upward)),
+            Tab(text: AppLocalizations.of(context)!.purchaseInvoices, icon: const Icon(Icons.arrow_downward)),
           ],
         ),
         actions: [
@@ -116,7 +122,7 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
                       Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
-                        'Henüz fatura eklenmemiş',
+                        AppLocalizations.of(context)!.noInvoicesYet,
                         style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ],
@@ -146,10 +152,10 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (fatura.cariHesapUnvan != null && fatura.cariHesapUnvan!.isNotEmpty)
-                                Text('Cari: ${fatura.cariHesapUnvan}'),
-                              Text('Tarih: ${DateFormat('dd.MM.yyyy', 'tr_TR').format(fatura.tarih)}'),
+                                Text('${AppLocalizations.of(context)!.cariLabel}: ${fatura.cariHesapUnvan}'),
+                              Text('${AppLocalizations.of(context)!.dateLabel}: ${DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(fatura.tarih)}'),
                               Text(
-                                'Toplam: ${_formatPara(fatura.genelToplam)}',
+                                '${AppLocalizations.of(context)!.total}: ${_formatPara(fatura.genelToplam)}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: _seciliTip == FaturaTipi.satis ? Colors.green : Colors.blue,
@@ -159,23 +165,23 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
                           ),
                           trailing: PopupMenuButton(
                             itemBuilder: (context) => [
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'edit',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.edit, size: 20),
-                                    SizedBox(width: 8),
-                                    Text('Düzenle'),
+                                    const Icon(Icons.edit, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(AppLocalizations.of(context)!.edit),
                                   ],
                                 ),
                               ),
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: 'delete',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.delete, size: 20, color: Colors.red),
-                                    SizedBox(width: 8),
-                                    Text('Sil', style: TextStyle(color: Colors.red)),
+                                    const Icon(Icons.delete, size: 20, color: Colors.red),
+                                    const SizedBox(width: 8),
+                                    Text(AppLocalizations.of(context)!.delete, style: const TextStyle(color: Colors.red)),
                                   ],
                                 ),
                               ),
@@ -231,17 +237,17 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
     final onay = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Silme Onayı'),
-        content: Text('${fatura.faturaNo} numaralı faturayı silmek istediğinize emin misiniz?'),
+        title: Text(AppLocalizations.of(context)!.deleteConfirmTitle),
+        content: Text(AppLocalizations.of(context)!.deleteInvoiceConfirm(fatura.faturaNo)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('İptal'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Sil'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -252,14 +258,14 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
         await DatabaseHelper.instance.deleteFatura(fatura.id!);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Fatura silindi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.invoiceDeleted)),
           );
           _yukleFaturalar();
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Hata: $e')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
           );
         }
       }

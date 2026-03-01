@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../models/gelir_gider.dart';
 import '../services/database_helper.dart';
@@ -65,10 +66,15 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
   }
 
   String _formatPara(double tutar) {
+    final locale = Localizations.localeOf(context).toString();
     try {
-      return NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(tutar);
+      return NumberFormat.currency(
+        locale: locale,
+        symbol: locale == 'tr' ? '₺' : '\$',
+        decimalDigits: 2,
+      ).format(tutar);
     } catch (e) {
-      return '₺${tutar.toStringAsFixed(2)}';
+      return (locale == 'tr' ? '₺' : '\$') + tutar.toStringAsFixed(2);
     }
   }
 
@@ -76,12 +82,12 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gelir/Gider'),
+        title: Text(AppLocalizations.of(context)!.incomeExpense),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Gelirler', icon: Icon(Icons.trending_up)),
-            Tab(text: 'Giderler', icon: Icon(Icons.trending_down)),
+          tabs: [
+            Tab(text: AppLocalizations.of(context)!.incomes, icon: const Icon(Icons.trending_up)),
+            Tab(text: AppLocalizations.of(context)!.expenses, icon: const Icon(Icons.trending_down)),
           ],
         ),
         actions: [
@@ -115,7 +121,7 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Henüz ${_seciliTip == GelirGiderTipi.gelir ? 'gelir' : 'gider'} eklenmemiş',
+                        AppLocalizations.of(context)!.noIncomeExpenseYet(_seciliTip == GelirGiderTipi.gelir ? AppLocalizations.of(context)!.income : AppLocalizations.of(context)!.expense),
                         style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ],
@@ -142,10 +148,10 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (item.kategori != null && item.kategori!.isNotEmpty)
-                                Text('Kategori: ${item.kategori}'),
+                                Text('${AppLocalizations.of(context)!.categoryLabel}: ${item.kategori}'),
                               if (item.cariHesapUnvan != null && item.cariHesapUnvan!.isNotEmpty)
-                                Text('Cari: ${item.cariHesapUnvan}'),
-                              Text('Tarih: ${DateFormat('dd.MM.yyyy', 'tr_TR').format(item.tarih)}'),
+                                Text('${AppLocalizations.of(context)!.cariLabel}: ${item.cariHesapUnvan}'),
+                              Text('${AppLocalizations.of(context)!.dateLabel}: ${DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(item.tarih)}'),
                             ],
                           ),
                           trailing: Column(
@@ -162,23 +168,23 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
                               ),
                               PopupMenuButton(
                                 itemBuilder: (context) => [
-                                  const PopupMenuItem(
+                                  PopupMenuItem(
                                     value: 'edit',
                                     child: Row(
                                       children: [
                                         Icon(Icons.edit, size: 20),
                                         SizedBox(width: 8),
-                                        Text('Düzenle'),
+                                        Text(AppLocalizations.of(context)!.edit),
                                       ],
                                     ),
                                   ),
-                                  const PopupMenuItem(
+                                  PopupMenuItem(
                                     value: 'delete',
                                     child: Row(
                                       children: [
                                         Icon(Icons.delete, size: 20, color: Colors.red),
                                         SizedBox(width: 8),
-                                        Text('Sil', style: TextStyle(color: Colors.red)),
+                                        Text(AppLocalizations.of(context)!.delete, style: const TextStyle(color: Colors.red)),
                                       ],
                                     ),
                                   ),
@@ -236,17 +242,17 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
     final onay = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Silme Onayı'),
-        content: Text('${item.baslik} kaydını silmek istediğinize emin misiniz?'),
+        title: Text(AppLocalizations.of(context)!.deleteConfirmTitle),
+        content: Text(AppLocalizations.of(context)!.deleteRecordConfirm(item.baslik)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('İptal'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Sil'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -257,14 +263,14 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
         await DatabaseHelper.instance.deleteGelirGider(item.id!);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kayıt silindi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.recordDeleted)),
           );
           _yukleGelirGiderler();
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Hata: $e')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
           );
         }
       }

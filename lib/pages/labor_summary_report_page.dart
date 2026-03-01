@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../services/database_helper.dart';
 import '../models/worker.dart';
 import '../models/project.dart';
 import '../services/worker_export_service.dart';
+import '../services/premium_manager.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class LaborSummaryReportPage extends StatefulWidget {
   const LaborSummaryReportPage({super.key});
@@ -81,7 +84,12 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
   }
 
   String _formatPara(double tutar) {
-    return NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(tutar);
+    final locale = Localizations.localeOf(context).toString();
+    return NumberFormat.currency(
+      locale: locale,
+      symbol: locale == 'tr' ? '₺' : '\$',
+      decimalDigits: 2,
+    ).format(tutar);
   }
 
   @override
@@ -107,59 +115,67 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('İŞÇİLİK ÖZET RAPORU'),
+        title: Text(AppLocalizations.of(context)!.laborSummaryReport_caps),
         actions: [
           IconButton(
             icon: const Icon(Icons.date_range),
             onPressed: _selectDateRange,
-            tooltip: 'Tarih Aralığı',
+            tooltip: AppLocalizations.of(context)!.dateRange,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadData,
-            tooltip: 'Yenile',
+            tooltip: AppLocalizations.of(context)!.refresh,
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) async {
               if (value == 'pdf') {
-                await WorkerExportService.exportToPDF(
-                  startDate: _startDate,
-                  endDate: _endDate,
-                  puantajlar: _puantajlar,
-                  workerMap: _workerMap,
-                  projectNames: _projectNames,
-                  totalCost: totalCost,
-                  totalHours: totalHours,
-                );
+                if (PremiumManager.instance.checkPremium(context)) {
+                  final l10n = AppLocalizations.of(context)!;
+                  await WorkerExportService.exportToPDF(
+                    l10n: l10n,
+                    startDate: _startDate,
+                    endDate: _endDate,
+                    puantajlar: _puantajlar,
+                    workerMap: _workerMap,
+                    projectNames: _projectNames,
+                    totalCost: totalCost,
+                    totalHours: totalHours,
+                  );
+                }
               } else if (value == 'excel') {
-                await WorkerExportService.exportToExcel(
-                  startDate: _startDate,
-                  endDate: _endDate,
-                  puantajlar: _puantajlar,
-                  workerMap: _workerMap,
-                  projectNames: _projectNames,
-                );
+                if (PremiumManager.instance.checkPremium(context)) {
+                  final l10n = AppLocalizations.of(context)!;
+                  await WorkerExportService.exportToExcel(
+                    l10n: l10n,
+                    startDate: _startDate,
+                    endDate: _endDate,
+                    puantajlar: _puantajlar,
+                    workerMap: _workerMap,
+                    projectNames: _projectNames,
+                  );
+                }
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'pdf',
                 child: Row(
                   children: [
                     Icon(Icons.picture_as_pdf, color: Colors.red),
                     SizedBox(width: 8),
-                    Text('PDF İndir'),
+                    Text(AppLocalizations.of(context)!.downloadPDF),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'excel',
                 child: Row(
                   children: [
                     Icon(Icons.table_chart, color: Colors.green),
                     SizedBox(width: 8),
-                    Text('Excel İndir'),
+                    Text(AppLocalizations.of(context)!.downloadExcel),
                   ],
                 ),
               ),
@@ -180,10 +196,10 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${DateFormat('dd.MM.yyyy').format(_startDate)} - ${DateFormat('dd.MM.yyyy').format(_endDate)}',
+                      '${DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_endDate)}',
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
-                    const Text('Seçili Dönem Kayıtları', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text(AppLocalizations.of(context)!.selectedPeriodRecords, style: const TextStyle(color: Colors.white70, fontSize: 12)),
                   ],
                 ),
                 Column(
@@ -193,7 +209,10 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                       _formatPara(totalCost),
                       style: const TextStyle(color: Color(0xFF2EC4B6), fontWeight: FontWeight.w900, fontSize: 18),
                     ),
-                    Text('$totalHours Saat Çalışma', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text(
+                      AppLocalizations.of(context)!.xHoursWork(totalHours),
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
                   ],
                 ),
               ],
@@ -204,7 +223,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _puantajlar.isEmpty
-                    ? const Center(child: Text('Bu tarih aralığında kayıt bulunamadı.'))
+                    ? Center(child: Text(AppLocalizations.of(context)!.noRecordFoundInRange))
                     : ListView.builder(
                         itemCount: sortedWorkerIds.length,
                         itemBuilder: (context, index) {
@@ -229,14 +248,14 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                                 child: Icon(Icons.person, color: Colors.white),
                               ),
                               title: Text(
-                                worker?.adSoyad ?? 'Bilinmiyor',
+                                worker?.adSoyad ?? AppLocalizations.of(context)!.unknown,
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               subtitle: Row(
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      'Toplam: $workerTotalHours Saat  |  ${_formatPara(workerTotalCost)}',
+                                      '${AppLocalizations.of(context)!.total}: ${AppLocalizations.of(context)!.xHours(workerTotalHours)}  |  ${_formatPara(workerTotalCost)}',
                                       style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600),
                                     ),
                                   ),
@@ -244,30 +263,42 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                                     icon: const Icon(Icons.picture_as_pdf, size: 20, color: Colors.red),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
-                                    onPressed: () => WorkerExportService.exportToPDF(
-                                      startDate: _startDate,
-                                      endDate: _endDate,
-                                      puantajlar: puantajs,
-                                      workerMap: _workerMap,
-                                      projectNames: _projectNames,
-                                      totalCost: workerTotalCost,
-                                      totalHours: workerTotalHours,
-                                      filterWorkerId: workerId,
-                                    ),
+                                    onPressed: () {
+                                      if (PremiumManager.instance.checkPremium(context)) {
+                                        final l10n = AppLocalizations.of(context)!;
+                                        WorkerExportService.exportToPDF(
+                                          l10n: l10n,
+                                          startDate: _startDate,
+                                          endDate: _endDate,
+                                          puantajlar: puantajs,
+                                          workerMap: _workerMap,
+                                          projectNames: _projectNames,
+                                          totalCost: workerTotalCost,
+                                          totalHours: workerTotalHours,
+                                          filterWorkerId: workerId,
+                                        );
+                                      }
+                                    },
                                   ),
                                   const SizedBox(width: 8),
                                   IconButton(
                                     icon: const Icon(Icons.table_chart, size: 20, color: Colors.green),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
-                                    onPressed: () => WorkerExportService.exportToExcel(
-                                      startDate: _startDate,
-                                      endDate: _endDate,
-                                      puantajlar: puantajs,
-                                      workerMap: _workerMap,
-                                      projectNames: _projectNames,
-                                      filterWorkerId: workerId,
-                                    ),
+                                    onPressed: () {
+                                      if (PremiumManager.instance.checkPremium(context)) {
+                                        final l10n = AppLocalizations.of(context)!;
+                                        WorkerExportService.exportToExcel(
+                                          l10n: l10n,
+                                          startDate: _startDate,
+                                          endDate: _endDate,
+                                          puantajlar: puantajs,
+                                          workerMap: _workerMap,
+                                          projectNames: _projectNames,
+                                          filterWorkerId: workerId,
+                                        );
+                                      }
+                                    },
                                   ),
                                 ],
                               ),
@@ -279,12 +310,12 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                                     headingRowHeight: 40,
                                     columnSpacing: 24,
                                     headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
-                                    columns: const [
-                                      DataColumn(label: Text('TARİH', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                                      DataColumn(label: Text('PROJE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                                      DataColumn(label: Text('SAAT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                                      DataColumn(label: Text('MESAİ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                                      DataColumn(label: Text('TUTAR', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
+                                    columns: [
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableDate_caps, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableProject_caps, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableHour_caps, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableMesai_caps, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
+                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableAmount_caps, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
                                     ],
                                     rows: puantajs.map((p) {
                                       final cost = worker != null 
@@ -292,7 +323,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                                           : 0.0;
                                       return DataRow(
                                         cells: [
-                                          DataCell(Text(DateFormat('dd.MM.yy').format(p.tarih), style: const TextStyle(fontSize: 12))),
+                                          DataCell(Text(DateFormat('dd.MM.yy', Localizations.localeOf(context).toString()).format(p.tarih), style: const TextStyle(fontSize: 12))),
                                           DataCell(Text(_projectNames[p.projectId] ?? '-', style: const TextStyle(fontSize: 12))),
                                           DataCell(Text(p.saat.toString(), style: const TextStyle(fontSize: 12))),
                                           DataCell(Text(p.mesai.toString(), style: const TextStyle(fontSize: 12))),
@@ -311,7 +342,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
           ),
         ],
       ),
-      floatingActionButton: null,
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 }

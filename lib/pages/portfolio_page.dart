@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../services/database_helper.dart';
 import '../models/worker.dart';
 import '../models/project.dart';
@@ -82,19 +83,19 @@ class _PortfolioPageState extends State<PortfolioPage> {
       for (var p in allProjects) {
         _timelineEvents.add(_TimelineEvent(
           date: p.baslangicTarihi,
-          title: '${p.ad} Başlatıldı',
+          title: p.ad,
           type: _TimelineEventType.projectStart,
         ));
         if (p.durum == ProjectStatus.tamamlandi) {
           _timelineEvents.add(_TimelineEvent(
-            date: p.olusturmaTarihi.add(const Duration(days: 30)), // Örnek bitiş veya varsa bitiş tarihi
-            title: '${p.ad} Tamamlandı',
+            date: p.olusturmaTarihi.add(const Duration(days: 30)),
+            title: p.ad,
             type: _TimelineEventType.projectEnd,
           ));
         } else if (p.durum == ProjectStatus.askida) {
            _timelineEvents.add(_TimelineEvent(
-            date: DateTime.now(), // Askıya alınma tarihi olmadığı için şimdiki zaman (örnek)
-            title: '${p.ad} Askıya Alındı',
+            date: DateTime.now(),
+            title: p.ad,
             type: _TimelineEventType.projectSuspend,
           ));
         }
@@ -104,13 +105,13 @@ class _PortfolioPageState extends State<PortfolioPage> {
       for (var w in allWorkers) {
         _timelineEvents.add(_TimelineEvent(
           date: w.baslangicTarihi,
-          title: '${w.adSoyad} Ekibe Katıldı',
+          title: w.adSoyad,
           type: _TimelineEventType.workerJoin,
         ));
         if (!w.aktif && w.istenCikisTarihi != null) {
           _timelineEvents.add(_TimelineEvent(
             date: w.istenCikisTarihi!,
-            title: '${w.adSoyad} Ayrıldı',
+            title: w.adSoyad,
             type: _TimelineEventType.workerLeave,
           ));
         }
@@ -121,7 +122,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
         if (h.durum == HakedisDurum.tahsilEdildi) {
           _timelineEvents.add(_TimelineEvent(
             date: h.tarih,
-            title: '${h.baslik} Tahsil Edildi',
+            title: h.baslik,
             type: _TimelineEventType.payment,
           ));
         }
@@ -129,10 +130,10 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
       // 4. Gider Olayları (Önemli Giderler)
       for (var gg in allGelirGider) {
-        if (gg.tipi == GelirGiderTipi.gider && gg.tutar > 10000) { // Sadece 10000 TL üstü önemli giderleri göster
+        if (gg.tipi == GelirGiderTipi.gider && gg.tutar > 10000) {
           _timelineEvents.add(_TimelineEvent(
             date: gg.tarih,
-            title: '${gg.baslik} Ödemesi yapıldı',
+            title: gg.baslik,
             type: _TimelineEventType.expense,
           ));
         }
@@ -153,15 +154,13 @@ class _PortfolioPageState extends State<PortfolioPage> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Şirket Portföyü')),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.companyPortfolio)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Şirket Portföyü'),
-      ),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.companyPortfolio)),
       body: RefreshIndicator(
         onRefresh: _loadPortfolioData,
         child: SingleChildScrollView(
@@ -176,19 +175,19 @@ class _PortfolioPageState extends State<PortfolioPage> {
                   children: [
                     _buildProjectStats(),
                     const SizedBox(height: 24),
-                    _buildSectionTitle('Şirket Özeti'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.companySummary),
                     _buildSummaryCard(),
                     const SizedBox(height: 24),
-                    _buildSectionTitle('Finansal Sağlık'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.financialHealth),
                     _buildFinancialHealth(),
                     const SizedBox(height: 24),
-                    _buildSectionTitle('Projelerimiz'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.ourProjects),
                     _buildProjectsGrid(),
                     const SizedBox(height: 24),
-                    _buildSectionTitle('Ekibimiz'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.ourTeam),
                     _buildTeamList(),
                     const SizedBox(height: 24),
-                    _buildSectionTitle('Kilometre Taşları'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.milestones),
                     _buildMilestones(),
                     const SizedBox(height: 32),
                   ],
@@ -220,9 +219,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
             color: Color(0xFF2EC4B6),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Vizyoner Çözümler',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.visionarySolutions,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -230,7 +229,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            '$_activeProjectsCount Aktif Proje ile Geleceği İnşa Ediyoruz',
+            AppLocalizations.of(context)!.buildingFutureWithXActiveProjects(_activeProjectsCount),
             style: TextStyle(
               color: Colors.white.withOpacity(0.7),
               fontSize: 14,
@@ -244,11 +243,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
   Widget _buildProjectStats() {
     return Row(
       children: [
-        _buildStatItem('Aktif', _activeProjectsCount, const Color(0xFF2EC4B6)),
+        _buildStatItem(AppLocalizations.of(context)!.active, _activeProjectsCount, const Color(0xFF2EC4B6)),
         const SizedBox(width: 8),
-        _buildStatItem('Tamamlanan', _completedProjectsCount, Colors.blue),
+        _buildStatItem(AppLocalizations.of(context)!.completed, _completedProjectsCount, Colors.blue),
         const SizedBox(width: 8),
-        _buildStatItem('Askıda', _suspendedProjectsCount, Colors.orange),
+        _buildStatItem(AppLocalizations.of(context)!.suspended, _suspendedProjectsCount, Colors.orange),
       ],
     );
   }
@@ -291,7 +290,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Tahsilat / Borç Oranı', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(AppLocalizations.of(context)!.collectionDebtRatio, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               Text('%${(ratio * 100).toInt()}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF2EC4B6))),
             ],
           ),
@@ -306,7 +305,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text('Yeşil: Tahsilatlar, Kırmızı: Bekleyen Borçlar', style: TextStyle(fontSize: 10, color: Colors.grey)),
+          Text(AppLocalizations.of(context)!.greenCollectionsRedDebts, style: const TextStyle(fontSize: 10, color: Colors.grey)),
         ],
       ),
     );
@@ -328,7 +327,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   Widget _buildSummaryCard() {
-    final NumberFormat currencyFormat = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
+    final locale = Localizations.localeOf(context).toString();
+    final NumberFormat currencyFormat = NumberFormat.currency(
+      locale: locale,
+      symbol: locale == 'tr' ? '₺' : '\$',
+      decimalDigits: 0,
+    );
     final double revenue = _financialSummary['gelir'] ?? 0;
     final double debt = _financialSummary['gider'] ?? 0;
 
@@ -340,9 +344,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
         border: Border.all(color: Colors.black.withOpacity(0.05)),
       ),
       child: Text(
-        'Şirketimiz, finansal yönetim alanında uzman personeliyle sektöre liderlik etmektedir. '
-        'Bugüne kadar ${currencyFormat.format(revenue)} değerinde hakediş tahsilatı gerçekleştirilmiş '
-        've şu an ${currencyFormat.format(debt)} tutarında işçilik borcu yönetilmektedir.',
+        AppLocalizations.of(context)!.companyOverviewText(currencyFormat.format(revenue), currencyFormat.format(debt)),
         style: const TextStyle(fontSize: 14, height: 1.5, color: Colors.black87),
       ),
     );
@@ -353,7 +355,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
       return Container(
         height: 100,
         alignment: Alignment.center,
-        child: const Text('Henüz proje kaydı bulunmuyor.'),
+        child: Text(AppLocalizations.of(context)!.noProjectRecordsYet),
       );
     }
 
@@ -398,7 +400,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
   Widget _buildTeamList() {
     if (_activeWorkers.isEmpty) {
-      return const Text('Henüz aktif çalışan bulunmuyor.');
+      return Text(AppLocalizations.of(context)!.noActiveWorkersYet);
     }
 
     final currencyFormat = NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 0);
@@ -427,7 +429,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(member.adSoyad, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text(member.maasTuru == WorkerSalaryType.aylik ? 'Aylık Personel' : 'Yevmiyeli Personel', 
+                    Text(member.maasTuru == WorkerSalaryType.aylik ? AppLocalizations.of(context)!.monthlyPersonnel : AppLocalizations.of(context)!.dailyPersonnel, 
                       style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                   ],
                 ),
@@ -443,9 +445,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                       fontSize: 14,
                     ),
                   ),
-                  const Text(
-                    'Bekleyen Maaş',
-                    style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold),
+                  Text(
+                    AppLocalizations.of(context)!.pendingSalary,
+                    style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -458,7 +460,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
   Widget _buildMilestones() {
     if (_timelineEvents.isEmpty) {
-      return const Text('Kilometre taşı bulunmuyor.');
+      return Text(AppLocalizations.of(context)!.noMilestonesYet);
     }
 
     return Column(
@@ -471,7 +473,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
               child: Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
-                  DateFormat('dd MMM yy', 'tr_TR').format(event.date), 
+                  DateFormat('dd MMM yy', Localizations.localeOf(context).toString()).format(event.date), 
                   style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 11)
                 ),
               ),
@@ -498,13 +500,10 @@ class _PortfolioPageState extends State<PortfolioPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      event.title,
+                      '${event.title} ${_getEventSubText(context, event)}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
-                    Text(
-                      _getEventSub(event.type),
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-                    ),
+                    const SizedBox.shrink(),
                   ],
                 ),
               ),
@@ -541,16 +540,16 @@ class _PortfolioPageState extends State<PortfolioPage> {
     }
   }
 
-  String _getEventSub(_TimelineEventType type) {
-    switch (type) {
-      case _TimelineEventType.projectStart: return 'Yeni Proje Başlatıldı';
-      case _TimelineEventType.projectEnd: return 'Proje Başarıyla Tamamlandı';
-      case _TimelineEventType.projectSuspend: return 'Proje Geçici Olarak Durduruldu';
-      case _TimelineEventType.workerJoin: return 'Yeni Ekip Arkadaşı Katıldı';
-      case _TimelineEventType.workerLeave: return 'Ekip Arkadaşı Ayrıldı';
-      case _TimelineEventType.payment: return 'Finansal Tahsilat Yapıldı';
-      case _TimelineEventType.expense: return 'Yüksek Tutarlı Gider Kaydı';
-      default: return 'Bilinmeyen Olay';
+  String _getEventSubText(BuildContext context, _TimelineEvent event) {
+    switch (event.type) {
+      case _TimelineEventType.projectStart: return AppLocalizations.of(context)!.newProjectStarted;
+      case _TimelineEventType.projectEnd: return AppLocalizations.of(context)!.projectCompletedSuccessfully;
+      case _TimelineEventType.projectSuspend: return AppLocalizations.of(context)!.projectSuspendedTemporarily;
+      case _TimelineEventType.workerJoin: return AppLocalizations.of(context)!.newTeamMemberJoined;
+      case _TimelineEventType.workerLeave: return AppLocalizations.of(context)!.teamMemberLeft;
+      case _TimelineEventType.payment: return AppLocalizations.of(context)!.financialCollectionMade;
+      case _TimelineEventType.expense: return AppLocalizations.of(context)!.highAmountExpenseRecord;
+      default: return AppLocalizations.of(context)!.unknownEvent;
     }
   }
 }

@@ -1,0 +1,824 @@
+{
+  "@@locale": "en",
+  "appTitle": "Accounting Pro",
+  "dashboard": "Dashboard",
+  "netCash": "NET CASH",
+  "current": "CURRENT",
+  "totalCollection": "TOTAL COLLECTION",
+  "remainingDebt": "REMAINING DEBT",
+  "quickAccess": "QUICK ACCESS",
+  "accounting": "Accounting",
+  "reports": "Reports",
+  "personnel": "Personnel",
+  "settlement": "Settlement",
+  "bottleneckAnalysis": "BOTTLENECK AND PROFIT ANALYSIS",
+  "statusAnalysis": "STATUS ANALYSIS",
+  "profitableProjects": "MOST PROFITABLE PROJECTS",
+  "performanceIndicator": "PERFORMANCE INDICATOR",
+  "openedProjects": "Open Projects",
+  "totalCurrentAccounts": "Total Current Accounts",
+  "incomeExpenseBalance": "Income / Expense Balance",
+  "positive": "Positive",
+  "incomeShare": "Income Share",
+  "expenseShare": "Expense Share",
+  "noProfitData": "No projects with profit data yet.",
+  "premiumAnalysis": "PREMIUM ANALYSIS",
+  "unlock": "Unlock",
+  "workerAnalysis": "Worker Analysis",
+  "ourPortfolio": "Our Portfolio",
+  "laborSummary": "Labor Summary",
+  "premiumPackages": "Premium Packages",
+  "logout": "Logout",
+  "language": "Language",
+  "selectLanguage": "Select Language",
+  "premiumSubtitle": "Accounting Pro Premium",
+  "premiumDescription": "Upgrade to manage your business more professionally.",
+  "featureRemoveAds": "Remove all ads",
+  "featureUnlimitedPDF": "Create unlimited PDF reports",
+  "featureCloudBackup": "Unlimited cloud backup",
+  "featureB2B": "B2B/Company features access",
+  "monthlyPackage": "Monthly Package",
+  "yearlyPackage": "Yearly Package",
+  "monthlyPrice": "₺99.99 / month",
+  "yearlyPrice": "₺899.99 / year",
+  "cancelAnytime": "Cancel anytime.",
+  "save25": "25% more affordable!",
+  "mostPopular": "MOST POPULAR",
+  "continueButton": "Continue",
+  "congratulations": "Congratulations!",
+  "premiumActivatedMonthly": "Your monthly Premium membership has been successfully activated. You can now enjoy all unlimited features.",
+  "premiumActivatedYearly": "Your yearly Premium membership has been successfully activated. You can now enjoy all unlimited features.",
+  "great": "Great!",
+  "premiumSuccessSnackBar": "Premium features activated!",
+  "login": "Login",
+  "register": "Register",
+  "email": "Email Address",
+  "password": "Password",
+  "forgotPassword": "Forgot Password",
+  "loginButton": "LOGIN",
+  "registerButton": "REGISTER",
+  "noAccount": "Don't have an account? ",
+  "haveAccount": "Already have an account? ",
+  "fillAllFields": "Please fill in all fields",
+  "accountAlreadyRegistered": "This account is already registered.",
+  "invalidCredentials": "Invalid email or password.",
+  "emailNotConfirmed": "Email Confirmation Required",
+  "emailNotConfirmedDetail": "You need to confirm your email address to log in. Please check your inbox (and spam folder).",
+  "rateLimitExceeded": "Too many email sending attempts. Please try again later.",
+  "registrationSuccess": "Registration Successful!",
+  "registrationSuccessDetail": "We've created your account! Please click the confirmation link we sent to your email address.",
+  "registrationInstruction": "You cannot log in without confirming.",
+  "okIUnderstand": "OK, I Understand",
+  "close": "Close",
+  "emailSent": "Email Sent",
+  "resetPasswordEmailSent": "Password reset link has been sent to your email address. Please check.",
+  "ok": "OK",
+  "emailSendError": "Email could not be sent. Please check your SMTP settings or try again in 5 minutes.",
+  "corporateCloudSolution": "Corporate Cloud Solution",
+  "secureConnection": "SSL SECURE CONNECTION",
+  "appTagline": "Future of Financial Management",
+  "projects": "PROJECTS",
+  "newProjectCard": "NEW PROJECT CARD",
+  "noProjectsDefined": "No projects defined yet",
+  "noProjectsInStatus": "No projects in {status} status",
+  "@noProjectsInStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "createFirstProject": "CREATE FIRST PROJECT",
+  "all": "All",
+  "active": "Active",
+  "suspended": "Suspended",
+  "completed": "Completed",
+  "deleteProject": "Delete Project",
+  "deleteProjectConfirm": "Are you sure you want to delete the project \"{name}\"? This action cannot be undone.",
+  "@deleteProjectConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "CANCEL",
+  "delete": "DELETE",
+  "projectDeleted": "Project successfully deleted",
+  "projectName": "Project Name",
+  "customerFirm": "Customer / Firm (Current)",
+  "estimatedBudget": "Estimated Budget",
+  "status": "Status",
+  "saveProject": "SAVE PROJECT",
+  "projectCreated": "Project successfully created",
+  "enterProjectName": "Please enter project name",
+  "errorPrefix": "Error: {message}",
+  "@errorPrefix": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetLabel": "BUDGET",
+  "summary": "SUMMARY",
+  "hakedisler": "HAKEDISLER",
+  "expenses": "EXPENSES",
+  "collected": "Collected",
+  "totalExpense": "Total Expense",
+  "netProfit": "Net Profit",
+  "projectBudget": "Project Budget",
+  "projectDetails": "Project Details",
+  "startingDate": "Starting Date",
+  "description": "Description",
+  "notEntered": "Not Entered",
+  "changeProjectStatus": "Change Project Status",
+  "statusUpdated": "Project status updated to {status}",
+  "@statusUpdated": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "noHakedisYet": "No payment installments (hakedis) entered yet",
+  "downloadAllHakedisPDF": "DOWNLOAD ALL HAKEDIS PDF",
+  "newHakedis": "NEW HAKEDIS",
+  "collected_caps": "COLLECTED",
+  "pending": "PENDING",
+  "markAsPending": "Mark as Pending",
+  "markAsCollected": "Mark as Collected",
+  "materialService": "Material/Service",
+  "laborPaid": "Labor (Paid)",
+  "accountPayments": "Account Payments",
+  "cashOutflows": "Cash Outflows",
+  "sunday": "Sunday",
+  "downloadPDF": "Download PDF",
+  "deleteHakedis": "Delete Hakedis",
+  "gross": "Gross",
+  "deductions": "Deductions",
+  "netCollection": "Net Collection",
+  "deleteHakedisConfirm": "Are you sure you want to delete the hakedis \"{title}\"?",
+  "@deleteHakedisConfirm": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "expense": "Expense",
+  "laborPayment": "Labor Payment",
+  "puantajRecord": "Attendance Record",
+  "noExpensesYet": "No expense records found yet",
+  "hakedisEntry": "Payment Installment Entry",
+  "hakedisTitle": "Hakedis Title",
+  "hakedisTitleHint": "e.g. 1st Hakedis or January Hakedis",
+  "hakedisAmountExcVat": "Hakedis Amount (Exc. VAT)",
+  "taxAndDeductionRates": "Tax and Deduction Rates (%)",
+  "vat": "VAT",
+  "withholding": "Withholding",
+  "guarantee": "Guarantee",
+  "hakedisDate": "Hakedis Date",
+  "descriptionOptional": "Description / Note (Optional)",
+  "saveHakedis": "SAVE HAKEDIS",
+  "enterTitleAndAmount": "Please enter title and amount.",
+  "accountingAndCurrent": "ACCOUNTING & CURRENT",
+  "pleaseSelectCari": "Please select a current account",
+  "descriptionRequired": "Description is required",
+  "amountRequired": "Debt or Credit amount must be entered",
+  "transactionSaved": "Transaction saved",
+  "transactionDeleted": "Transaction deleted",
+  "collectionIn": "Collection (In)",
+  "paymentOut": "Payment (Out)",
+  "incomingDebt": "Incoming (Debt)",
+  "outgoingCredit": "Outgoing (Credit)",
+  "netCashKasa": "Net Cash (Kasa)",
+  "netStatusBalance": "Net Status (Balance)",
+  "addNewTransaction": "ADD NEW TRANSACTION",
+  "quickTransactionEntry": "Quick Transaction Entry",
+  "cariAccountSelection": "Current Account Selection",
+  "descriptionNote": "Description / Note",
+  "debtIncoming": "Debt (Incoming)",
+  "creditOutgoing": "Credit (Outgoing)",
+  "saveTransaction": "SAVE TRANSACTION",
+  "allCaris": "All Accounts",
+  "selectProject": "Select Project",
+  "allProjects": "All Projects",
+  "statusIn": "IN",
+  "statusOut": "OUT",
+  "statusDebt": "DEBT",
+  "statusCredit": "CREDIT",
+  "tableDate": "DATE",
+  "tableCari": "ACCOUNT",
+  "tableDescription": "DESCRIPTION",
+  "tableStatus": "STATUS",
+  "tableIncoming": "INCOMING",
+  "tableOutgoing": "OUTGOING",
+  "tableBalance": "BALANCE",
+  "adminDashboard": "Admin Dashboard",
+  "financialAnalysis": "Financial Analysis",
+  "profitabilityRate": "Profitability Rate",
+  "expenseBreakdown": "EXPENSE BREAKDOWN",
+  "projectBasedPerformance": "PROJECT BASED PERFORMANCE",
+  "pendingWorkerPayment": "Pending Worker Payment",
+  "personnelTracking": "PERSONNEL TRACKING",
+  "fieldPersonnelManagement": "Field Personnel Management",
+  "personnelSubtitle": "Attendance and salary accrual tracking",
+  "getSummary": "GET SUMMARY",
+  "personnelRegistration": "PERSONNEL REGISTRATION",
+  "dismissed": "DISMISSED",
+  "fieldWorker": "Field Worker",
+  "attendance": "ATTENDANCE",
+  "dismissWorker": "Dismiss Worker",
+  "documents": "Documents",
+  "permanentlyDelete": "Permanently Delete",
+  "personnelListEmpty": "Personnel list is empty",
+  "newPersonnelCard": "New Personnel Card",
+  "nameSurname": "Name Surname",
+  "rolePosition": "Role / Position",
+  "salaryAmount": "Salary Amount",
+  "salaryType": "Salary Type",
+  "daily": "Daily",
+  "monthly": "Monthly",
+  "hourly": "Hourly",
+  "saveAsCari": "Save as Current Account",
+  "completeRegistration": "COMPLETE REGISTRATION",
+  "personnelGeneralSummary": "PERSONNEL GENERAL SUMMARY",
+  "totalPersonnel": "Total Personnel",
+  "activePersonnel": "Active Personnel",
+  "dismissedPersonnel": "Dismissed Personnel",
+  "totalAccrued": "Total Accrued",
+  "totalPaid": "Total Paid",
+  "remainingBalance": "Remaining Balance",
+  "workingHours": "Working Hours",
+  "overtimeHours": "Overtime Hours",
+  "hourlyWage": "Hourly Wage",
+  "calculatedAmount": "CALCULATED AMOUNT",
+  "selectStatus": "SELECT STATUS",
+  "normal": "Normal",
+  "onLeave": "On Leave",
+  "medicalLeave": "Medical Leave",
+  "excusedLeave": "Excused Leave",
+  "unexcusedLeave": "Unexcused Leave",
+  "refresh": "Refresh",
+  "stockManagement": "Stock Management",
+  "stockCode": "Stock Code",
+  "stockCodeRequired": "Stock code is required",
+  "stockName": "Stock Name",
+  "stockNameRequired": "Stock name is required",
+  "unit": "Unit",
+  "stockAmount": "Stock Amount",
+  "criticalStockLevel": "Critical Stock Level",
+  "purchasePriceLabel": "Purchase Price",
+  "salePriceLabel": "Sale Price",
+  "vatRate": "VAT Rate",
+  "newStock": "New Stock",
+  "editStock": "Edit Stock",
+  "noStocksYet": "No stocks added yet",
+  "noSearchResultFound": "No search result found",
+  "code": "Code",
+  "stockLabel": "Stock",
+  "companyPortfolio": "Company Portfolio",
+  "visionarySolutions": "Visionary Solutions",
+  "buildingFutureWithXActiveProjects": "Building the Future with {count} Active Projects",
+  "@buildingFutureWithXActiveProjects": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "companySummary": "Company Summary",
+  "financialHealth": "Financial Health",
+  "ourProjects": "Our Projects",
+  "ourTeam": "Our Team",
+  "milestones": "Milestones",
+  "collectionDebtRatio": "Collection / Debt Ratio",
+  "greenCollectionsRedDebts": "Green: Collections, Red: Pending Debts",
+  "companyOverviewText": "Our company leads the sector with its expert personnel in financial management. To date, {revenue} worth of payment installments have been collected and {debt} worth of labor debt is currently being managed.",
+  "@companyOverviewText": {
+    "placeholders": {
+      "revenue": {
+        "type": "String"
+      },
+      "debt": {
+        "type": "String"
+      }
+    }
+  },
+  "noProjectRecordsYet": "No project records yet.",
+  "noActiveWorkersYet": "No active workers yet.",
+  "monthlyPersonnel": "Monthly Personnel",
+  "dailyPersonnel": "Daily Personnel",
+  "pendingSalary": "Pending Salary",
+  "noMilestonesYet": "No milestones found.",
+  "newProjectStarted": "New Project Started",
+  "projectCompletedSuccessfully": "Project Completed Successfully",
+  "projectSuspendedTemporarily": "Project Suspended Temporarily",
+  "newTeamMemberJoined": "New Team Member Joined",
+  "teamMemberLeft": "Team Member Left",
+  "financialCollectionMade": "Financial Collection Made",
+  "highAmountExpenseRecord": "High Amount Expense Record",
+  "unknownEvent": "Unknown Event",
+  "periodIncomeExpenseBalance": "Period Income / Expense Balance",
+  "xPercentPositive": "{percent}% Positive",
+  "@xPercentPositive": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "laborSummaryReport_caps": "LABOR SUMMARY REPORT",
+  "dateRange": "Date Range",
+  "selectedPeriodRecords": "Selected Period Records",
+  "xHoursWork": "{hours} Hours Work",
+  "@xHoursWork": {
+    "placeholders": {
+      "hours": {
+        "type": "double"
+      }
+    }
+  },
+  "noRecordFoundInRange": "No record found in this date range.",
+  "unknown": "Unknown",
+  "total": "Total",
+  "xHours": "{hours} Hours",
+  "@xHours": {
+    "placeholders": {
+      "hours": {
+        "type": "double"
+      }
+    }
+  },
+  "tableProject_caps": "PROJECT",
+  "tableHour_caps": "HOUR",
+  "tableMesai_caps": "OVERTIME",
+  "tableAmount_caps": "AMOUNT",
+  "tableDate_caps": "DATE",
+  "workerDocuments": "{name} - Documents",
+  "@workerDocuments": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "severanceAndRights": "Severance and Rights (Editable)",
+  "severancePay": "Severance Pay",
+  "noticePay": "Notice Pay",
+  "leavePay": "Leave Pay",
+  "separationReason": "Separation Reason",
+  "createDocument": "Create Document",
+  "serviceCertificate": "Service Certificate",
+  "releaseForm": "Release Form",
+  "compensationBreakdown": "Compensation Breakdown",
+  "payrollPusula": "Payroll Slip",
+  "sgkStatement": "SGK Statement",
+  "paymentReceipt": "Payment Receipt",
+  "editDocument": "Edit {title}",
+  "@editDocument": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "save": "SAVE",
+  "reasonHint": "e.g. Retirement, Resignation, etc.",
+  "serviceCertificate_template": "Mr./Ms. {name} has worked in our workplace from {startDate} to {endDate} as \"{position}\". Reason for leaving: {reason}. This document has been prepared upon the request of the interested party.",
+  "@serviceCertificate_template": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "startDate": {
+        "type": "String"
+      },
+      "endDate": {
+        "type": "String"
+      },
+      "position": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "releaseForm_template": "Upon leaving the workplace on {date}; I declare that I have received my salary, severance pay, notice pay, and all other social rights in full, and that I have no rights or claims from the employer, and I fully release the employer.",
+  "@releaseForm_template": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "compensationBreakdown_template": "PERSONNEL RIGHTS AND RECEIVABLES BREAKDOWN:\n\n1. Severance Pay: {severance}\n2. Notice Pay: {notice}\n3. Leave Pay: {leave}\n\nTOTAL PAID: {total}\n\nThis breakdown shows the legal receivables entitled to the personnel when the employment contract ends.",
+  "@compensationBreakdown_template": {
+    "placeholders": {
+      "severance": {
+        "type": "String"
+      },
+      "notice": {
+        "type": "String"
+      },
+      "leave": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "payrollPusula_template": "PAYROLL SLIP:\n\nThe last month's salary and additional payments accrued during the personnel's tenure have been delivered to the bank accounts specified below or in hand.\n\nPayment Item: Severance/Notice/Salary\nDescription: Lump-sum payment as a result of termination of employment contract.",
+  "sgkStatement_template": "SOCIAL SECURITY TERMINATION STATEMENT SUMMARY:\n\nPersonnel: {name}\nID No: {tcNo}\nTermination Date: {date}\nTermination Reason: {reason}\n\nThis breakdown is a copy of the termination notification entered into the SGK system.",
+  "@sgkStatement_template": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "tcNo": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentReceipt_template": "BANK PAYMENT RECEIPT / VOUCHER:\n\nPaid to: {name}\nAmount: {amount}\nDescription: It is a collective liquidation payment of salary, severance, notice, and all fringe rights.\n\nPayment Date: {date}",
+  "@paymentReceipt_template": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "personnelInfo": "PERSONNEL INFORMATION:",
+  "idNo": "ID No",
+  "employerSignature": "Employer Signature",
+  "workerSignature": "Worker Signature",
+  "categoryLabel": "Category",
+  "cariLabel": "Account",
+  "dateLabel": "Date",
+  "edit": "Edit",
+  "financeKasaManagement": "FINANCE & CASH MANAGEMENT",
+  "recentTransactions": "Recent Transactions",
+  "pendingCollections": "Pending Collections",
+  "noBalanceToReset": "No balance found to reset.",
+  "passwordResetSuccess": "Your password has been successfully updated. You can now login.",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "pleaseEnterNewPassword": "Please enter a new password",
+  "secondPage": "Second Page",
+  "goBack": "Go Back",
+  "bankKasa": "BANK / CASH",
+  "cekSenet": "CHECK / BILL",
+  "cashMovement": "CASH MOVEMENT",
+  "documentEntry": "DOCUMENT ENTRY",
+  "mainVault": "Main Vault (USD)",
+  "checksGiven": "Issued Checks",
+  "dailyPay": "DAILY",
+  "monthlyPay": "MONTHLY",
+  "hourlyRate": "Hourly Wage",
+  "overtimeHourly": "Overtime Wage",
+  "deleteWorkerConfirmNote": "Are you sure you want to permanently delete the personnel named {name} and all their data (attendance, payments, etc.)?",
+  "dismissConfirmNote": "Are you sure you want to dismiss the personnel named {name}? (Past data is preserved)",
+  "attendanceAndSalaryTracking": "Attendance and salary accrual tracking",
+  "workerDismissedInfo": "Personnel dismissed",
+  "workerDeletedInfo": "Personnel deleted",
+  "fullName": "Full Name",
+  "dutyPosition": "Duty / Position",
+  "saveAsCariAccount": "Save as Current Account",
+  "requiredForSalaryPayments": "Required for salary payment tracking",
+  "remainingDebtBalance": "Remaining Debt (Balance)",
+  "onReport": "On Report",
+  "onExcuse": "On Excuse",
+  "unauthorized": "Unauthorized",
+  "noProjectSelected": "No Project Selected",
+  "relatedProject": "Related Project",
+  "deleteRecord": "Delete Record",
+  "monday_short": "Mon",
+  "tuesday_short": "Tue",
+  "wednesday_short": "Wed",
+  "thursday_short": "Thu",
+  "friday_short": "Fri",
+  "saturday_short": "Sat",
+  "sunday_short": "Sun",
+  "work_caps": "WORK",
+  "leave_report_caps": "LEAVE/REPORT",
+  "unauthorized_caps": "UNAUTHORIZED",
+  "sunday_caps": "SUNDAY",
+  "netIncomes": "Net Incomes",
+  "workerRegistration": "PERSONNEL REGISTRATION",
+  "statusDismissed": "DISMISSED",
+  "fieldPersonnel": "Field Personnel",
+  "deletePermanently": "Delete Permanently",
+  "newWorkerCard": "New Personnel Card",
+  "incomeAndExpense": "Income / Expense Balance",
+  "netCashStatus": "Net Cash Status",
+  "top3ProfitableProjects": "TOP 3 PROFITABLE PROJECTS",
+  "cariTransaction": "Account Transaction",
+  "workerAnalysisSubtitle": "{worked} days worked, {leave} days leave/report",
+  "@workerAnalysisSubtitle": {
+    "placeholders": {
+      "worked": {
+        "type": "int"
+      },
+      "leave": {
+        "type": "int"
+      }
+    }
+  },
+  "noDataEntryThisMonth": "No data entries found for the selected range.",
+  "productivity_caps": "PRODUCTIVITY",
+  "editDocumentContentHint": "Type the document content here...",
+  "workerAnalysisTitle": "Personnel Performance Analysis",
+  "performanceOverTime": "Performance Over Time",
+  "workerDistribution": "Personnel Distribution (Work x Leave)",
+  "attendanceSummary": "Attendance Summary",
+  "noWorkerFound": "No personnel records found.",
+  "excelFeatureSoon": "Excel export feature coming soon",
+  "printFeatureSoon": "Print feature coming soon",
+  "turkish": "Turkish",
+  "english": "English",
+  "subtotal": "Subtotal",
+  "vatTotal": "VAT Total",
+  "totalSalesTaxBase": "Total Sales Tax Base",
+  "totalPurchaseTaxBase": "Total Purchase Tax Base",
+  "salesVat": "Sales VAT",
+  "purchaseVat": "Purchase VAT",
+  "vatToPay": "VAT to Pay",
+  "vatDeferred": "Deferred VAT",
+  "cariAccountDeleted": "Account successfully deleted",
+  "balance": "Balance",
+  "accountNotLinkedToWorker": "This account is not linked to any personnel.",
+  "noLaborRecordsYet": "No labor records found yet.",
+  "project": "Project",
+  "overtime_caps": "OVERTIME",
+  "hakedis_short": "Pay.",
+  "notSpecified": "Not specified",
+  "downloadExcel": "Download Excel",
+  "markAsCashInfo": "Mark as cash account (e.g., Cash Register)",
+  "completeRecord": "COMPLETE RECORD",
+  "workerAnalysisDetail": "{workerName} Analysis Detail",
+  "@workerAnalysisDetail": {
+    "placeholders": {
+      "workerName": {
+        "type": "String",
+        "description": "The name of the worker"
+      }
+    }
+  },
+  "accountDetail": "accountDetail",
+  "collectionIn_caps": "collectionIn_caps",
+  "incomingDebt_caps": "incomingDebt_caps",
+  "paymentOut_caps": "paymentOut_caps",
+  "outgoingCredit_caps": "outgoingCredit_caps",
+  "netCashKasa_caps": "netCashKasa_caps",
+  "netStatusBalance_caps": "netStatusBalance_caps",
+  "exportExcel": "exportExcel",
+  "print": "print",
+  "createReceipt": "createReceipt",
+  "back": "back",
+  "noTransactionsYet": "noTransactionsYet",
+  "newCariRecord": "newCariRecord",
+  "editCariRecord": "editCariRecord",
+  "generalInfo": "generalInfo",
+  "accountTitle": "accountTitle",
+  "titleRequired": "titleRequired",
+  "contactInfo": "contactInfo",
+  "address": "address",
+  "financialSettings": "financialSettings",
+  "startingBalance": "startingBalance",
+  "cashAccount": "cashAccount",
+  "cariAccounts": "cariAccounts",
+  "addNewCari": "addNewCari",
+  "searchCariHint": "searchCariHint",
+  "noCariAccountsYet": "noCariAccountsYet",
+  "noResultsFound": "noResultsFound",
+  "deleteConfirmTitle": "deleteConfirmTitle",
+  "deleteCariConfirm": "Are you sure you want to delete account {arg}?",
+  "cancel_caps": "cancel_caps",
+  "delete_caps": "delete_caps",
+  "deleteFailed": "Failed to delete {arg}.",
+  "taxNo_short": "taxNo_short",
+  "currentBalance_caps": "currentBalance_caps",
+  "totalExpenses": "totalExpenses",
+  "mustAddAtLeastOneItem": "mustAddAtLeastOneItem",
+  "invoiceAdded": "invoiceAdded",
+  "invoiceUpdated": "invoiceUpdated",
+  "sales": "sales",
+  "purchase": "purchase",
+  "newInvoiceType": "newInvoiceType",
+  "editInvoiceType": "editInvoiceType",
+  "invoiceNo": "invoiceNo",
+  "invoiceNoRequired": "invoiceNoRequired",
+  "pleaseSelectDate": "pleaseSelectDate",
+  "dueDate": "dueDate",
+  "selectCariAccount": "selectCariAccount",
+  "invoiceItems": "invoiceItems",
+  "addItem": "addItem",
+  "noItemsYet": "noItemsYet",
+  "item": "item",
+  "amountLabel": "amountLabel",
+  "priceLabel": "priceLabel",
+  "grandTotal": "grandTotal",
+  "editItem": "editItem",
+  "newItem": "newItem",
+  "itemName": "itemName",
+  "unitPrice": "unitPrice",
+  "vatRatePercent": "vatRatePercent",
+  "invoices": "invoices",
+  "salesInvoices": "salesInvoices",
+  "purchaseInvoices": "purchaseInvoices",
+  "noInvoicesYet": "noInvoicesYet",
+  "deleteInvoiceConfirm": "Are you sure you want to delete invoice {arg}?",
+  "invoiceDeleted": "invoiceDeleted",
+  "recordAdded": "recordAdded",
+  "recordUpdated": "recordUpdated",
+  "income": "income",
+  "newItemType": "New {arg}",
+  "editItemType": "Edit {arg}",
+  "newInvoiceType": "New {arg} Invoice",
+  "@newInvoiceType": {
+    "placeholders": {
+      "arg": {
+        "type": "String"
+      }
+    }
+  },
+  "editInvoiceType": "Edit {arg} Invoice",
+  "@editInvoiceType": {
+    "placeholders": {
+      "arg": {
+        "type": "String"
+      }
+    }
+  },
+  "titleLabel": "titleLabel",
+  "pleaseEnterValidAmount": "pleaseEnterValidAmount",
+  "selectCariAccountOptional": "selectCariAccountOptional",
+  "selectProjectOptional": "selectProjectOptional",
+  "incomeExpense": "incomeExpense",
+  "incomes": "incomes",
+  "noIncomeExpenseYet": "No {arg} found yet.",
+  "@noIncomeExpenseYet": {
+    "placeholders": {
+      "arg": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteRecordConfirm": "Are you sure you want to delete record {arg}?",
+  "@deleteRecordConfirm": {
+    "placeholders": {
+      "arg": {
+        "type": "String"
+      }
+    }
+  },
+  "recordDeleted": "recordDeleted",
+  "settlementReport_caps": "SETTLEMENT REPORT",
+  "noDataFound": "No Data Found",
+  "settlementPeriod_caps": "SETTLEMENT PERIOD",
+  "selectDate_caps": "SELECT DATE",
+  "personnelSalaryStatus_caps": "PERSONNEL SALARY STATUS",
+  "projectHakedis_caps": "PROJECT PAYMENTS",
+  "settleAccount_caps": "SETTLE ACCOUNT",
+  "noPendingHakedisFound": "noPendingHakedisFound",
+  "processHakedisCollection": "processHakedisCollection",
+  "hakedisSettleConfirm": "{count} progress payments totaling {amount} will be collected. Confirm?",
+  "@hakedisSettleConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "hakedisCollectionsProcessed": "hakedisCollectionsProcessed",
+  "settlePersonnelAccount": "settlePersonnelAccount",
+  "laborSettleConfirm": "{count} labor payments totaling {amount} will be paid. Confirm?",
+  "@laborSettleConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "personnelPaymentsProcessed": "personnelPaymentsProcessed",
+  "closeCariAccounts": "closeCariAccounts",
+  "cariSettleConfirm": "{count} account operations will be closed. Confirm?",
+  "@cariSettleConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cariAccountBalancesClosed": "cariAccountBalancesClosed",
+  "confirm_caps": "confirm_caps",
+  "periodNetProfit_caps": "PERIOD NET PROFIT",
+  "totalRevenue_caps": "TOTAL REVENUE",
+  "totalCost_caps": "TOTAL COST",
+  "totalEarned": "Total Earned",
+  "remainingPersonnelDebt": "Remaining Personnel Debt",
+  "seePersonnelDetails": "See Personnel Details",
+  "laborSummaryDetail": "Worked: {worked} | Leave: {leave} | Sunday: {sunday}",
+  "@laborSummaryDetail": {
+    "placeholders": {
+      "worked": {
+        "type": "int"
+      },
+      "leave": {
+        "type": "int"
+      },
+      "sunday": {
+        "type": "int"
+      }
+    }
+  },
+  "producedHakedisNet": "Produced Net Hakedis",
+  "pendingCollection": "Pending Collection",
+  "customerReceivables": "Customer Receivables",
+  "supplierPayables": "Supplier Payables",
+  "mainCashStatus": "Main Cash Status",
+  "search": "Search",
+  "workerSummaryReport_caps": "WORKER SUMMARY REPORT",
+  "totalWorkHours": "{hours} Hours Total Work",
+  "@totalWorkHours": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "workerReport_caps": "{name} SUMMARY REPORT",
+  "@workerReport_caps": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "totalHoursAndAmount": "Total: {hours} Hours | {amount}",
+  "@totalHoursAndAmount": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "hakedisDocument_caps": "PAYMENT INSTALLMENT DOCUMENT",
+  "projectHakedisReport_caps": "PROJECT PAYMENT REPORT",
+  "brutAmount_caps": "GROSS AMOUNT",
+  "netAccrual_caps": "NET ACCRUAL",
+  "quantity": "Quantity",
+  "totalBrut": "Total Gross",
+  "totalNet": "Total Net",
+  "reportDateLabel": "Report Date: {date}",
+  "@reportDateLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentDateLabel": "Document Date: {date}",
+  "@documentDateLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyPolicy": "Privacy Policy",
+  "date": "Date",
+  "hour": "Hour",
+  "mesai": "Overtime",
+  "personal": "Personnel",
+  "item": "Item",
+  "rate": "Rate",
+  "amountLabel": "Amount",
+  "stopaj": "Withholding",
+  "teminat": "Guarantee",
+  "pending_caps": "PENDING",
+  "titleLabel": "Title"
+}

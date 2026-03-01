@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class FinanceManagementPage extends StatefulWidget {
   const FinanceManagementPage({super.key});
@@ -18,7 +20,11 @@ class _FinanceManagementPageState extends State<FinanceManagementPage> with Sing
   }
 
   String _formatPara(double tutar) {
-    return NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(tutar);
+    return NumberFormat.currency(
+      locale: Localizations.localeOf(context).toString(),
+      symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : r'$',
+      decimalDigits: 2,
+    ).format(tutar);
   }
 
   @override
@@ -26,12 +32,12 @@ class _FinanceManagementPageState extends State<FinanceManagementPage> with Sing
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('FİNANS & KASA YÖNETİMİ'),
+        title: Text(AppLocalizations.of(context)!.financeKasaManagement),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'BANKA / KASA'),
-            Tab(text: 'ÇEK / SENET'),
+          tabs: [
+            Tab(text: AppLocalizations.of(context)!.bankKasa),
+            Tab(text: AppLocalizations.of(context)!.cekSenet),
           ],
         ),
       ),
@@ -45,10 +51,11 @@ class _FinanceManagementPageState extends State<FinanceManagementPage> with Sing
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
         icon: const Icon(Icons.add_card_rounded),
-        label: Text(_tabController.index == 0 ? 'NAKİT HAREKETİ' : 'EVRAK GİRİŞİ'),
+        label: Text(_tabController.index == 0 ? AppLocalizations.of(context)!.cashMovement : AppLocalizations.of(context)!.documentEntry),
         backgroundColor: const Color(0xFF003399),
         foregroundColor: Colors.white,
       ),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 
@@ -56,11 +63,11 @@ class _FinanceManagementPageState extends State<FinanceManagementPage> with Sing
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        _buildFinanceCard('Ana Kasa (TL)', 125400.00, Colors.green),
+        _buildFinanceCard(AppLocalizations.of(context)!.mainVault, 125400.00, Colors.green),
         const SizedBox(height: 16),
         _buildFinanceCard('Ziraat Bankası', 450000.00, Colors.blue),
         const SizedBox(height: 24),
-        const Text('Son Hareketler', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+        Text(AppLocalizations.of(context)!.recentTransactions, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
         const SizedBox(height: 16),
         _buildMovementItem('Hakediş Tahsilatı', 'Akasya Projesi', 85000.0, true),
         _buildMovementItem('Mazot Gideri', 'Şantiye Petrol', -4500.0, false),
@@ -73,12 +80,12 @@ class _FinanceManagementPageState extends State<FinanceManagementPage> with Sing
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Text('Bekleyen Tahsilatlar', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+        Text(AppLocalizations.of(context)!.pendingCollections, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
         const SizedBox(height: 16),
         _buildCheckItem('Müşteri Çeki', 'Özkul İnşaat', 150000.0, '25.04.2026', Colors.orange),
         _buildCheckItem('Portföy Çeki', 'Alfa Yapı', 75000.0, '12.05.2026', Colors.blue),
         const SizedBox(height: 24),
-        const Text('Verilen Çekler', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+        Text(AppLocalizations.of(context)!.checksGiven, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
         const SizedBox(height: 16),
         _buildCheckItem('Firma Çeki', 'Beton A.Ş', 45000.0, '15.03.2026', Colors.red),
       ],

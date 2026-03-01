@@ -6,10 +6,9 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/worker.dart';
 import '../services/database_helper.dart';
+import '../l10n/app_localizations.dart';
 
 class WorkerExportService {
-  static final NumberFormat _currencyFormat = NumberFormat.currency(locale: 'tr_TR', symbol: 'TL', decimalDigits: 2);
-
   static String _tr(String? text) {
     if (text == null) return '';
     var result = text;
@@ -20,7 +19,17 @@ class WorkerExportService {
     return result;
   }
 
+  static NumberFormat _getCurrencyFormat(AppLocalizations l10n) {
+    final locale = l10n.localeName;
+    return NumberFormat.currency(
+      locale: locale,
+      symbol: locale == 'tr' ? 'TL' : '\$',
+      decimalDigits: 2,
+    );
+  }
+
   static Future<void> exportToPDF({
+    required AppLocalizations l10n,
     required DateTime startDate,
     required DateTime endDate,
     required List<Puantaj> puantajlar,
@@ -31,6 +40,7 @@ class WorkerExportService {
     int? filterWorkerId,
   }) async {
     final pdf = pw.Document();
+    final currencyFormat = _getCurrencyFormat(l10n);
     
     // Grouping
     Map<int, List<Puantaj>> groupedPuantaj = {};
@@ -48,12 +58,12 @@ class WorkerExportService {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
         build: (context) => [
-          _buildHeader(startDate, endDate, totalCost, totalHours, filterWorkerId != null ? _tr(workerMap[filterWorkerId]?.adSoyad) : null),
+          _buildHeader(l10n, currencyFormat, startDate, endDate, totalCost, totalHours, filterWorkerId != null ? _tr(workerMap[filterWorkerId]?.adSoyad) : null),
           pw.SizedBox(height: 20),
           ...sortedWorkerIds.map((workerId) {
             final worker = workerMap[workerId];
             final puantajs = groupedPuantaj[workerId]!;
-            return _buildWorkerSection(worker, puantajs, projectNames);
+            return _buildWorkerSection(l10n, currencyFormat, worker, puantajs, projectNames);
           }),
         ],
       ),
@@ -69,7 +79,7 @@ class WorkerExportService {
     );
   }
 
-  static pw.Widget _buildHeader(DateTime start, DateTime end, double cost, double hours, [String? workerName]) {
+  static pw.Widget _buildHeader(AppLocalizations l10n, NumberFormat currencyFormat, DateTime start, DateTime end, double cost, double hours, [String? workerName]) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
       decoration: const pw.BoxDecoration(
@@ -81,7 +91,7 @@ class WorkerExportService {
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(_tr(workerName != null ? '$workerName OZET RAPORU' : 'ISCI OZET RAPORU'), 
+              pw.Text(_tr(workerName != null ? l10n.workerReport_caps(workerName) : l10n.workerSummaryReport_caps), 
                 style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 18)),
               pw.Text(
                 '${DateFormat('dd.MM.yyyy').format(start)} - ${DateFormat('dd.MM.yyyy').format(end)}',
@@ -92,8 +102,8 @@ class WorkerExportService {
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
-              pw.Text(_currencyFormat.format(cost), style: pw.TextStyle(color: PdfColors.teal200, fontWeight: pw.FontWeight.bold, fontSize: 18)),
-              pw.Text(_tr('$hours Saat Toplam Calisma'), style: const pw.TextStyle(color: PdfColors.white, fontSize: 10)),
+              pw.Text(currencyFormat.format(cost), style: pw.TextStyle(color: PdfColors.teal200, fontWeight: pw.FontWeight.bold, fontSize: 18)),
+              pw.Text(_tr(l10n.totalWorkHours(hours.toString())), style: const pw.TextStyle(color: PdfColors.white, fontSize: 10)),
             ],
           ),
         ],
@@ -101,7 +111,7 @@ class WorkerExportService {
     );
   }
 
-  static pw.Widget _buildWorkerSection(Worker? worker, List<Puantaj> puantajs, Map<int, String> projectNames) {
+  static pw.Widget _buildWorkerSection(AppLocalizations l10n, NumberFormat currencyFormat, Worker? worker, List<Puantaj> puantajs, Map<int, String> projectNames) {
     double workerTotalHours = 0;
     double workerTotalCost = 0;
     for (var p in puantajs) {
@@ -122,8 +132,8 @@ class WorkerExportService {
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text(_tr(worker?.adSoyad ?? 'Bilinmiyor'), style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                pw.Text(_tr('Toplam: $workerTotalHours Saat | ${_currencyFormat.format(workerTotalCost)}'), style: pw.TextStyle(fontSize: 10)),
+                pw.Text(_tr(worker?.adSoyad ?? l10n.unknown), style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text(_tr(l10n.totalHoursAndAmount(workerTotalHours.toString(), currencyFormat.format(workerTotalCost))), style: pw.TextStyle(fontSize: 10)),
               ],
             ),
           ),
@@ -131,7 +141,7 @@ class WorkerExportService {
             headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
             cellStyle: const pw.TextStyle(fontSize: 9),
             headerDecoration: const pw.BoxDecoration(color: PdfColors.grey100),
-            headers: [_tr('TARIH'), _tr('PROJE'), _tr('SAAT'), _tr('MESAI'), _tr('TUTAR')],
+            headers: [_tr(l10n.date), _tr(l10n.project), _tr(l10n.hour), _tr(l10n.mesai), _tr(l10n.amountLabel)],
             data: puantajs.map((p) {
               final cost = worker != null ? DatabaseHelper.instance.calculateLaborCost(p, worker) : 0.0;
               return [
@@ -139,7 +149,7 @@ class WorkerExportService {
                 _tr(projectNames[p.projectId] ?? '-'),
                 p.saat.toString(),
                 p.mesai.toString(),
-                _currencyFormat.format(cost),
+                _tr(currencyFormat.format(cost)),
               ];
             }).toList(),
           ),
@@ -149,6 +159,7 @@ class WorkerExportService {
   }
 
   static Future<void> exportToExcel({
+    required AppLocalizations l10n,
     required DateTime startDate,
     required DateTime endDate,
     required List<Puantaj> puantajlar,
@@ -157,7 +168,8 @@ class WorkerExportService {
     int? filterWorkerId,
   }) async {
     var excel = Excel.createExcel();
-    var sheet = excel['Isci Ozet Raporu'];
+    var sheetName = l10n.workerSummaryReport_caps;
+    var sheet = excel[sheetName];
     excel.delete('Sheet1');
 
     // Header Style
@@ -168,18 +180,18 @@ class WorkerExportService {
       horizontalAlign: HorizontalAlign.Center,
     );
 
-    sheet.appendRow([TextCellValue(filterWorkerId != null ? '${_tr(workerMap[filterWorkerId]?.adSoyad) ?? ''} ÖZET RAPORU' : 'İŞÇİ ÖZET RAPORU')]);
+    sheet.appendRow([TextCellValue(filterWorkerId != null ? (l10n.workerReport_caps(_tr(workerMap[filterWorkerId]?.adSoyad) ?? '')) : l10n.workerSummaryReport_caps)]);
     sheet.appendRow([TextCellValue('${DateFormat('dd.MM.yyyy').format(startDate)} - ${DateFormat('dd.MM.yyyy').format(endDate)}')]);
     sheet.appendRow([]);
 
     // Column Headers
     sheet.appendRow([
-      TextCellValue('PERSONEL'),
-      TextCellValue('TARİH'),
-      TextCellValue('PROJE'),
-      TextCellValue('SAAT'),
-      TextCellValue('MESAİ'),
-      TextCellValue('TUTAR'),
+      TextCellValue(l10n.personal),
+      TextCellValue(l10n.date),
+      TextCellValue(l10n.project),
+      TextCellValue(l10n.hour),
+      TextCellValue(l10n.mesai),
+      TextCellValue(l10n.amountLabel),
     ]);
 
     // Apply header style (row 4, columns 0-5)
@@ -205,7 +217,7 @@ class WorkerExportService {
       for (var p in puantajs) {
         final cost = worker != null ? DatabaseHelper.instance.calculateLaborCost(p, worker) : 0.0;
         sheet.appendRow([
-          TextCellValue(worker?.adSoyad ?? 'Bilinmiyor'),
+          TextCellValue(worker?.adSoyad ?? l10n.unknown),
           TextCellValue(DateFormat('dd.MM.yyyy').format(p.tarih)),
           TextCellValue(projectNames[p.projectId] ?? '-'),
           DoubleCellValue(p.saat.toDouble()),

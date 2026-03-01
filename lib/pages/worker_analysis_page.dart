@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../services/database_helper.dart';
 import '../models/worker.dart';
 
@@ -172,12 +173,12 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('İşçi Analizleri'),
+        title: Text(AppLocalizations.of(context)!.workerAnalysis),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _workers.isEmpty 
-            ? const Center(child: Text('Henüz işçi kaydı bulunamadı.'))
+            ? Center(child: Text(AppLocalizations.of(context)!.noWorkerFound))
             : RefreshIndicator(
                 onRefresh: _loadData,
                 child: SingleChildScrollView(
@@ -194,9 +195,9 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                       const SizedBox(height: 32),
                       Row(
                         children: [
-                          const Text(
-                            'ÇALIŞMA SAATLERİ',
-                            style: TextStyle(
+                          Text(
+                            AppLocalizations.of(context)!.performanceOverTime,
+                            style: const TextStyle(
                               fontWeight: FontWeight.w900,
                               color: Color(0xFF011627),
                               fontSize: 13,
@@ -205,7 +206,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                           ),
                           const Spacer(),
                           Text(
-                            '${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate)}',
+                            '${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_endDate)}',
                             style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -215,9 +216,9 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                       const SizedBox(height: 32),
                       Row(
                         children: [
-                          const Text(
-                            'İŞÇİ BAZLI ÇALIŞMA GÜNLERİ',
-                            style: TextStyle(
+                          Text(
+                            AppLocalizations.of(context)!.workerDistribution,
+                            style: const TextStyle(
                               fontWeight: FontWeight.w900,
                               color: Color(0xFF011627),
                               fontSize: 13,
@@ -226,7 +227,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                           ),
                           const Spacer(),
                           Text(
-                            '${DateFormat('MMMM').format(_startDate)}',
+                            DateFormat('MMMM', Localizations.localeOf(context).toString()).format(_startDate),
                             style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -234,9 +235,9 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                       const SizedBox(height: 16),
                       _buildBarChart(),
                       const SizedBox(height: 48),
-                      const Text(
-                        'GENEL VERİMLİLİK',
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.of(context)!.attendanceSummary,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           color: Color(0xFF011627),
                           fontSize: 13,
@@ -308,7 +309,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                '${DateFormat('dd MMMM yyyy', 'tr').format(_startDate)} - ${DateFormat('dd MMMM yyyy', 'tr').format(_endDate)}',
+                '${DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(_endDate)}',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
@@ -320,7 +321,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
   }
 
   Widget _buildHeaderCard() {
-    String subtitle = 'Toplam $_selectedWorkerWorkedDays gün çalışma, $_selectedWorkerLeaveDays gün izin kaydedildi.';
+    String subtitle = AppLocalizations.of(context)!.workerAnalysisSubtitle(_selectedWorkerWorkedDays, _selectedWorkerLeaveDays);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -351,7 +352,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$_selectedWorker Analizi',
+                  AppLocalizations.of(context)!.workerAnalysisDetail(_selectedWorker),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -401,7 +402,15 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
-                  const days = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+                  final days = [
+                    AppLocalizations.of(context)!.monday_short,
+                    AppLocalizations.of(context)!.tuesday_short,
+                    AppLocalizations.of(context)!.wednesday_short,
+                    AppLocalizations.of(context)!.thursday_short,
+                    AppLocalizations.of(context)!.friday_short,
+                    AppLocalizations.of(context)!.saturday_short,
+                    AppLocalizations.of(context)!.sunday_short
+                  ];
                   int idx = value.toInt();
                   if (idx >= 0 && idx < _lineSpots.length) {
                     final date = _startDate.add(Duration(days: idx));
@@ -415,7 +424,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
-                        _lineSpots.length <= 7 ? days[date.weekday - 1] : DateFormat('dd.MM').format(date), 
+                        _lineSpots.length <= 7 ? days[date.weekday - 1] : DateFormat('dd.MM', Localizations.localeOf(context).toString()).format(date), 
                         style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold)
                       ),
                     );
@@ -549,7 +558,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
 
   Widget _buildPieChart() {
     if (_totalWorkedDays == 0 && _totalLeaveDays == 0) {
-      return const SizedBox(height: 200, child: Center(child: Text('Bu ay henüz veri girişi yok.')));
+      return SizedBox(height: 200, child: Center(child: Text(AppLocalizations.of(context)!.noDataEntryThisMonth)));
     }
 
     final double total = (_totalWorkedDays + _totalLeaveDays).toDouble();
@@ -606,9 +615,9 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                 letterSpacing: -1,
               ),
             ),
-            const Text(
-              'VERİMLİLİK',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.productivity_caps,
+              style: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 color: Colors.grey,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/stok.dart';
 import '../services/database_helper.dart';
 
@@ -93,14 +94,14 @@ class _StokEklePageState extends State<StokEklePage> {
         await DatabaseHelper.instance.insertStok(stok);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Stok başarıyla eklendi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.recordAdded)),
           );
         }
       } else {
         await DatabaseHelper.instance.updateStok(stok);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Stok başarıyla güncellendi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.recordUpdated)),
           );
         }
       }
@@ -111,7 +112,7 @@ class _StokEklePageState extends State<StokEklePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
         );
       }
     } finally {
@@ -127,7 +128,7 @@ class _StokEklePageState extends State<StokEklePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.stok == null ? 'Yeni Stok' : 'Stok Düzenle'),
+        title: Text(widget.stok == null ? AppLocalizations.of(context)!.newStock : AppLocalizations.of(context)!.editStock),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -140,13 +141,13 @@ class _StokEklePageState extends State<StokEklePage> {
                   children: [
                     TextFormField(
                       controller: _kodController,
-                      decoration: const InputDecoration(
-                        labelText: 'Stok Kodu *',
+                      decoration: InputDecoration(
+                        labelText: '${AppLocalizations.of(context)!.stockCode} *',
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Stok kodu zorunludur';
+                          return AppLocalizations.of(context)!.stockCodeRequired;
                         }
                         return null;
                       },
@@ -154,13 +155,13 @@ class _StokEklePageState extends State<StokEklePage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _adController,
-                      decoration: const InputDecoration(
-                        labelText: 'Stok Adı *',
+                      decoration: InputDecoration(
+                        labelText: '${AppLocalizations.of(context)!.stockName} *',
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Stok adı zorunludur';
+                          return AppLocalizations.of(context)!.stockNameRequired;
                         }
                         return null;
                       },
@@ -171,8 +172,8 @@ class _StokEklePageState extends State<StokEklePage> {
                         Expanded(
                           child: TextFormField(
                             controller: _birimController,
-                            decoration: const InputDecoration(
-                              labelText: 'Birim',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.unit,
                               border: OutlineInputBorder(),
                             ),
                           ),
@@ -181,8 +182,8 @@ class _StokEklePageState extends State<StokEklePage> {
                         Expanded(
                           child: TextFormField(
                             controller: _kategoriController,
-                            decoration: const InputDecoration(
-                              labelText: 'Kategori',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.categoryLabel,
                               border: OutlineInputBorder(),
                             ),
                           ),
@@ -195,8 +196,8 @@ class _StokEklePageState extends State<StokEklePage> {
                         Expanded(
                           child: TextFormField(
                             controller: _stokMiktariController,
-                            decoration: const InputDecoration(
-                              labelText: 'Stok Miktarı',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.stockAmount,
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -206,8 +207,8 @@ class _StokEklePageState extends State<StokEklePage> {
                         Expanded(
                           child: TextFormField(
                             controller: _kritikStokSeviyesiController,
-                            decoration: const InputDecoration(
-                              labelText: 'Kritik Stok Seviyesi',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.criticalStockLevel,
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -221,8 +222,8 @@ class _StokEklePageState extends State<StokEklePage> {
                         Expanded(
                           child: TextFormField(
                             controller: _alisFiyatiController,
-                            decoration: const InputDecoration(
-                              labelText: 'Alış Fiyatı',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.purchasePriceLabel,
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -232,8 +233,8 @@ class _StokEklePageState extends State<StokEklePage> {
                         Expanded(
                           child: TextFormField(
                             controller: _satisFiyatiController,
-                            decoration: const InputDecoration(
-                              labelText: 'Satış Fiyatı',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.salePriceLabel,
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -244,8 +245,8 @@ class _StokEklePageState extends State<StokEklePage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _kdvOraniController,
-                      decoration: const InputDecoration(
-                        labelText: 'KDV Oranı (%)',
+                      decoration: InputDecoration(
+                        labelText: '${AppLocalizations.of(context)!.vatRate} (%)',
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -253,8 +254,8 @@ class _StokEklePageState extends State<StokEklePage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _aciklamaController,
-                      decoration: const InputDecoration(
-                        labelText: 'Açıklama',
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.description,
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 3,
@@ -265,7 +266,7 @@ class _StokEklePageState extends State<StokEklePage> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('Kaydet'),
+                      child: Text(AppLocalizations.of(context)!.save),
                     ),
                   ],
                 ),

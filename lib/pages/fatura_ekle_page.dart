@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../models/fatura.dart';
 import '../models/cari_hesap.dart';
@@ -37,7 +38,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
       _tarihController.text = DateFormat('dd.MM.yyyy', 'tr_TR').format(_tarih);
       _vadeTarihi = widget.fatura!.vadeTarihi;
       if (_vadeTarihi != null) {
-        _vadeTarihiController.text = DateFormat('dd.MM.yyyy', 'tr_TR').format(_vadeTarihi!);
+        _vadeTarihiController.text = DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_vadeTarihi!);
       }
       _aciklamaController.text = widget.fatura!.aciklama ?? '';
       _kalemler = List.from(widget.fatura!.kalemler);
@@ -45,7 +46,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
         _yukleCariHesap(widget.fatura!.cariHesapId!);
       }
     } else {
-      _tarihController.text = DateFormat('dd.MM.yyyy', 'tr_TR').format(_tarih);
+      _tarihController.text = DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_tarih);
       _faturaNoController.text = _olusturFaturaNo();
     }
   }
@@ -53,7 +54,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
   String _olusturFaturaNo() {
     final tip = widget.tipi ?? FaturaTipi.satis;
     final prefix = tip == FaturaTipi.satis ? 'SF' : 'AF';
-    final tarih = DateFormat('yyyyMMdd', 'tr_TR').format(DateTime.now());
+    final tarih = DateFormat('yyyyMMdd', Localizations.localeOf(context).toString()).format(DateTime.now());
     return '$prefix-$tarih-001';
   }
 
@@ -77,7 +78,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
     if (secilen != null) {
       setState(() {
         _tarih = secilen;
-        _tarihController.text = DateFormat('dd.MM.yyyy', 'tr_TR').format(_tarih);
+        _tarihController.text = DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_tarih);
       });
     }
   }
@@ -93,7 +94,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
     if (secilen != null) {
       setState(() {
         _vadeTarihi = secilen;
-        _vadeTarihiController.text = DateFormat('dd.MM.yyyy', 'tr_TR').format(_vadeTarihi!);
+        _vadeTarihiController.text = DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_vadeTarihi!);
       });
     }
   }
@@ -139,7 +140,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
 
     if (_kalemler.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('En az bir kalem eklemelisiniz')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.mustAddAtLeastOneItem)),
       );
       return;
     }
@@ -171,14 +172,14 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
         await DatabaseHelper.instance.insertFatura(fatura);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Fatura başarıyla eklendi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.invoiceAdded)),
           );
         }
       } else {
         await DatabaseHelper.instance.updateFatura(fatura);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Fatura başarıyla güncellendi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.invoiceUpdated)),
           );
         }
       }
@@ -189,7 +190,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
         );
       }
     } finally {
@@ -204,11 +205,11 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
   @override
   Widget build(BuildContext context) {
     final tipi = widget.fatura?.tipi ?? widget.tipi ?? FaturaTipi.satis;
-    final tipiText = tipi == FaturaTipi.satis ? 'Satış' : 'Alış';
+    final tipiText = tipi == FaturaTipi.satis ? AppLocalizations.of(context)!.sales : AppLocalizations.of(context)!.purchase;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.fatura == null ? 'Yeni $tipiText Faturası' : '$tipiText Faturası Düzenle'),
+        title: Text(widget.fatura == null ? AppLocalizations.of(context)!.newInvoiceType(tipiText) : AppLocalizations.of(context)!.editInvoiceType(tipiText)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -221,13 +222,13 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                   children: [
                     TextFormField(
                       controller: _faturaNoController,
-                      decoration: const InputDecoration(
-                        labelText: 'Fatura No *',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: '${AppLocalizations.of(context)!.invoiceNo} *',
+                        border: const OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Fatura no zorunludur';
+                          return AppLocalizations.of(context)!.invoiceNoRequired;
                         }
                         return null;
                       },
@@ -238,16 +239,16 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                         Expanded(
                           child: TextFormField(
                             controller: _tarihController,
-                            decoration: const InputDecoration(
-                              labelText: 'Tarih *',
-                              border: OutlineInputBorder(),
-                              suffixIcon: Icon(Icons.calendar_today),
+                            decoration: InputDecoration(
+                              labelText: '${AppLocalizations.of(context)!.tableDate} *',
+                              border: const OutlineInputBorder(),
+                              suffixIcon: const Icon(Icons.calendar_today),
                             ),
                             readOnly: true,
                             onTap: _tarihSec,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Tarih seçiniz';
+                                return AppLocalizations.of(context)!.pleaseSelectDate;
                               }
                               return null;
                             },
@@ -257,10 +258,10 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                         Expanded(
                           child: TextFormField(
                             controller: _vadeTarihiController,
-                            decoration: const InputDecoration(
-                              labelText: 'Vade Tarihi',
-                              border: OutlineInputBorder(),
-                              suffixIcon: Icon(Icons.calendar_today),
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.dueDate,
+                              border: const OutlineInputBorder(),
+                              suffixIcon: const Icon(Icons.calendar_today),
                             ),
                             readOnly: true,
                             onTap: _vadeTarihiSec,
@@ -270,7 +271,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                     ),
                     const SizedBox(height: 16),
                     ListTile(
-                      title: Text(_seciliCariHesap?.unvan ?? 'Cari Hesap Seç'),
+                      title: Text(_seciliCariHesap?.unvan ?? AppLocalizations.of(context)!.selectCariAccount),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () async {
                         // Basit bir dialog ile cari hesap seçimi
@@ -279,7 +280,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                           final secilen = await showDialog<CariHesap>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text('Cari Hesap Seç'),
+                              title: Text(AppLocalizations.of(context)!.selectCariAccount),
                               content: SizedBox(
                                 width: double.maxFinite,
                                 child: ListView.builder(
@@ -311,9 +312,9 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _aciklamaController,
-                      decoration: const InputDecoration(
-                        labelText: 'Açıklama',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.description,
+                        border: const OutlineInputBorder(),
                       ),
                       maxLines: 2,
                     ),
@@ -321,24 +322,24 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Fatura Kalemleri',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        Text(
+                          AppLocalizations.of(context)!.invoiceItems,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         TextButton.icon(
                           onPressed: () {
                             _kalemEkle();
                           },
                           icon: const Icon(Icons.add),
-                          label: const Text('Kalem Ekle'),
+                          label: Text(AppLocalizations.of(context)!.addItem),
                         ),
                       ],
                     ),
                     if (_kalemler.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(32.0),
+                      Padding(
+                        padding: const EdgeInsets.all(32.0),
                         child: Center(
-                          child: Text('Henüz kalem eklenmemiş'),
+                          child: Text(AppLocalizations.of(context)!.noItemsYet),
                         ),
                       )
                     else
@@ -348,9 +349,9 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
-                            title: Text(kalem.stokAdi ?? 'Kalem ${index + 1}'),
+                            title: Text(kalem.stokAdi ?? '${AppLocalizations.of(context)!.item} ${index + 1}'),
                             subtitle: Text(
-                              'Miktar: ${kalem.miktar} ${kalem.birim} - Fiyat: ${kalem.birimFiyat.toStringAsFixed(2)} ₺',
+                              '${AppLocalizations.of(context)!.amountLabel}: ${kalem.miktar} ${kalem.birim} - ${AppLocalizations.of(context)!.priceLabel}: ${kalem.birimFiyat.toStringAsFixed(2)} ₺',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -383,7 +384,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Ara Toplam:'),
+                                Text('${AppLocalizations.of(context)!.subtotal}:'),
                                 Text(
                                   '${_getToplamTutar().toStringAsFixed(2)} ₺',
                                   style: const TextStyle(fontWeight: FontWeight.bold),
@@ -394,7 +395,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('KDV Toplam:'),
+                                Text('${AppLocalizations.of(context)!.vatTotal}:'),
                                 Text(
                                   '${_getToplamKdv().toStringAsFixed(2)} ₺',
                                   style: const TextStyle(fontWeight: FontWeight.bold),
@@ -405,9 +406,9 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Genel Toplam:',
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                Text(
+                                  '${AppLocalizations.of(context)!.grandTotal}:',
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 ),
                                 Text(
                                   '${_getGenelToplam().toStringAsFixed(2)} ₺',
@@ -429,7 +430,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('Kaydet'),
+                      child: Text(AppLocalizations.of(context)!.save),
                     ),
                   ],
                 ),
@@ -472,14 +473,14 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
           }
 
           return AlertDialog(
-            title: Text(index >= 0 ? 'Kalem Düzenle' : 'Yeni Kalem'),
+            title: Text(index >= 0 ? AppLocalizations.of(context)!.editItem : AppLocalizations.of(context)!.newItem),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: stokAdiController,
-                    decoration: const InputDecoration(labelText: 'Stok Adı', border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context)!.itemName, border: const OutlineInputBorder()),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -496,7 +497,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                       Expanded(
                         child: TextField(
                           controller: birimController,
-                          decoration: const InputDecoration(labelText: 'Birim', border: OutlineInputBorder()),
+                          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.unit, border: const OutlineInputBorder()),
                         ),
                       ),
                     ],
@@ -504,21 +505,21 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: birimFiyatController,
-                    decoration: const InputDecoration(labelText: 'Birim Fiyat', border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context)!.unitPrice, border: const OutlineInputBorder()),
                     keyboardType: TextInputType.numberWithOptions(decimal: true),
                     onChanged: (_) => hesapla(),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: kdvOraniController,
-                    decoration: const InputDecoration(labelText: 'KDV Oranı (%)', border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context)!.vatRatePercent, border: const OutlineInputBorder()),
                     keyboardType: TextInputType.numberWithOptions(decimal: true),
                     onChanged: (_) => hesapla(),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: aciklamaController,
-                    decoration: const InputDecoration(labelText: 'Açıklama', border: OutlineInputBorder()),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context)!.description, border: const OutlineInputBorder()),
                     maxLines: 2,
                   ),
                 ],
@@ -527,7 +528,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('İptal'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -563,7 +564,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
 
                   Navigator.pop(context);
                 },
-                child: const Text('Kaydet'),
+                child: Text(AppLocalizations.of(context)!.save),
               ),
             ],
           );

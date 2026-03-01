@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../models/cari_islem.dart';
 import '../models/cari_hesap.dart';
 import '../models/worker.dart';
@@ -78,10 +79,15 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
   }
 
   String _formatPara(double tutar) {
+    final locale = Localizations.localeOf(context).toString();
     try {
-      return NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(tutar);
+      return NumberFormat.currency(
+        locale: locale,
+        symbol: locale == 'tr' ? '₺' : '\$',
+        decimalDigits: 2,
+      ).format(tutar);
     } catch (e) {
-      return '₺${tutar.toStringAsFixed(2)}';
+      return (locale == 'tr' ? '₺' : '\$') + tutar.toStringAsFixed(2);
     }
   }
 
@@ -91,7 +97,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Cari Detay: ${widget.cariUnvan.toUpperCase()}'),
+          title: Text('${AppLocalizations.of(context)!.accountDetail}: ${widget.cariUnvan.toUpperCase()}'),
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh),
@@ -117,7 +123,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
                 children: [
                   Expanded(
                     child: _OzetKart(
-                      baslik: _cari?.isKasa == true ? 'TAHSİLAT (GİRİŞ):' : 'GELECEK (BORÇ):',
+                      baslik: _cari?.isKasa == true ? AppLocalizations.of(context)!.collectionIn_caps : AppLocalizations.of(context)!.incomingDebt_caps,
                       deger: _formatPara(_toplamlar['borc']!),
                       renk: Colors.white,
                     ),
@@ -125,7 +131,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
                   const SizedBox(width: 20),
                   Expanded(
                     child: _OzetKart(
-                      baslik: _cari?.isKasa == true ? 'ÖDEME (ÇIKIŞ):' : 'ÇIKACAK (ALACAK):',
+                      baslik: _cari?.isKasa == true ? AppLocalizations.of(context)!.paymentOut_caps : AppLocalizations.of(context)!.outgoingCredit_caps,
                       deger: _formatPara(_toplamlar['alacak']!),
                       renk: Colors.white,
                     ),
@@ -133,7 +139,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
                   const SizedBox(width: 20),
                   Expanded(
                     child: _OzetKart(
-                      baslik: _cari?.isKasa == true ? 'NET NAKİT (KASA):' : 'BAKİYE (NET NAKİT):',
+                      baslik: _cari?.isKasa == true ? AppLocalizations.of(context)!.netCashKasa_caps : AppLocalizations.of(context)!.netStatusBalance_caps,
                       deger: _formatPara(_toplamlar['bakiye']!),
                       renk: Colors.yellow,
                     ),
@@ -162,11 +168,11 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Excel çıktı özelliği yakında eklenecek')),
+                          SnackBar(content: Text(AppLocalizations.of(context)!.excelFeatureSoon)),
                         );
                       },
                       icon: const Icon(Icons.file_download, size: 18),
-                      label: const Text('Excel Çıktı Al'),
+                      label: Text(AppLocalizations.of(context)!.exportExcel),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
@@ -178,11 +184,11 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Yazdırma özelliği yakında eklenecek')),
+                          SnackBar(content: Text(AppLocalizations.of(context)!.printFeatureSoon)),
                         );
                       },
                       icon: const Icon(Icons.print, size: 18),
-                      label: const Text('Yazdır'),
+                      label: Text(AppLocalizations.of(context)!.print),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
@@ -198,7 +204,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
                         );
                       },
                       icon: const Icon(Icons.receipt, size: 18),
-                      label: const Text('Makbuz Oluştur'),
+                      label: Text(AppLocalizations.of(context)!.createReceipt),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0066CC),
                         foregroundColor: Colors.white,
@@ -214,7 +220,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
-                      child: const Text('Geri'),
+                      child: Text(AppLocalizations.of(context)!.back),
                     ),
                   ),
                 ],
@@ -235,7 +241,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
           children: [
             Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
-            Text('Henüz işlem eklenmemiş', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+            Text(AppLocalizations.of(context)!.noTransactionsYet, style: TextStyle(fontSize: 16, color: Colors.grey[600])),
           ],
         ),
       );
@@ -246,18 +252,18 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
       child: SingleChildScrollView(
         child: DataTable(
           headingRowColor: MaterialStateProperty.all(const Color(0xFFE6EBF5)),
-          columns: const [
-            DataColumn(label: Text('TARİH', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('AÇIKLAMA', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('İŞLEM TİPİ', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('BORÇ (G)', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('ALACAK (Ç)', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('BAKİYE', style: TextStyle(fontWeight: FontWeight.bold))),
+          columns: [
+            DataColumn(label: Text(AppLocalizations.of(context)!.tableDate, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(AppLocalizations.of(context)!.tableDescription, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(AppLocalizations.of(context)!.tableStatus, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(AppLocalizations.of(context)!.tableIncoming, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(AppLocalizations.of(context)!.tableOutgoing, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(AppLocalizations.of(context)!.balance, style: const TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: _islemler.map((islem) {
             return DataRow(
               cells: [
-                DataCell(Text(DateFormat('dd.MM.yyyy', 'tr_TR').format(islem.tarih))),
+                DataCell(Text(DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(islem.tarih))),
                 DataCell(Text(islem.displayAciklama)),
                 DataCell(Text(islem.hesapTipi)),
                 DataCell(Text(
@@ -286,7 +292,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
           children: [
             Icon(Icons.person_off_rounded, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
-            Text('Bu hesap bir personele bağlı değil', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+            Text(AppLocalizations.of(context)!.accountNotLinkedToWorker, style: TextStyle(fontSize: 16, color: Colors.grey[600])),
           ],
         ),
       );
@@ -299,7 +305,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
           children: [
             Icon(Icons.engineering_outlined, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
-            Text('Henüz çalışma kaydı bulunmuyor', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+            Text(AppLocalizations.of(context)!.noLaborRecordsYet, style: TextStyle(fontSize: 16, color: Colors.grey[600])),
           ],
         ),
       );
@@ -310,20 +316,20 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
       child: SingleChildScrollView(
         child: DataTable(
           headingRowColor: MaterialStateProperty.all(const Color(0xFFF0F2F5)),
-          columns: const [
-            DataColumn(label: Text('TARİH', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('PROJE', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('SAAT', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('MESAİ', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('DURUM', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('HAKEDİŞ', style: TextStyle(fontWeight: FontWeight.bold))),
+          columns: [
+            DataColumn(label: Text(AppLocalizations.of(context)!.tableDate, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(AppLocalizations.of(context)!.project, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(AppLocalizations.of(context)!.work_caps, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(AppLocalizations.of(context)!.overtime_caps, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(AppLocalizations.of(context)!.status, style: const TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text(AppLocalizations.of(context)!.hakedis_short, style: const TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: _workerPuantaj.map((p) {
             final cost = DatabaseHelper.instance.calculateLaborCost(p, _worker!);
             return DataRow(
               cells: [
-                DataCell(Text(DateFormat('dd.MM.yyyy', 'tr_TR').format(p.tarih))),
-                DataCell(Text(_projectNames[p.projectId] ?? 'Belirtilmemiş')),
+                DataCell(Text(DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(p.tarih))),
+                DataCell(Text(_projectNames[p.projectId] ?? AppLocalizations.of(context)!.notSpecified)),
                 DataCell(Text(p.saat.toString())),
                 DataCell(Text(p.mesai.toString())),
                 DataCell(Text(p.status.name.toUpperCase())),

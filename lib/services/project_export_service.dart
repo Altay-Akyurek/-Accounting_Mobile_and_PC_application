@@ -4,10 +4,9 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/hakedis.dart';
 import '../models/project.dart';
+import '../l10n/app_localizations.dart';
 
 class ProjectExportService {
-  static final NumberFormat _currencyFormat = NumberFormat.currency(locale: 'tr_TR', symbol: 'TL', decimalDigits: 2);
-
   static String _tr(String? text) {
     if (text == null) return '';
     var result = text;
@@ -18,8 +17,18 @@ class ProjectExportService {
     return result;
   }
 
-  static Future<void> exportHakedisPDF(Hakedis h, Project p) async {
+  static NumberFormat _getCurrencyFormat(AppLocalizations l10n) {
+    final locale = l10n.localeName;
+    return NumberFormat.currency(
+      locale: locale,
+      symbol: locale == 'tr' ? 'TL' : '\$',
+      decimalDigits: 2,
+    );
+  }
+
+  static Future<void> exportHakedisPDF(AppLocalizations l10n, Hakedis h, Project p) async {
     final pdf = pw.Document();
+    final currencyFormat = _getCurrencyFormat(l10n);
 
     pdf.addPage(
       pw.Page(
@@ -29,13 +38,13 @@ class ProjectExportService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              _buildHeader(_tr('HAKEDİŞ BELGESİ'), _tr(p.ad)),
+              _buildHeader(_tr(l10n.hakedisDocument_caps), _tr(p.ad)),
               pw.SizedBox(height: 30),
-              _buildInfoSection(h, p),
+              _buildInfoSection(l10n, h, p),
               pw.SizedBox(height: 40),
-              _buildDetailTable(h),
+              _buildDetailTable(l10n, currencyFormat, h),
               pw.Spacer(),
-              _buildFooter(h.tarih),
+              _buildFooter(l10n, h.tarih),
             ],
           );
         },
@@ -48,8 +57,9 @@ class ProjectExportService {
     );
   }
 
-  static Future<void> exportProjectHakedislerPDF(Project p, List<Hakedis> hakedisler) async {
+  static Future<void> exportProjectHakedislerPDF(AppLocalizations l10n, Project p, List<Hakedis> hakedisler) async {
     final pdf = pw.Document();
+    final currencyFormat = _getCurrencyFormat(l10n);
 
     double toplamBrut = 0;
     double toplamNet = 0;
@@ -63,23 +73,23 @@ class ProjectExportService {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
         build: (context) => [
-          _buildHeader(_tr('PROJE HAKEDİŞ RAPORU'), _tr(p.ad)),
+          _buildHeader(_tr(l10n.projectHakedisReport_caps), _tr(p.ad)),
           pw.SizedBox(height: 20),
-          _buildSummaryCard(toplamBrut, toplamNet, hakedisler.length),
+          _buildSummaryCard(l10n, currencyFormat, toplamBrut, toplamNet, hakedisler.length),
           pw.SizedBox(height: 20),
           pw.TableHelper.fromTextArray(
             headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
             cellStyle: const pw.TextStyle(fontSize: 9),
             headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
-            headers: [_tr('BAŞLIK'), _tr('TARİH'), _tr('BRÜT TUTAR'), _tr('KESİNTİLER'), _tr('NET TUTAR'), _tr('DURUM')],
+            headers: [_tr(l10n.titleLabel), _tr(l10n.date), _tr(l10n.brutAmount_caps), _tr(l10n.deductions), _tr(l10n.netAccrual_caps), _tr(l10n.status)],
             data: hakedisler.map((h) {
               return [
                 _tr(h.baslik),
                 DateFormat('dd.MM.yyyy').format(h.tarih),
-                _currencyFormat.format(h.tutar),
-                _currencyFormat.format(h.stopajTutari + h.teminatTutari),
-                _currencyFormat.format(h.netTutar),
-                _tr(h.durum == HakedisDurum.tahsilEdildi ? 'TAHSİL EDİLDİ' : 'BEKLİYOR'),
+                currencyFormat.format(h.tutar),
+                currencyFormat.format(h.stopajTutari + h.teminatTutari),
+                currencyFormat.format(h.netTutar),
+                _tr(h.durum == HakedisDurum.tahsilEdildi ? l10n.collected_caps : l10n.pending_caps),
               ];
             }).toList(),
           ),
@@ -112,7 +122,7 @@ class ProjectExportService {
     );
   }
 
-  static pw.Widget _buildInfoSection(Hakedis h, Project p) {
+  static pw.Widget _buildInfoSection(AppLocalizations l10n, Hakedis h, Project p) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -120,10 +130,10 @@ class ProjectExportService {
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              _infoRow(_tr('Proje:'), _tr(p.ad)),
-              _infoRow(_tr('Hakediş:'), _tr(h.baslik)),
-              _infoRow(_tr('Tarih:'), DateFormat('dd.MM.yyyy').format(h.tarih)),
-              _infoRow(_tr('Durum:'), _tr(h.durum == HakedisDurum.tahsilEdildi ? 'TAHSİL EDİLDİ' : 'BEKLİYOR')),
+              _infoRow('${l10n.project}:', _tr(p.ad)),
+              _infoRow('${l10n.hakedis_short}:', _tr(h.baslik)),
+              _infoRow('${l10n.date}:', DateFormat('dd.MM.yyyy').format(h.tarih)),
+              _infoRow('${l10n.status}:', _tr(h.durum == HakedisDurum.tahsilEdildi ? l10n.collected_caps : l10n.pending_caps)),
             ],
           ),
         ),
@@ -131,7 +141,7 @@ class ProjectExportService {
           child: pw.Column(
              crossAxisAlignment: pw.CrossAxisAlignment.start,
              children: [
-               pw.Text(_tr('AÇIKLAMA:'), style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+               pw.Text('${l10n.description}:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
                pw.SizedBox(height: 4),
                pw.Text(_tr(h.aciklama ?? '-'), style: pw.TextStyle(fontSize: 10, fontStyle: pw.FontStyle.italic)),
              ],
@@ -146,23 +156,23 @@ class ProjectExportService {
       padding: const pw.EdgeInsets.symmetric(vertical: 2),
       child: pw.Row(
         children: [
-          pw.SizedBox(width: 60, child: pw.Text(label, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+          pw.SizedBox(width: 70, child: pw.Text(label, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
           pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
         ],
       ),
     );
   }
 
-  static pw.Widget _buildDetailTable(Hakedis h) {
+  static pw.Widget _buildDetailTable(AppLocalizations l10n, NumberFormat currencyFormat, Hakedis h) {
     return pw.TableHelper.fromTextArray(
       headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-      headers: [_tr('KALEM'), _tr('ORAN'), _tr('TUTAR')],
+      headers: [_tr(l10n.item), _tr(l10n.rate), _tr(l10n.amountLabel)],
       data: [
-        [_tr('BRÜT TUTAR'), '-', _currencyFormat.format(h.tutar)],
-        [_tr('KDV'), '%${h.kdvOrani.toStringAsFixed(1)}', '+ ${_currencyFormat.format(h.kdvTutari)}'],
-        [_tr('STOPAJ'), '%${h.stopajOrani.toStringAsFixed(1)}', '- ${_currencyFormat.format(h.stopajTutari)}'],
-        [_tr('TEMİNAT'), '%${h.teminatOrani.toStringAsFixed(1)}', '- ${_currencyFormat.format(h.teminatTutari)}'],
-        [_tr('NET TAHAKKUK'), '-', _currencyFormat.format(h.netTutar)],
+        [_tr(l10n.brutAmount_caps), '-', currencyFormat.format(h.tutar)],
+        [_tr(l10n.vat), '%${h.kdvOrani.toStringAsFixed(1)}', '+ ${currencyFormat.format(h.kdvTutari)}'],
+        [_tr(l10n.stopaj), '%${h.stopajOrani.toStringAsFixed(1)}', '- ${currencyFormat.format(h.stopajTutari)}'],
+        [_tr(l10n.teminat), '%${h.teminatOrani.toStringAsFixed(1)}', '- ${currencyFormat.format(h.teminatTutari)}'],
+        [_tr(l10n.netAccrual_caps), '-', currencyFormat.format(h.netTutar)],
       ],
       columnWidths: {
         0: const pw.FlexColumnWidth(3),
@@ -174,7 +184,7 @@ class ProjectExportService {
     );
   }
 
-  static pw.Widget _buildSummaryCard(double brut, double net, int count) {
+  static pw.Widget _buildSummaryCard(AppLocalizations l10n, NumberFormat currencyFormat, double brut, double net, int count) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
       decoration: pw.BoxDecoration(
@@ -184,9 +194,9 @@ class ProjectExportService {
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
         children: [
-          _summaryItem(_tr('Adet'), count.toString()),
-          _summaryItem(_tr('Toplam Brüt'), _currencyFormat.format(brut)),
-          _summaryItem(_tr('Toplam Net'), _currencyFormat.format(net)),
+          _summaryItem(l10n.quantity, count.toString()),
+          _summaryItem(l10n.totalBrut, currencyFormat.format(brut)),
+          _summaryItem(l10n.totalNet, currencyFormat.format(net)),
         ],
       ),
     );
@@ -201,15 +211,15 @@ class ProjectExportService {
     );
   }
 
-  static pw.Widget _buildFooter(DateTime date) {
+  static pw.Widget _buildFooter(AppLocalizations l10n, DateTime date) {
     return pw.Column(
       children: [
         pw.Divider(color: PdfColors.grey300),
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text(_tr('Rapor Tarihi: ${DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now())}'), style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-            pw.Text(_tr('Belge Tarihi: ${DateFormat('dd.MM.yyyy').format(date)}'), style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+            pw.Text(_tr(l10n.reportDateLabel(DateFormat('dd.MM.yyyy HH:mm').format(DateTime.now()))), style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+            pw.Text(_tr(l10n.documentDateLabel(DateFormat('dd.MM.yyyy').format(date))), style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
           ],
         ),
       ],

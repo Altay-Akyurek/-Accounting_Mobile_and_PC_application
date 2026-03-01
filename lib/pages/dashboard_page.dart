@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/database_helper.dart';
 import '../services/auth_service.dart';
-import 'raporlar_page.dart';
+import '../services/premium_manager.dart';
+import '../services/language_service.dart';
+import '../models/project.dart';
+import '../l10n/app_localizations.dart';
 import 'muhasebe_sayfasi.dart';
+import 'raporlar_page.dart';
 import 'hesap_kesim_rapor_page.dart';
-import 'fatura_liste_page.dart';
-import 'stok_liste_page.dart';
 import 'worker_analysis_page.dart';
 import 'portfolio_page.dart';
-import '../models/project.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -75,9 +80,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   String _formatPara(double tutar) {
+    final locale = Localizations.localeOf(context).toString();
     return NumberFormat.currency(
-      locale: 'tr_TR',
-      symbol: '₺',
+      locale: locale,
+      symbol: locale == 'tr' ? '₺' : '\$',
       decimalDigits: 0,
     ).format(tutar);
   }
@@ -87,17 +93,17 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        title: const Text('Muhasebe Asistanı'),
+        title: Text(AppLocalizations.of(context)!.appTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: _yukleOzetBilgiler,
-            tooltip: 'Yenile',
+            tooltip: AppLocalizations.of(context)!.current,
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Color(0xFFE71D36)),
             onPressed: () => AuthService().signOut(),
-            tooltip: 'Çıkış Yap',
+            tooltip: AppLocalizations.of(context)!.logout,
           ),
           const SizedBox(width: 8),
         ],
@@ -146,7 +152,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   _buildDrawerItem(
                     icon: Icons.analytics_rounded,
-                    label: 'İşçi Analizi',
+                    label: AppLocalizations.of(context)!.workerAnalysis,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -157,7 +163,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   _buildDrawerItem(
                     icon: Icons.cases_rounded,
-                    label: 'Portföyümüz',
+                    label: AppLocalizations.of(context)!.ourPortfolio,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -168,16 +174,44 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   _buildDrawerItem(
                     icon: Icons.engineering_rounded,
-                    label: 'İşçilik Özeti',
+                    label: AppLocalizations.of(context)!.laborSummary,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.pushNamed(context, '/labor_summary');
                     },
                   ),
+                  _buildDrawerItem(
+                    icon: Icons.stars_rounded,
+                    label: AppLocalizations.of(context)!.premiumPackages,
+                    color: const Color(0xFF2EC4B6),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/premium');
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.language_rounded,
+                    label: AppLocalizations.of(context)!.language,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showLanguageDialog();
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.privacy_tip_rounded,
+                    label: AppLocalizations.of(context)!.privacyPolicy,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      final url = Uri.parse('https://altay-akyurek.github.io/-Accounting_Mobile_and_PC_application/privacy_policy.html');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      }
+                    },
+                  ),
                   const Divider(indent: 20, endIndent: 20),
                   _buildDrawerItem(
                     icon: Icons.logout_rounded,
-                    label: 'Çıkış Yap',
+                    label: AppLocalizations.of(context)!.logout,
                     color: const Color(0xFFE71D36),
                     onTap: () {
                       Navigator.pop(context);
@@ -212,9 +246,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     _buildTopOzet(),
                     const SizedBox(height: 32),
-                    const Text(
-                      'HIZLI ERİŞİM',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.quickAccess,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF011627),
                         fontSize: 13,
@@ -224,9 +258,21 @@ class _DashboardPageState extends State<DashboardPage> {
                     const SizedBox(height: 16),
                     _buildMainActions(),
                     const SizedBox(height: 32),
-                    const Text(
-                      'DURUM ANALİZİ',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.bottleneckAnalysis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF011627),
+                        fontSize: 13,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildPremiumCharts(),
+                    const SizedBox(height: 32),
+                    Text(
+                      AppLocalizations.of(context)!.statusAnalysis,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF011627),
                         fontSize: 13,
@@ -236,9 +282,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     const SizedBox(height: 16),
                     _buildStatusGrid(),
                     const SizedBox(height: 32),
-                    const Text(
-                      'EN KARLI PROJELER',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.profitableProjects,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF011627),
                         fontSize: 13,
@@ -248,9 +294,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     const SizedBox(height: 16),
                     _buildTopProjects(),
                     const SizedBox(height: 32),
-                    const Text(
-                      'PERFORMANS GÖSTERGESİ',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.performanceIndicator,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF011627),
                         fontSize: 13,
@@ -263,6 +309,214 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
             ),
+      bottomNavigationBar: const BannerAdWidget(),
+    );
+  }
+
+  Widget _buildPremiumCharts() {
+    final isPremium = PremiumManager.instance.isPremium;
+
+    return Stack(
+      children: [
+        Column(
+          children: [
+            _buildGelirGiderChart(),
+            const SizedBox(height: 16),
+            _buildProjeKarlilikChart(),
+          ],
+        ),
+        if (!isPremium)
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: Container(
+                  color: Colors.white.withOpacity(0.05),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF011627),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF011627).withOpacity(0.3),
+                                blurRadius: 20,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.lock_rounded, color: Color(0xFF2EC4B6), size: 32),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          AppLocalizations.of(context)!.premiumAnalysis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                            color: Color(0xFF011627),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pushNamed(context, '/premium'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2EC4B6),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          ),
+                          child: Text(AppLocalizations.of(context)!.unlock),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildGelirGiderChart() {
+    double gelir = _ozetBilgiler['toplamGelir']!;
+    double gider = _ozetBilgiler['toplamGider']!;
+    double total = gelir + gider;
+
+    return Container(
+      height: 220,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: PieChart(
+              PieChartData(
+                sectionsSpace: 4,
+                centerSpaceRadius: 40,
+                sections: [
+                  PieChartSectionData(
+                    value: gelir,
+                    title: '%${total > 0 ? (gelir / total * 100).toStringAsFixed(0) : 0}',
+                    color: const Color(0xFF2EC4B6),
+                    radius: 25,
+                    titleStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+                  ),
+                  PieChartSectionData(
+                    value: gider,
+                    title: '%${total > 0 ? (gider / total * 100).toStringAsFixed(0) : 0}',
+                    color: const Color(0xFFE71D36),
+                    radius: 25,
+                    titleStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 24),
+          Expanded(
+            flex: 3,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.incomeAndExpense.toUpperCase(),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+                ),
+                const SizedBox(height: 16),
+                _LegendItem(label: AppLocalizations.of(context)!.netIncomes, color: const Color(0xFF2EC4B6)),
+                const SizedBox(height: 8),
+                _LegendItem(label: AppLocalizations.of(context)!.totalExpenses, color: const Color(0xFFE71D36)),
+                const SizedBox(height: 16),
+                Text(
+                  _formatPara(_ozetBilgiler['kar']!),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF011627)),
+                ),
+                Text(AppLocalizations.of(context)!.netCashStatus.toUpperCase(), style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProjeKarlilikChart() {
+    return Container(
+      height: 220,
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black.withOpacity(0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+           Text(
+            AppLocalizations.of(context)!.top3ProfitableProjects.toUpperCase(),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: _topProjeler.isEmpty ? 100 : _topProjeler.map((e) => e['kar'] as double).reduce((a, b) => a > b ? a : b) * 1.2,
+                barTouchData: BarTouchData(enabled: false),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        int index = value.toInt();
+                        if (index < _topProjeler.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              _topProjeler[index]['projeAd'].toString().substring(0, 3).toUpperCase(),
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                            ),
+                          );
+                        }
+                        return const SizedBox();
+                      },
+                    ),
+                  ),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                gridData: const FlGridData(show: false),
+                borderData: FlBorderData(show: false),
+                barGroups: List.generate(_topProjeler.length, (index) {
+                  return BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: _topProjeler[index]['kar'],
+                        color: const Color(0xFF2EC4B6),
+                        width: 20,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ],
+                  );
+                }),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -287,9 +541,9 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'NET NAKİT (KASA)',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.netCash,
+                style: const TextStyle(
                   color: Colors.white70,
                   fontWeight: FontWeight.w900,
                   fontSize: 11,
@@ -305,9 +559,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: const Color(0xFF2EC4B6),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'GÜNCEL',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.current,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
@@ -330,13 +584,13 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             children: [
               _MiniStat(
-                label: 'TAHSİLAT',
+                label: AppLocalizations.of(context)!.totalCollection,
                 value: _formatPara(_ozetBilgiler['toplamGelir']!),
                 color: const Color(0xFF2EC4B6),
               ),
               const SizedBox(width: 24),
               _MiniStat(
-                label: 'KALAN BORÇ',
+                label: AppLocalizations.of(context)!.remainingDebt,
                 value: _formatPara(_ozetBilgiler['toplamGider']!),
                 color: const Color(0xFFE71D36),
               ),
@@ -354,7 +608,7 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             _QuickAction(
               icon: Icons.account_balance_wallet_rounded,
-              label: 'Muhasebe',
+              label: AppLocalizations.of(context)!.accounting,
               color: const Color(0xFF011627),
               onTap: () async {
                 await Navigator.push(
@@ -367,7 +621,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(width: 16),
             _QuickAction(
               icon: Icons.pie_chart_rounded,
-              label: 'Raporlar',
+              label: AppLocalizations.of(context)!.reports,
               color: const Color(0xFF011627),
               onTap: () async {
                 await Navigator.push(
@@ -384,7 +638,7 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             _QuickAction(
               icon: Icons.engineering_rounded,
-              label: 'Personel',
+              label: AppLocalizations.of(context)!.personnel,
               color: const Color(0xFF011627),
               onTap: () async {
                 await Navigator.pushNamed(context, '/labor');
@@ -394,7 +648,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(width: 16),
             _QuickAction(
               icon: Icons.auto_graph_rounded,
-              label: 'Hesap Kesimi',
+              label: AppLocalizations.of(context)!.settlement,
               color: const Color(0xFF2EC4B6),
               onTap: () async {
                 await Navigator.push(
@@ -422,13 +676,13 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       children: [
         _StatusCard(
-          baslik: 'Açık Projeler',
+          baslik: AppLocalizations.of(context)!.openedProjects,
           deger: _ozetBilgiler['acikProjeler']!.toInt().toString(),
           icon: Icons.architecture_rounded,
           onTap: () => Navigator.pushNamed(context, '/projects'),
         ),
         _StatusCard(
-          baslik: 'Toplam Cari',
+          baslik: AppLocalizations.of(context)!.totalCurrentAccounts,
           deger: _ozetBilgiler['toplamCari']!.toInt().toString(),
           icon: Icons.business_rounded,
           onTap: () => Navigator.pushNamed(context, '/cari_liste'),
@@ -457,10 +711,10 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Gelir / Gider Dengesi',
-                  style: TextStyle(
+                  AppLocalizations.of(context)!.incomeExpenseBalance,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 14,
                     color: Color(0xFF011627),
@@ -470,7 +724,7 @@ class _DashboardPageState extends State<DashboardPage> {
               const SizedBox(width: 8),
               FittedBox(
                 child: Text(
-                  '%${(profitRatio * 100).toStringAsFixed(1)} Pozitif',
+                  '${(profitRatio * 100).toStringAsFixed(1)} ${AppLocalizations.of(context)!.positive}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 13,
@@ -496,8 +750,8 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _LegendItem(label: 'Gelir Payı', color: const Color(0xFF2EC4B6)),
-              _LegendItem(label: 'Gider Payı', color: const Color(0xFFE71D36)),
+              _LegendItem(label: AppLocalizations.of(context)!.incomeShare, color: const Color(0xFF2EC4B6)),
+              _LegendItem(label: AppLocalizations.of(context)!.expenseShare, color: const Color(0xFFE71D36)),
             ],
           ),
         ],
@@ -515,10 +769,10 @@ class _DashboardPageState extends State<DashboardPage> {
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.black.withOpacity(0.05)),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
-            'Henüz kârlılık verisi olan proje yok.',
-            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            AppLocalizations.of(context)!.noProfitData,
+            style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
           ),
         ),
       );
@@ -577,7 +831,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   child: FittedBox(
                     child: Text(
-                      (proj['durum'] as String? ?? 'Aktif').toUpperCase(),
+                      (proj['durum'] == ProjectStatus.tamamlandi.name
+                              ? AppLocalizations.of(context)!.completed
+                              : proj['durum'] == ProjectStatus.aktif.name
+                                  ? AppLocalizations.of(context)!.active
+                                  : AppLocalizations.of(context)!.pending)
+                          .toUpperCase(),
                       style: TextStyle(
                         fontSize: 8,
                         fontWeight: FontWeight.bold,
@@ -632,6 +891,37 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+    );
+  }
+
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.selectLanguage),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Text('🇹🇷', style: TextStyle(fontSize: 24)),
+              title: Text(AppLocalizations.of(context)!.turkish),
+              onTap: () {
+                LanguageService.instance.changeLanguage('tr');
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Text('🇺🇸', style: TextStyle(fontSize: 24)),
+              title: Text(AppLocalizations.of(context)!.english),
+              onTap: () {
+                LanguageService.instance.changeLanguage('en');
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

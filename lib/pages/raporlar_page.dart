@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../services/database_helper.dart';
 import '../models/gelir_gider.dart';
 import '../models/hakedis.dart';
 import '../models/project.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class RaporlarPage extends StatefulWidget {
   const RaporlarPage({super.key});
@@ -43,7 +45,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
         _projeler = projeler;
       });
     } catch (e) {
-      print('Proje yükleme hatası: $e');
+      debugPrint('Proje yükleme hatası: $e');
     }
   }
 
@@ -68,7 +70,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
       if (mounted)
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
+        ).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')));
       setState(() => _isLoading = false);
     }
   }
@@ -107,9 +109,10 @@ class _RaporlarPageState extends State<RaporlarPage> {
   }
 
   String _formatPara(double tutar) {
+    final locale = Localizations.localeOf(context).toString();
     return NumberFormat.currency(
-      locale: 'tr_TR',
-      symbol: '₺',
+      locale: locale,
+      symbol: locale == 'tr' ? '₺' : '\$',
       decimalDigits: 0,
     ).format(tutar);
   }
@@ -120,7 +123,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        title: const Text('Yönetici Kontrol Paneli'),
+        title: Text(AppLocalizations.of(context)!.adminDashboard),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -142,9 +145,9 @@ class _RaporlarPageState extends State<RaporlarPage> {
                   const SizedBox(height: 32),
                   _buildExecutiveSummary(),
                   const SizedBox(height: 32),
-                  const Text(
-                    'PERFORMANS GÖSTERGESİ',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.performanceIndicator,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       color: Color(0xFF011627),
                       fontSize: 13,
@@ -154,9 +157,9 @@ class _RaporlarPageState extends State<RaporlarPage> {
                   const SizedBox(height: 16),
                   _buildPerformanceIndicator(),
                   const SizedBox(height: 32),
-                  const Text(
-                    'PROJE BAZLI PERFORMANS',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.projectBasedPerformance,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       color: Color(0xFF011627),
                       fontSize: 13,
@@ -168,6 +171,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
                 ],
               ),
             ),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 
@@ -182,9 +186,9 @@ class _RaporlarPageState extends State<RaporlarPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Finansal Analiz',
-                    style: TextStyle(
+                   Text(
+                    AppLocalizations.of(context)!.financialAnalysis,
+                    style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
                       color: Color(0xFF011627),
@@ -192,7 +196,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
                     ),
                   ),
                   Text(
-                    '${DateFormat('MMMM yyyy', 'tr_TR').format(_baslangicTarihi!)} dönemi raporu',
+                    '${DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(_baslangicTarihi!)} ${AppLocalizations.of(context)!.summary}', // simplified
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontWeight: FontWeight.w500,
@@ -227,7 +231,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
       physics: const BouncingScrollPhysics(),
       child: Row(
         children: [
-          _buildFilterChip(null, 'Tüm Projeler'),
+          _buildFilterChip(null, AppLocalizations.of(context)!.allProjects),
           ..._projeler.map((p) => _buildFilterChip(p.id, p.ad)),
         ],
       ),
@@ -276,7 +280,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
         Row(
           children: [
             _SummaryCard(
-              title: 'TOPLAM GELİR',
+              title: AppLocalizations.of(context)!.totalCollection.toUpperCase(),
               value: _formatPara(_genelOzet['gelir']!),
               icon: Icons.trending_up_rounded,
               color: const Color(0xFF2EC4B6),
@@ -284,7 +288,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
             ),
             const SizedBox(width: 16),
             _SummaryCard(
-              title: 'NET KAR',
+              title: AppLocalizations.of(context)!.netProfit.toUpperCase(),
               value: _formatPara(_genelOzet['kar']!),
               icon: Icons.account_balance_rounded,
               color: const Color(0xFF011627),
@@ -293,9 +297,9 @@ class _RaporlarPageState extends State<RaporlarPage> {
           ],
         ),
         const SizedBox(height: 32),
-        const Text(
-          'GİDER KIRILIMI',
-          style: TextStyle(
+         Text(
+          AppLocalizations.of(context)!.expenseBreakdown,
+          style: const TextStyle(
             fontWeight: FontWeight.w900,
             color: Color(0xFF011627),
             fontSize: 13,
@@ -331,7 +335,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    entry.key,
+                    _translateCategory(entry.key, context),
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
@@ -395,7 +399,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '$worked Çalışma + $leave İzin + $sunday Pazar',
+                          '$worked ${AppLocalizations.of(context)!.normal} + $leave ${AppLocalizations.of(context)!.onLeave} + $sunday ${AppLocalizations.of(context)!.sunday}',
                           style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
                         ),
                       ],
@@ -415,13 +419,31 @@ class _RaporlarPageState extends State<RaporlarPage> {
     );
   }
 
+  String _translateCategory(String key, BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (key) {
+      case 'Malzeme/Hizmet':
+        return l10n.materialService;
+      case 'İşçilik (Ödenen)':
+        return l10n.laborPaid;
+      case 'İşçilik (Bekleyen)':
+        return l10n.pendingWorkerPayment;
+      case 'Cari Ödemeler':
+        return l10n.accountPayments;
+      case 'Kasa Çıkışları':
+        return l10n.cashOutflows;
+      default:
+        return key;
+    }
+  }
+
   Widget _buildProjectList() {
     if (_projeRaporlari.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 40),
           child: Text(
-            'Henüz proje verisi bulunmuyor.',
+            AppLocalizations.of(context)!.noProjectsDefined,
             style: TextStyle(color: Colors.grey.shade400),
           ),
         ),
@@ -560,7 +582,7 @@ class _ProjectReportItem extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Karlılık Oranı: %${(progress * 100).toStringAsFixed(1)}',
+                      '${AppLocalizations.of(context)!.profitabilityRate}: %${(progress * 100).toStringAsFixed(1)}',
                       style: TextStyle(
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.w600,
@@ -575,8 +597,8 @@ class _ProjectReportItem extends StatelessWidget {
                 children: [
                   Text(
                     NumberFormat.currency(
-                      locale: 'tr_TR',
-                      symbol: '₺',
+                      locale: Localizations.localeOf(context).toString(),
+                      symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : '\$',
                       decimalDigits: 0,
                     ).format(report['kar']),
                     style: TextStyle(
@@ -587,8 +609,8 @@ class _ProjectReportItem extends StatelessWidget {
                       fontSize: 18,
                     ),
                   ),
-                  const Text(
-                    'NET KAR',
+                   Text(
+                    AppLocalizations.of(context)!.netProfit.toUpperCase(),
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
@@ -609,7 +631,7 @@ class _ProjectReportItem extends StatelessWidget {
             children: [
               Expanded(
                 child: _MiniValue(
-                  label: 'GELİR',
+                  label: AppLocalizations.of(context)!.collected_caps.substring(0, 5), // hacky limit
                   value: report['gelir'] ?? 0.0,
                   color: const Color(0xFF2EC4B6),
                 ),
@@ -617,7 +639,7 @@ class _ProjectReportItem extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _MiniValue(
-                  label: 'GİDER',
+                  label: AppLocalizations.of(context)!.expenses.toUpperCase(),
                   value: report['gider'] ?? 0.0,
                   color: const Color(0xFFE71D36),
                 ),
@@ -635,8 +657,8 @@ class _ProjectReportItem extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Bekleyen İşçi Ödemesi:',
+                  Text(
+                    '${AppLocalizations.of(context)!.pendingWorkerPayment}:',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -645,8 +667,8 @@ class _ProjectReportItem extends StatelessWidget {
                   ),
                   Text(
                     NumberFormat.currency(
-                      locale: 'tr_TR',
-                      symbol: '₺',
+                      locale: Localizations.localeOf(context).toString(),
+                      symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : '\$',
                       decimalDigits: 0,
                     ).format(report['bekleyenIscilik']),
                     style: const TextStyle(
@@ -747,8 +769,8 @@ class _MiniValue extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           NumberFormat.currency(
-            locale: 'tr_TR',
-            symbol: '₺',
+            locale: Localizations.localeOf(context).toString(),
+            symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : '\$',
             decimalDigits: 0,
           ).format(value),
           style: const TextStyle(
@@ -808,9 +830,9 @@ extension on _RaporlarPageState {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Dönem Gelir / Gider Dengesi',
+                  AppLocalizations.of(context)!.periodIncomeExpenseBalance,
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 14,
@@ -821,7 +843,7 @@ extension on _RaporlarPageState {
               const SizedBox(width: 8),
               FittedBox(
                 child: Text(
-                  '%${(profitRatio * 100).toStringAsFixed(1)} Pozitif',
+                  AppLocalizations.of(context)!.xPercentPositive((profitRatio * 100).toStringAsFixed(1)),
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 13,
@@ -847,8 +869,8 @@ extension on _RaporlarPageState {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _LegendItem(label: 'Gelir Payı', color: const Color(0xFF2EC4B6)),
-              _LegendItem(label: 'Gider Payı', color: const Color(0xFFE71D36)),
+              _LegendItem(label: AppLocalizations.of(context)!.incomeShare, color: const Color(0xFF2EC4B6)),
+              _LegendItem(label: AppLocalizations.of(context)!.expenseShare, color: const Color(0xFFE71D36)),
             ],
           ),
         ],

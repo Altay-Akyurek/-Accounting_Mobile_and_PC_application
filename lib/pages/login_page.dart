@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
+import '../l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,7 +21,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _handleAuth() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen tüm alanları doldurun')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.fillAllFields)),
       );
       return;
     }
@@ -48,8 +49,8 @@ class _LoginPageState extends State<LoginPage> {
         if (response.user != null && response.session == null && 
             response.user!.identities != null && response.user!.identities!.isEmpty) {
            ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Bu hesapla daha önce kayıt yapılmış.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.accountAlreadyRegistered),
               backgroundColor: Colors.orange,
             ),
           );
@@ -71,19 +72,19 @@ class _LoginPageState extends State<LoginPage> {
         // Giriş hatası kontrolü (E-posta veya şifre yanlış)
         if (lowerMessage.contains('invalid login credentials') || 
             lowerMessage.contains('invalid email or password')) {
-          message = 'E-posta adresi veya şifre hatalı.';
+          message = AppLocalizations.of(context)!.invalidCredentials;
         }
         // Mükerrer kayıt hatası kontrolü
         else if (lowerMessage.contains('user already registered') || 
             lowerMessage.contains('already exists') ||
             (e is AuthException && (e.message.toLowerCase().contains('already registered') || e.message.toLowerCase().contains('already exists')))) {
-          message = 'Bu hesapla daha önce kayıt yapılmış.';
+          message = AppLocalizations.of(context)!.accountAlreadyRegistered;
         } else if (lowerMessage.contains('email not confirmed')) {
           _showEmailNotConfirmedDialog();
           return;
         } else if (lowerMessage.contains('email rate limit exceeded') || 
                    lowerMessage.contains('over_email_send_rate_limit')) {
-          message = 'Çok fazla e-posta gönderim denemesi yaptınız. Lütfen bir süre sonra tekrar deneyin.';
+          message = AppLocalizations.of(context)!.rateLimitExceeded;
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -105,19 +106,19 @@ class _LoginPageState extends State<LoginPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         icon: const Icon(Icons.mark_email_read_rounded, size: 60, color: Color(0xFF2EC4B6)),
-        title: const Text('Kayıt Başarılı!', style: TextStyle(fontWeight: FontWeight.w900)),
-        content: const Column(
+        title: Text(AppLocalizations.of(context)!.registrationSuccess, style: const TextStyle(fontWeight: FontWeight.w900)),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Hesabınızı oluşturduk! Lütfen e-posta adresinize gönderdiğimiz onay linkine tıklayın.',
+              AppLocalizations.of(context)!.registrationSuccessDetail,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
-              'Onaylamadan giriş yapamazsınız.',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+              AppLocalizations.of(context)!.registrationInstruction,
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
               textAlign: TextAlign.center,
             ),
           ],
@@ -127,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Tamam, Anladım'),
+              child: Text(AppLocalizations.of(context)!.okIUnderstand),
             ),
           ),
         ],
@@ -141,15 +142,15 @@ class _LoginPageState extends State<LoginPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         icon: const Icon(Icons.warning_amber_rounded, size: 60, color: Colors.orange),
-        title: const Text('E-posta Onayı Gerekli', style: TextStyle(fontWeight: FontWeight.w900)),
-        content: const Text(
-          'Giriş yapabilmek için e-posta adresinizi onaylamanız gerekiyor. Lütfen gelen kutunuzu (ve gereksiz kutusunu) kontrol edin.',
+        title: Text(AppLocalizations.of(context)!.emailNotConfirmed, style: const TextStyle(fontWeight: FontWeight.w900)),
+        content: Text(
+          AppLocalizations.of(context)!.emailNotConfirmedDetail,
           textAlign: TextAlign.center,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Kapat'),
+            child: Text(AppLocalizations.of(context)!.close),
           ),
         ],
       ),
@@ -160,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen şifre sıfırlama için e-posta adresinizi girin')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.fillAllFields)),
       );
       return;
     }
@@ -174,9 +175,9 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             icon: const Icon(Icons.mark_email_read_rounded, size: 60, color: Color(0xFF2EC4B6)),
-            title: const Text('E-posta Gönderildi', style: TextStyle(fontWeight: FontWeight.w900)),
-            content: const Text(
-              'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi. Lütfen kontrol edin.',
+            title: Text(AppLocalizations.of(context)!.emailSent, style: const TextStyle(fontWeight: FontWeight.w900)),
+            content: Text(
+              AppLocalizations.of(context)!.resetPasswordEmailSent,
               textAlign: TextAlign.center,
             ),
             actions: [
@@ -184,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Tamam'),
+                  child: Text(AppLocalizations.of(context)!.ok),
                 ),
               ),
             ],
@@ -195,9 +196,9 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         String errorMessage = e.toString();
         if (errorMessage.contains('Error sending recovery email')) {
-          errorMessage = 'E-posta gönderilemedi. Lütfen SMTP ayarlarınızı kontrol edin veya 5 dakika sonra tekrar deneyin.';
+          errorMessage = AppLocalizations.of(context)!.emailSendError;
         } else if (errorMessage.contains('over_email_send_rate_limit')) {
-          errorMessage = 'E-posta gönderim limiti aşıldı. Lütfen bekleyin.';
+          errorMessage = AppLocalizations.of(context)!.rateLimitExceeded;
         }
         
         ScaffoldMessenger.of(context).showSnackBar(
@@ -284,8 +285,8 @@ class _LoginPageState extends State<LoginPage> {
                       letterSpacing: -1,
                     ),
                   ),
-                  const Text(
-                    'Kurumsal Bulut Çözümü',
+                  Text(
+                    AppLocalizations.of(context)!.corporateCloudSolution,
                     style: TextStyle(
                       color: Colors.white54,
                       fontSize: 16,
@@ -316,14 +317,14 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           _buildTextField(
                             controller: _emailController,
-                            label: 'E-posta Adresi',
+                            label: AppLocalizations.of(context)!.email,
                             icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                           ),
                           const SizedBox(height: 20),
                             _buildTextField(
                               controller: _passwordController,
-                              label: 'Şifre',
+                              label: AppLocalizations.of(context)!.password,
                               icon: Icons.lock_outline_rounded,
                               isPassword: true,
                             ),
@@ -333,7 +334,7 @@ class _LoginPageState extends State<LoginPage> {
                                 child: TextButton(
                                   onPressed: _isLoading ? null : _handleForgotPassword,
                                   child: Text(
-                                    'Şifremi Unuttum',
+                                    AppLocalizations.of(context)!.forgotPassword,
                                     style: TextStyle(
                                       color: Colors.grey.shade600,
                                       fontSize: 13,
@@ -367,7 +368,7 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                     )
                                   : Text(
-                                      _isLogin ? 'GİRİŞ YAP' : 'KAYIT OL',
+                                      _isLogin ? AppLocalizations.of(context)!.loginButton : AppLocalizations.of(context)!.registerButton,
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w900,
@@ -383,11 +384,11 @@ class _LoginPageState extends State<LoginPage> {
                             onPressed: () => setState(() => _isLogin = !_isLogin),
                             child: RichText(
                               text: TextSpan(
-                                text: _isLogin ? 'Henüz hesabınız yok mu? ' : 'Zaten hesabınız var mı? ',
+                                text: _isLogin ? AppLocalizations.of(context)!.noAccount : AppLocalizations.of(context)!.haveAccount,
                                 style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                                 children: [
                                   TextSpan(
-                                    text: _isLogin ? 'Kayıt Ol' : 'Giriş Yap',
+                                    text: _isLogin ? AppLocalizations.of(context)!.register : AppLocalizations.of(context)!.login,
                                     style: const TextStyle(
                                       color: Color(0xFF011627),
                                       fontWeight: FontWeight.w900,
@@ -403,8 +404,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   
                   const SizedBox(height: 48),
-                  const Text(
-                    'SSL GÜVENLİ BAĞLANTI',
+                  Text(
+                    AppLocalizations.of(context)!.secureConnection,
                     style: TextStyle(
                       color: Colors.white24,
                       fontSize: 10,

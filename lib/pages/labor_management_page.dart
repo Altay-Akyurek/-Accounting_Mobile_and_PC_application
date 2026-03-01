@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../models/worker.dart';
 import '../models/cari_hesap.dart';
 import '../models/project.dart';
 import '../services/database_helper.dart';
+import '../services/language_service.dart';
 import 'worker_documents_page.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class LaborManagementPage extends StatefulWidget {
   const LaborManagementPage({super.key});
@@ -37,7 +40,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        title: const Text('PERSONEL TAKİBİ'),
+        title: Text(AppLocalizations.of(context)!.personnelTracking.toUpperCase()),
       ),
       body: Column(
         children: [
@@ -54,10 +57,11 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddWorkerDialog,
         icon: const Icon(Icons.add_moderator_rounded),
-        label: const Text('PERSONEL KAYIT'),
+        label: Text(AppLocalizations.of(context)!.workerRegistration.toUpperCase()),
         backgroundColor: const Color(0xFF011627),
         foregroundColor: Colors.white,
       ),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 
@@ -74,12 +78,12 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
         children: [
           const Icon(Icons.assignment_ind_rounded, color: Color(0xFF2EC4B6), size: 32),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Saha Personel Yönetimi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-                Text('Puantaj ve maaş tahakkuk takibi', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(AppLocalizations.of(context)!.fieldPersonnelManagement, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+                Text(AppLocalizations.of(context)!.attendanceAndSalaryTracking, style: const TextStyle(color: Colors.white70, fontSize: 12)),
               ],
             ),
           ),
@@ -90,7 +94,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               minimumSize: Size.zero,
             ),
-            child: const Text('ÖZET AL', style: TextStyle(fontSize: 11)),
+            child: Text(AppLocalizations.of(context)!.getSummary.toUpperCase(), style: const TextStyle(fontSize: 11)),
           ),
         ],
       ),
@@ -120,10 +124,10 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                     color: Colors.red.shade700,
                     borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
                   ),
-                  child: const Text(
-                    'İŞTEN AYRILDI',
+                  child: Text(
+                    AppLocalizations.of(context)!.statusDismissed.toUpperCase(),
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
               Padding(
@@ -152,7 +156,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                           maxLines: 1,
                         ),
                         Text(
-                          worker.pozisyon ?? 'Saha Personeli',
+                          worker.pozisyon ?? AppLocalizations.of(context)!.fieldPersonnel,
                           style: TextStyle(
                             color: Colors.grey.shade500,
                             fontWeight: FontWeight.bold,
@@ -174,7 +178,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                           child: ElevatedButton.icon(
                             onPressed: () => _showPuantajCalendar(worker),
                             icon: const Icon(Icons.calendar_month_rounded, size: 14),
-                            label: const Text('PUANTAJ', style: TextStyle(fontSize: 11)),
+                            label: Text(AppLocalizations.of(context)!.attendance.toUpperCase(), style: const TextStyle(fontSize: 11)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF011627),
                               foregroundColor: Colors.white,
@@ -197,9 +201,9 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                           }
                         },
                         itemBuilder: (context) => [
-                          if (worker.aktif) const PopupMenuItem(value: 'dismiss', child: Text('İşten Çıkar')),
-                          const PopupMenuItem(value: 'documents', child: Text('Belgeler')),
-                          if (!worker.aktif) const PopupMenuItem(value: 'delete', child: Text('Kalıcı Olarak Sil', style: TextStyle(color: Colors.red))),
+                          if (worker.aktif) PopupMenuItem(value: 'dismiss', child: Text(AppLocalizations.of(context)!.dismissWorker)),
+                          PopupMenuItem(value: 'documents', child: Text(AppLocalizations.of(context)!.documents)),
+                          if (!worker.aktif) PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.deletePermanently, style: const TextStyle(color: Colors.red))),
                         ],
                       ),
                     ],
@@ -218,21 +222,21 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('İşten Çıkar'),
-        content: Text('${worker.adSoyad} isimli personeli işten çıkarmak istediğinize emin misiniz?\n\nNot: Eğer geçmiş işlemleri yoksa bağlı cari hesap otomatik olarak silinecektir. İşlemleri varsa cari hesap dökümü için korunacaktır.'),
+        title: Text(AppLocalizations.of(context)!.dismissWorker),
+        content: Text('${worker.adSoyad} ${AppLocalizations.of(context)!.dismissConfirmNote}'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('İPTAL')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancel.toUpperCase())),
           ElevatedButton(
             onPressed: () async {
               await DatabaseHelper.instance.dismissWorker(worker.id!, DateTime.now());
               if (mounted) {
                 Navigator.pop(context);
                 _loadWorkers();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Personel işten çıkarıldı. (Hareket geçmişi olan cari hesaplar korunur)')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.workerDismissedInfo)));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('İŞTEN ÇIKAR'),
+            child: Text(AppLocalizations.of(context)!.dismissWorker.toUpperCase()),
           ),
         ],
       ),
@@ -243,21 +247,21 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Kalıcı Olarak Sil'),
-        content: Text('${worker.adSoyad} isimli personeli ve tüm puantaj kayıtlarını tamamen silmek istediğinize emin misiniz? bu işlem geri alınamaz.'),
+        title: Text(AppLocalizations.of(context)!.deletePermanently),
+        content: Text('${worker.adSoyad} ${AppLocalizations.of(context)!.deleteWorkerConfirmNote}'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('İPTAL')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancel.toUpperCase())),
           ElevatedButton(
             onPressed: () async {
               await DatabaseHelper.instance.deleteWorker(worker.id!);
               if (mounted) {
                 Navigator.pop(context);
                 _loadWorkers();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Personel kaydı tamamen silindi.')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.workerDeletedInfo)));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('KALICI OLARAK SİL'),
+            child: Text(AppLocalizations.of(context)!.deletePermanently.toUpperCase()),
           ),
         ],
       ),
@@ -280,7 +284,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
         children: [
           Icon(Icons.people_outline_rounded, size: 80, color: Colors.grey.shade200),
           const SizedBox(height: 16),
-          Text('Personel listesi boş', style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
+          Text(AppLocalizations.of(context)!.personnelListEmpty, style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -306,26 +310,26 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Yeni Personel Kartı', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
+                Text(AppLocalizations.of(context)!.newWorkerCard, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
                 const SizedBox(height: 24),
-                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Ad Soyad')),
+                TextField(controller: nameController, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.fullName)),
                 const SizedBox(height: 16),
-                TextField(controller: posController, decoration: const InputDecoration(labelText: 'Görev / Pozisyon')),
+                TextField(controller: posController, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.dutyPosition)),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: TextField(controller: salaryController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Maaş Tutarı'))),
+                    Expanded(child: TextField(controller: salaryController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.salaryAmount))),
                     const SizedBox(width: 12),
                     Expanded(
                       child: DropdownButtonFormField<WorkerSalaryType>(
                         value: selectedType,
-                        items: const [
-                          DropdownMenuItem(value: WorkerSalaryType.gunluk, child: Text('Günlük')),
-                          DropdownMenuItem(value: WorkerSalaryType.aylik, child: Text('Aylık')),
-                          DropdownMenuItem(value: WorkerSalaryType.saatlik, child: Text('Saatlik')),
+                        items: [
+                          DropdownMenuItem(value: WorkerSalaryType.gunluk, child: Text(AppLocalizations.of(context)!.daily)),
+                          DropdownMenuItem(value: WorkerSalaryType.aylik, child: Text(AppLocalizations.of(context)!.monthly)),
+                          DropdownMenuItem(value: WorkerSalaryType.saatlik, child: Text(AppLocalizations.of(context)!.hourly)),
                         ],
                         onChanged: (v) => setModalState(() => selectedType = v!),
-                        decoration: const InputDecoration(labelText: 'Maaş Türü'),
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.salaryType),
                       ),
                     ),
                   ],
@@ -334,8 +338,8 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                 CheckboxListTile(
                   value: addAsCari,
                   onChanged: (v) => setModalState(() => addAsCari = v ?? false),
-                  title: const Text('Cari Hesap Olarak Kaydet', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Maaş ödemeleri ve mutabakat için gereklidir', style: TextStyle(fontSize: 12)),
+                  title: Text(AppLocalizations.of(context)!.saveAsCariAccount, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  subtitle: Text(AppLocalizations.of(context)!.requiredForSalaryPayments, style: const TextStyle(fontSize: 12)),
                   contentPadding: EdgeInsets.zero,
                   controlAffinity: ListTileControlAffinity.leading,
                   activeColor: const Color(0xFF2EC4B6),
@@ -367,7 +371,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                         }
                       }
                     },
-                    child: const Text('KAYDI TAMAMLA'),
+                    child: Text(AppLocalizations.of(context)!.completeRegistration.toUpperCase()),
                   ),
                 ),
               ],
@@ -410,15 +414,24 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('PERSONEL GENEL ÖZETİ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
+              Text(AppLocalizations.of(context)!.personnelGeneralSummary, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
               const SizedBox(height: 24),
-              _buildSummaryItem('Toplam Personel', summary['total'].toString(), Icons.people_rounded),
-              _buildSummaryItem('Aktif Personel', summary['active'].toString(), Icons.check_circle_outline_rounded, color: Colors.green),
-              _buildSummaryItem('Ayrılan Personel', summary['dismissed'].toString(), Icons.exit_to_app_rounded, color: Colors.orange),
+              _buildSummaryItem(AppLocalizations.of(context)!.totalPersonnel, summary['total'].toString(), Icons.people_rounded),
+              _buildSummaryItem(AppLocalizations.of(context)!.activePersonnel, summary['active'].toString(), Icons.check_circle_outline_rounded, color: Colors.green),
+              _buildSummaryItem(AppLocalizations.of(context)!.dismissedPersonnel, summary['dismissed'].toString(), Icons.exit_to_app_rounded, color: Colors.orange),
               const Divider(height: 32),
-              _buildSummaryItem('Toplam Tahakkuk (Hak)', NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(summary['accrued']), Icons.work_history_rounded),
-              _buildSummaryItem('Toplam Ödenen', NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(summary['paid']), Icons.payments_rounded, color: Colors.blue),
-              _buildSummaryItem('Kalan Borç (Bakiye)', NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(summary['balance']), Icons.account_balance_wallet_rounded, 
+              _buildSummaryItem(AppLocalizations.of(context)!.totalAccrued, NumberFormat.currency(
+                locale: Localizations.localeOf(context).toString(),
+                symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : r'$',
+              ).format(summary['accrued']), Icons.work_history_rounded),
+              _buildSummaryItem(AppLocalizations.of(context)!.totalPaid, NumberFormat.currency(
+                locale: Localizations.localeOf(context).toString(),
+                symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : r'$',
+              ).format(summary['paid']), Icons.payments_rounded, color: Colors.blue),
+              _buildSummaryItem(AppLocalizations.of(context)!.remainingDebtBalance, NumberFormat.currency(
+                locale: Localizations.localeOf(context).toString(),
+                symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : r'$',
+              ).format(summary['balance']), Icons.account_balance_wallet_rounded, 
                 color: (summary['balance'] as double) > 0 ? Colors.red : Colors.green),
               const SizedBox(height: 24),
               SizedBox(
@@ -426,7 +439,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF011627)),
-                  child: const Text('KAPAT'),
+                  child: Text(AppLocalizations.of(context)!.close.toUpperCase()),
                 ),
               ),
             ],
@@ -553,7 +566,7 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${DateFormat('dd MMMM yyyy EEEE', 'tr_TR').format(date)} - Puantaj',
+                    '${DateFormat('dd MMMM yyyy EEEE', Localizations.localeOf(context).toString()).format(date)} - ${AppLocalizations.of(context)!.attendance}',
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                     textAlign: TextAlign.center,
                   ),
@@ -570,26 +583,40 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Saatlik Ücret:', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                            Text('${hRate.toStringAsFixed(2)} ₺', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text('${AppLocalizations.of(context)!.hourlyRate}:', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                            Text(NumberFormat.currency(
+                              locale: Localizations.localeOf(context).toString(),
+                              symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : r'$',
+                            ).format(hRate), style: const TextStyle(fontWeight: FontWeight.bold)),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Mesai Saatlik (1.5x):', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                            Text('${(hRate * 1.5).toStringAsFixed(2)} ₺', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                            Text('${AppLocalizations.of(context)!.overtimeHourly} (1.5x):', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                            Text(NumberFormat.currency(
+                              locale: Localizations.localeOf(context).toString(),
+                              symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : r'$',
+                            ).format(hRate * 1.5), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
                           ],
                         ),
                         const Divider(),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('HESAPLANAN TUTAR:', style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF011627))),
-                            Text(
-                              NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(currentCost),
-                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF2EC4B6)),
+                            Text('${AppLocalizations.of(context)!.calculatedAmount.toUpperCase()}:', style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF011627))),
+                            ValueListenableBuilder<Locale>(
+                              valueListenable: LanguageService.instance.localeNotifier,
+                              builder: (context, locale, _) {
+                                return Text(
+                                  NumberFormat.currency(
+                                    locale: locale.toString(),
+                                    symbol: locale.toString() == 'tr' ? '₺' : r'$',
+                                  ).format(currentCost),
+                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF2EC4B6)),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -605,7 +632,7 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           onChanged: (_) => setModalState(() {}),
                           decoration: InputDecoration(
-                            labelText: 'Çalışma Saati',
+                            labelText: AppLocalizations.of(context)!.workingHours,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
@@ -618,7 +645,7 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           onChanged: (_) => setModalState(() {}),
                           decoration: InputDecoration(
-                            labelText: 'Mesai Saati',
+                            labelText: AppLocalizations.of(context)!.overtimeHours,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
@@ -627,8 +654,8 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'DURUM SEÇİN',
+                   Text(
+                    AppLocalizations.of(context)!.selectStatus.toUpperCase(),
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1),
                   ),
                   const SizedBox(height: 12),
@@ -638,11 +665,11 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                       children: PuantajStatus.values.map((status) {
                         String label = '';
                         switch (status) {
-                          case PuantajStatus.normal: label = 'Normal'; break;
-                          case PuantajStatus.izinli: label = 'İzinli'; break;
-                          case PuantajStatus.raporlu: label = 'Raporlu'; break;
-                          case PuantajStatus.mazeretli: label = 'Mazeretli'; break;
-                          case PuantajStatus.izinsiz: label = 'İzinsiz'; break;
+                          case PuantajStatus.normal: label = AppLocalizations.of(context)!.normal; break;
+                          case PuantajStatus.izinli: label = AppLocalizations.of(context)!.onLeave; break;
+                          case PuantajStatus.raporlu: label = AppLocalizations.of(context)!.onReport; break;
+                          case PuantajStatus.mazeretli: label = AppLocalizations.of(context)!.onExcuse; break;
+                          case PuantajStatus.izinsiz: label = AppLocalizations.of(context)!.unauthorized; break;
                         }
                         final isSelected = selectedStatus == status;
                         return Padding(
@@ -678,7 +705,7 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                   TextField(
                     controller: noteController,
                     decoration: InputDecoration(
-                      labelText: 'Not / Açıklama',
+                      labelText: AppLocalizations.of(context)!.descriptionNote,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
@@ -687,7 +714,10 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                   DropdownButtonFormField<int>(
                     value: selectedProjectId,
                     items: [
-                      const DropdownMenuItem(value: null, child: Text('Proje Seçilmedi')),
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text(AppLocalizations.of(context)!.noProjectSelected),
+                      ),
                       ..._projects.map((p) => DropdownMenuItem(
                         value: p.id,
                         child: Text(p.ad),
@@ -695,7 +725,7 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                     ],
                     onChanged: (v) => setModalState(() => selectedProjectId = v),
                     decoration: InputDecoration(
-                      labelText: 'İlgili Proje',
+                      labelText: AppLocalizations.of(context)!.relatedProject,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     ),
@@ -730,7 +760,7 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                         shadowColor: const Color(0xFF011627).withOpacity(0.4),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
-                      child: const Text('KAYDET', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                      child: Text(AppLocalizations.of(context)!.save.toUpperCase(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
                     ),
                   ),
                   if (existingPuantaj != null) ...[
@@ -743,7 +773,7 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                           _loadAttendance();
                         }
                       },
-                      child: const Text('KAYDI SİL', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                      child: Text(AppLocalizations.of(context)!.deleteRecord.toUpperCase(), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ],
@@ -787,7 +817,7 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                       },
                     ),
                     Text(
-                      DateFormat('MMMM yyyy', 'tr_TR').format(_viewDate).toUpperCase(),
+                      DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(_viewDate).toUpperCase(),
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1),
                     ),
                     IconButton(
@@ -816,7 +846,15 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     child: Row(
-                      children: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day) => Expanded(
+                      children: [
+                        AppLocalizations.of(context)!.monday_short,
+                        AppLocalizations.of(context)!.tuesday_short,
+                        AppLocalizations.of(context)!.wednesday_short,
+                        AppLocalizations.of(context)!.thursday_short,
+                        AppLocalizations.of(context)!.friday_short,
+                        AppLocalizations.of(context)!.saturday_short,
+                        AppLocalizations.of(context)!.sunday_short,
+                      ].map((day) => Expanded(
                         child: Center(
                           child: Text(
                             day,
@@ -962,10 +1000,10 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildMiniSummary('ÇALIŞMA', workedDays, const Color(0xFF2EC4B6)),
-              _buildMiniSummary('İZİN/RAPOR', leaveDays, Colors.blue.shade600),
-              _buildMiniSummary('İZSİNSİZ', absentDays, Colors.red.shade600),
-              _buildMiniSummary('PAZAR', sundayBonuses, Colors.amber.shade700),
+              _buildMiniSummary(AppLocalizations.of(context)!.work_caps, workedDays, const Color(0xFF2EC4B6)),
+              _buildMiniSummary(AppLocalizations.of(context)!.leave_report_caps, leaveDays, Colors.blue.shade600),
+              _buildMiniSummary(AppLocalizations.of(context)!.unauthorized_caps, absentDays, Colors.red.shade600),
+              _buildMiniSummary(AppLocalizations.of(context)!.sunday_caps, sundayBonuses, Colors.amber.shade700),
             ],
           ),
           const SizedBox(height: 16),
@@ -974,7 +1012,7 @@ class _AttendanceCalendarState extends State<_AttendanceCalendar> {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF011627), padding: const EdgeInsets.symmetric(vertical: 16)),
-              child: const Text('KAPAT'),
+              child: Text(AppLocalizations.of(context)!.close.toUpperCase()),
             ),
           ),
         ],

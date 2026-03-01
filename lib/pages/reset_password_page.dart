@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 
 class ResetPasswordPage extends StatefulWidget {
@@ -19,14 +20,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   Future<void> _handleResetPassword() async {
     if (_passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen yeni şifre girin')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.pleaseEnterNewPassword)),
       );
       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifreler eşleşmiyor')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.passwordsDoNotMatch)),
       );
       return;
     }
@@ -36,8 +37,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       await _authService.updatePassword(_passwordController.text.trim());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.passwordResetSuccess),
             backgroundColor: Colors.green,
           ),
         );

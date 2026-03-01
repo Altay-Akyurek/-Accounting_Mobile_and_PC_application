@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../models/project.dart';
 import '../services/database_helper.dart';
 import 'project_detail_page.dart';
 import '../models/cari_hesap.dart';
 import '../widgets/cari_ekle_dialog.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
@@ -37,14 +39,19 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 
   String _formatPara(double tutar) {
-    return NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(tutar);
+    final locale = Localizations.localeOf(context).toString();
+    return NumberFormat.currency(
+      locale: locale,
+      symbol: locale == 'tr' ? '₺' : '\$',
+      decimalDigits: 2,
+    ).format(tutar);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PROJELER'),
+        title: Text(AppLocalizations.of(context)!.projects),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -66,10 +73,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddProjectDialog,
         icon: const Icon(Icons.add_business_rounded),
-        label: const Text('YENİ PROJE KARTI'),
+        label: Text(AppLocalizations.of(context)!.newProjectCard),
         backgroundColor: const Color(0xFF003399),
         foregroundColor: Colors.white,
       ),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 
@@ -81,14 +89,16 @@ class _ProjectsPageState extends State<ProjectsPage> {
           Icon(Icons.architecture_rounded, size: 80, color: Colors.grey.shade200),
           const SizedBox(height: 24),
           Text(
-            _filterStatus == null ? 'Henüz tanımlı proje bulunmuyor' : '${_filterStatus!.name} durumunda proje bulunmuyor',
+            _filterStatus == null 
+              ? AppLocalizations.of(context)!.noProjectsDefined 
+              : AppLocalizations.of(context)!.noProjectsInStatus(_filterStatus!.name),
             style: TextStyle(color: Colors.grey.shade400, fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 12),
           if (_filterStatus == null)
             ElevatedButton(
               onPressed: _showAddProjectDialog,
-              child: const Text('İLK PROJEYİ OLUŞTUR'),
+              child: Text(AppLocalizations.of(context)!.createFirstProject),
             ),
         ],
       ),
@@ -102,25 +112,25 @@ class _ProjectsPageState extends State<ProjectsPage> {
       child: Row(
         children: [
           FilterChip(
-            label: const Text('Hepsi'),
+            label: Text(AppLocalizations.of(context)!.all),
             selected: _filterStatus == null,
             onSelected: (val) => setState(() => _filterStatus = null),
           ),
           const SizedBox(width: 8),
           FilterChip(
-            label: const Text('Aktif'),
+            label: Text(AppLocalizations.of(context)!.active),
             selected: _filterStatus == ProjectStatus.aktif,
             onSelected: (val) => setState(() => _filterStatus = ProjectStatus.aktif),
           ),
           const SizedBox(width: 8),
           FilterChip(
-            label: const Text('Askıda'),
+            label: Text(AppLocalizations.of(context)!.suspended),
             selected: _filterStatus == ProjectStatus.askida,
             onSelected: (val) => setState(() => _filterStatus = ProjectStatus.askida),
           ),
           const SizedBox(width: 8),
           FilterChip(
-            label: const Text('Bitti'),
+            label: Text(AppLocalizations.of(context)!.completed),
             selected: _filterStatus == ProjectStatus.tamamlandi,
             onSelected: (val) => setState(() => _filterStatus = ProjectStatus.tamamlandi),
           ),
@@ -159,17 +169,17 @@ class _ProjectsPageState extends State<ProjectsPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Projeyi Sil'),
-        content: Text('"${project.ad}" projesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'),
+        title: Text(AppLocalizations.of(context)!.deleteProject),
+        content: Text(AppLocalizations.of(context)!.deleteProjectConfirm(project.ad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('İPTAL'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('SİL'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -180,7 +190,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
       _loadProjects();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Proje başarıyla silindi')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.projectDeleted)),
         );
       }
     }
@@ -209,11 +219,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Yeni Proje Kartı', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                Text(AppLocalizations.of(context)!.newProjectCard, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
                 const SizedBox(height: 24),
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Proje Adı', prefixIcon: Icon(Icons.business_rounded)),
+                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.projectName, prefixIcon: const Icon(Icons.business_rounded)),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -222,7 +232,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     Expanded(
                       child: DropdownButtonFormField<CariHesap?>(
                         value: selectedCari,
-                        decoration: const InputDecoration(labelText: 'Müşteri / Firma (Cari)', prefixIcon: Icon(Icons.person_rounded)),
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.customerFirm, prefixIcon: const Icon(Icons.person_rounded)),
                         items: _cariHesaplar.map((c) => DropdownMenuItem(value: c, child: Text(c.unvan))).toList(),
                         onChanged: (val) => setModalState(() => selectedCari = val),
                       ),
@@ -253,16 +263,16 @@ class _ProjectsPageState extends State<ProjectsPage> {
                 TextField(
                   controller: budgetController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Tahmini Bütçe', prefixIcon: Icon(Icons.payments_rounded)),
+                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.estimatedBudget, prefixIcon: const Icon(Icons.payments_rounded)),
                 ),
                 const SizedBox(height: 24),
-                const Text('Durum', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                Text(AppLocalizations.of(context)!.status, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
                 SegmentedButton<ProjectStatus>(
-                  segments: const [
-                    ButtonSegment(value: ProjectStatus.aktif, label: Text('Aktif'), icon: Icon(Icons.play_circle_outline)),
-                    ButtonSegment(value: ProjectStatus.askida, label: Text('Askıda'), icon: Icon(Icons.pause_circle_outline)),
-                    ButtonSegment(value: ProjectStatus.tamamlandi, label: Text('Bitti'), icon: Icon(Icons.check_circle_outline)),
+                  segments: [
+                    ButtonSegment(value: ProjectStatus.aktif, label: Text(AppLocalizations.of(context)!.active), icon: const Icon(Icons.play_circle_outline)),
+                    ButtonSegment(value: ProjectStatus.askida, label: Text(AppLocalizations.of(context)!.suspended), icon: const Icon(Icons.pause_circle_outline)),
+                    ButtonSegment(value: ProjectStatus.tamamlandi, label: Text(AppLocalizations.of(context)!.completed), icon: const Icon(Icons.check_circle_outline)),
                   ],
                   selected: {selectedStatus},
                   onSelectionChanged: (val) => setModalState(() => selectedStatus = val.first),
@@ -287,14 +297,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
                             Navigator.pop(context);
                             _loadProjects();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Proje başarıyla oluşturuldu'), backgroundColor: Colors.green),
+                              SnackBar(content: Text(AppLocalizations.of(context)!.projectCreated), backgroundColor: Colors.green),
                             );
                           }
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Hata: $e'),
+                                content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString())),
                                 backgroundColor: Colors.red,
                                 duration: const Duration(seconds: 5),
                               ),
@@ -303,11 +313,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
                         }
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Lütfen proje adını girin')),
+                          SnackBar(content: Text(AppLocalizations.of(context)!.enterProjectName)),
                         );
                       }
                     },
-                    child: const Text('PROJEYİ KAYDET'),
+                    child: Text(AppLocalizations.of(context)!.saveProject),
                   ),
                 ),
               ],
@@ -362,7 +372,12 @@ class _ProjectCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      project.durum.name.toUpperCase(),
+                      (project.durum == ProjectStatus.aktif
+                              ? AppLocalizations.of(context)!.active
+                              : project.durum == ProjectStatus.tamamlandi
+                                  ? AppLocalizations.of(context)!.completed
+                                  : AppLocalizations.of(context)!.suspended)
+                          .toUpperCase(),
                       style: TextStyle(color: statusColor, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1),
                     ),
                   ),
@@ -372,13 +387,13 @@ class _ProjectCard extends StatelessWidget {
                       if (val == 'delete') onDelete();
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
-                            SizedBox(width: 8),
-                            Text('Sil', style: TextStyle(color: Colors.red)),
+                            const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                            const SizedBox(width: 8),
+                            Text(AppLocalizations.of(context)!.delete, style: const TextStyle(color: Colors.red)),
                           ],
                         ),
                       ),
@@ -399,7 +414,7 @@ class _ProjectCard extends StatelessWidget {
                   Icon(Icons.calendar_today_rounded, size: 14, color: Colors.grey.shade400),
                   const SizedBox(width: 6),
                   Text(
-                    DateFormat('dd MMM yyyy').format(project.baslangicTarihi),
+                    DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(project.baslangicTarihi),
                     style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                 ],
@@ -413,9 +428,13 @@ class _ProjectCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('BÜTÇE', style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                      Text(AppLocalizations.of(context)!.budgetLabel, style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
                       Text(
-                        NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 0).format(project.toplamButce),
+                        NumberFormat.currency(
+                          locale: Localizations.localeOf(context).toString(),
+                          symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : r'$',
+                          decimalDigits: 0,
+                        ).format(project.toplamButce),
                         style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                       ),
                     ],

@@ -1,0 +1,49 @@
+﻿Analyzing 4 items...                                            
+
+  error - Target of URI doesn't exist: 'cari_liste_page.dart' - lib\pages\dashboard_page.dart:12:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: 'projeler_page.dart' - lib\pages\dashboard_page.dart:15:8 - uri_does_not_exist
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:123:45 - deprecated_member_use
+  error - The name 'WorkerAnalysisPage' isn't a class - lib\pages\dashboard_page.dart:157:65 - creation_with_non_type
+  error - The name 'PortfolioPage' isn't a class - lib\pages\dashboard_page.dart:168:65 - creation_with_non_type
+  error - The name 'BannerAdWidget' isn't a class - lib\pages\dashboard_page.dart:290:34 - creation_with_non_type
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:313:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:325:64 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:372:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:438:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:510:44 - deprecated_member_use
+  error - The name 'MuhasebeSayfasi' isn't a class - lib\pages\dashboard_page.dart:594:59 - creation_with_non_type
+  error - The name 'RaporlarPage' isn't a class - lib\pages\dashboard_page.dart:607:59 - creation_with_non_type
+  error - The name 'HesapKesimRaporPage' isn't a class - lib\pages\dashboard_page.dart:634:59 - creation_with_non_type
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:684:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:748:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:768:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:776:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:807:26 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:933:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard_page.dart:978:50 - deprecated_member_use
+   info - Unnecessary 'const' keyword - lib\pages\project_detail_page.dart:379:33 - unnecessary_const
+   info - Unnecessary 'const' keyword - lib\pages\project_detail_page.dart:389:33 - unnecessary_const
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\project_detail_page.dart:743:43 - use_build_context_synchronously
+   info - The import of 'package:flutter/foundation.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\services\premium_manager.dart:3:8 - unnecessary_import
+
+flutter : 25 issues fo
+und. (ran in 2.2s)
+At line:1 char:1
++ flutter analyze lib/
+services/premium_manag
+er.dart lib/pages/dash
+board ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (25 issues    
+ found. (ran in 2.    
+2s):String) [], R    e
+moteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 

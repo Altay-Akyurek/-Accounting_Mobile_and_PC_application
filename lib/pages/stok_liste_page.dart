@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../models/stok.dart';
 import '../services/database_helper.dart';
 import 'stok_ekle_page.dart';
@@ -72,17 +74,17 @@ class _StokListePageState extends State<StokListePage> {
     final onay = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Silme Onayı'),
-        content: Text('${stok.ad} adlı stok kaydını silmek istediğinize emin misiniz?'),
+        title: Text(AppLocalizations.of(context)!.deleteConfirmTitle),
+        content: Text(AppLocalizations.of(context)!.deleteRecordConfirm(stok.ad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('İptal'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Sil'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -93,14 +95,14 @@ class _StokListePageState extends State<StokListePage> {
         await DatabaseHelper.instance.deleteStok(stok.id!);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Stok silindi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.recordDeleted)),
           );
           _yukleStoklar();
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Hata: $e')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
           );
         }
       }
@@ -111,7 +113,7 @@ class _StokListePageState extends State<StokListePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stok Yönetimi'),
+        title: Text(AppLocalizations.of(context)!.stockManagement),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -134,7 +136,7 @@ class _StokListePageState extends State<StokListePage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Ara...',
+                labelText: AppLocalizations.of(context)!.search,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 suffixIcon: _searchController.text.isNotEmpty
@@ -161,7 +163,7 @@ class _StokListePageState extends State<StokListePage> {
                             Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[400]),
                             const SizedBox(height: 16),
                             Text(
-                              _stoklar.isEmpty ? 'Henüz stok eklenmemiş' : 'Arama sonucu bulunamadı',
+                              _stoklar.isEmpty ? AppLocalizations.of(context)!.noStocksYet : AppLocalizations.of(context)!.noSearchResultFound,
                               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                             ),
                           ],
@@ -192,33 +194,33 @@ class _StokListePageState extends State<StokListePage> {
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Kod: ${stok.kod}'),
+                                    Text('${AppLocalizations.of(context)!.code}: ${stok.kod}'),
                                     if (stok.kategori != null && stok.kategori!.isNotEmpty)
-                                      Text('Kategori: ${stok.kategori}'),
-                                    Text('Stok: ${stok.stokMiktari ?? 0.0} ${stok.birim}'),
+                                      Text('${AppLocalizations.of(context)!.categoryLabel}: ${stok.kategori}'),
+                                    Text('${AppLocalizations.of(context)!.stockLabel}: ${stok.stokMiktari ?? 0.0} ${stok.birim}'),
                                     if (stok.satisFiyati != null)
-                                      Text('Satış Fiyatı: ${stok.satisFiyati!.toStringAsFixed(2)} ₺'),
+                                      Text('${AppLocalizations.of(context)!.salePriceLabel}: ${NumberFormat.currency(locale: Localizations.localeOf(context).toString(), symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : '\$', decimalDigits: 2).format(stok.satisFiyati ?? 0.0)}'),
                                   ],
                                 ),
                                 trailing: PopupMenuButton(
                                   itemBuilder: (context) => [
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: 'edit',
                                       child: Row(
                                         children: [
                                           Icon(Icons.edit, size: 20),
                                           SizedBox(width: 8),
-                                          Text('Düzenle'),
+                                          Text(AppLocalizations.of(context)!.edit),
                                         ],
                                       ),
                                     ),
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: 'delete',
                                       child: Row(
                                         children: [
                                           Icon(Icons.delete, size: 20, color: Colors.red),
                                           SizedBox(width: 8),
-                                          Text('Sil', style: TextStyle(color: Colors.red)),
+                                          Text(AppLocalizations.of(context)!.delete, style: const TextStyle(color: Colors.red)),
                                         ],
                                       ),
                                     ),

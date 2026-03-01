@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../services/database_helper.dart';
 import '../models/cari_islem.dart';
 import '../models/hakedis.dart';
@@ -51,7 +52,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rapor yüklenirken hata oluştu: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
         );
       }
     }
@@ -86,9 +87,10 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
   }
 
   String _formatPara(double tutar) {
+    final locale = Localizations.localeOf(context).toString();
     return NumberFormat.currency(
-      locale: 'tr_TR',
-      symbol: '₺',
+      locale: locale,
+      symbol: locale == 'tr' ? '₺' : '\$',
       decimalDigits: 2,
     ).format(tutar);
   }
@@ -98,7 +100,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        title: const Text('HESAP KESİM RAPORU'),
+        title: Text(AppLocalizations.of(context)!.settlementReport_caps),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -114,7 +116,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _reportData == null
-                    ? const Center(child: Text('Veri bulunamadı'))
+                    ? Center(child: Text(AppLocalizations.of(context)!.noDataFound))
                     : _buildReportContent(),
           ),
         ],
@@ -140,9 +142,9 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'HESAP DÖNEMİ',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.settlementPeriod_caps,
+                  style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -154,7 +156,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '${DateFormat('dd MMM', 'tr_TR').format(_startDate)} - ${DateFormat('dd MMM yyyy', 'tr_TR').format(_endDate)}',
+                    '${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(_endDate)}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -170,7 +172,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
             child: ElevatedButton.icon(
               onPressed: _selectDate,
               icon: const Icon(Icons.calendar_month_rounded, size: 16),
-              label: const FittedBox(child: Text('TARİH SEÇ')),
+              label: FittedBox(child: Text(AppLocalizations.of(context)!.selectDate_caps)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2EC4B6),
                 foregroundColor: Colors.white,
@@ -233,7 +235,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
           _buildExecutiveSummary(),
           const SizedBox(height: 24),
           _buildSectionHeader(
-            'PERSONEL & MAAŞ DURUMU', 
+            AppLocalizations.of(context)!.personnelSalaryStatus_caps, 
             Icons.people_rounded,
             action: _buildSimpleSettleButton(onTap: () => _settleLabor()),
           ),
@@ -248,7 +250,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
           // _buildInvoiceSection(),
           // const SizedBox(height: 24),
           _buildSectionHeader(
-            'PROJE HAKEDİŞLERİ', 
+            AppLocalizations.of(context)!.projectHakedis_caps, 
             Icons.assignment_rounded,
             action: _buildSimpleSettleButton(onTap: () => _settleHakedis()),
           ),
@@ -273,9 +275,9 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
         children: [
           Icon(icon, size: 18, color: const Color(0xFF011627)),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              'PERSONEL & MAAŞ DURUMU',
+              title,
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 13,
@@ -297,7 +299,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     return OutlinedButton.icon(
       onPressed: onTap,
       icon: const Icon(Icons.check_circle_outline_rounded, size: 14),
-      label: const Text('HESABI KES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+      label: Text(AppLocalizations.of(context)!.settleAccount_caps, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
       style: OutlinedButton.styleFrom(
         foregroundColor: const Color(0xFF2EC4B6),
         side: const BorderSide(color: Color(0xFF2EC4B6)),
@@ -313,13 +315,13 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     final pending = hakedis['pending'].toDouble();
 
     if (pending <= 0 || items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tahsil edilecek bekleyen hakediş bulunamadı.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noPendingHakedisFound)));
       return;
     }
 
     final confirm = await _showConfirmDialog(
-      'Hakediş Tahsilatı İşle',
-      '${items.length} projenin toplam ${_formatPara(pending)} tutarındaki hakedişi, ilgili cari hesaplara "BORÇ" (Alınan) olarak işlenecektir.',
+      AppLocalizations.of(context)!.processHakedisCollection,
+      AppLocalizations.of(context)!.hakedisSettleConfirm(items.length, _formatPara(pending)),
     );
 
     if (confirm != true) return;
@@ -356,10 +358,10 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       );
 
       await _loadReport();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hakediş tahsilatları cari hesaplara işlendi.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.hakedisCollectionsProcessed)));
     } catch (e) {
       setState(() => _isLoading = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')));
     }
   }
 
@@ -369,13 +371,13 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     final toSettle = items.where((i) => i['amount'] != 0).toList();
 
     if (toSettle.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sıfırlanacak bakiye bulunamadı.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noBalanceToReset)));
       return;
     }
 
     final confirm = await _showConfirmDialog(
-      'Personel Hesabı Kes',
-      '${toSettle.length} personelin toplam ${_formatPara(labor['net_debt'].toDouble())} tutarındaki maaş ödemesi, ana kasadan personeller adına "ALACAK" (Verilecek) olarak muhasebeleşecektir.',
+      AppLocalizations.of(context)!.settlePersonnelAccount,
+      AppLocalizations.of(context)!.laborSettleConfirm(toSettle.length, _formatPara(labor['net_debt'].toDouble())),
     );
 
     if (confirm != true) return;
@@ -400,11 +402,11 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       await DatabaseHelper.instance.bulkInsertCariIslemler(transactions);
       await _loadReport();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Personel maaş ödemeleri muhasebeleşti.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.personnelPaymentsProcessed)));
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')));
     }
   }
 
@@ -414,13 +416,13 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     final toSettle = items.where((i) => i['balance'] != 0).toList();
 
     if (toSettle.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sıfırlanacak bakiye bulunamadı.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noBalanceToReset)));
       return;
     }
 
     final confirm = await _showConfirmDialog(
-      'Cari Hesapları Kapat',
-      '${toSettle.length} cari hesabın dönemsel bakiyesi "HESAP KAPATMA" olarak muhasebeye işlenecektir.',
+      AppLocalizations.of(context)!.closeCariAccounts,
+      AppLocalizations.of(context)!.cariSettleConfirm(toSettle.length),
     );
 
     if (confirm != true) return;
@@ -446,7 +448,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       await DatabaseHelper.instance.bulkInsertCariIslemler(transactions);
       await _loadReport();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cari hesap bakiyeleri kapatıldı.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.cariAccountBalancesClosed)));
       }
     } catch (e) {
       setState(() => _isLoading = false);
@@ -472,7 +474,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false), 
-              child: const Text('İPTAL')
+              child: Text(AppLocalizations.of(context)!.cancel_caps)
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true), 
@@ -480,7 +482,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                 backgroundColor: const Color(0xFF2EC4B6),
                 foregroundColor: Colors.white,
               ),
-              child: const Text('ONAYLA'),
+              child: Text(AppLocalizations.of(context)!.confirm_caps),
             ),
           ],
         ),
@@ -507,8 +509,8 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       ),
       child: Column(
         children: [
-          const Text(
-            'DÖNEM NET KARI',
+          Text(
+            AppLocalizations.of(context)!.periodNetProfit_caps,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.grey,
@@ -528,8 +530,8 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildMiniStat('TOPLAM GELİR', fin['total_revenue'].toDouble(), Colors.green),
-              _buildMiniStat('TOPLAM GİDER', fin['total_cost'].toDouble(), Colors.red),
+              _buildMiniStat(AppLocalizations.of(context)!.totalRevenue_caps, fin['total_revenue'].toDouble(), Colors.green),
+              _buildMiniStat(AppLocalizations.of(context)!.totalCost_caps, fin['total_cost'].toDouble(), Colors.red),
             ],
           ),
         ],
@@ -560,11 +562,11 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     return _buildCardWrapper(
       child: Column(
         children: [
-          _buildDataRow('Hak Edilen Toplam', labor['total_earned'].toDouble()),
-          _buildDataRow('Ödenen Toplam', labor['total_paid'].toDouble()),
+          _buildDataRow(AppLocalizations.of(context)!.totalEarned, labor['total_earned'].toDouble()),
+          _buildDataRow(AppLocalizations.of(context)!.totalPaid, labor['total_paid'].toDouble()),
           const Divider(),
           _buildDataRow(
-            'Kalan Personel Borcu', 
+            AppLocalizations.of(context)!.remainingPersonnelDebt, 
             labor['net_debt'].toDouble(), 
             isBold: true, 
             valueColor: Colors.red
@@ -574,7 +576,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
             Theme(
               data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
-                title: const Text('Personel Detaylarını Gör', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                title: Text(AppLocalizations.of(context)!.seePersonnelDetails, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: EdgeInsets.zero,
                 onExpansionChanged: (expanded) => setState(() => _isLaborExpanded = expanded),
@@ -596,7 +598,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '$worked Çalışma + $leave İzin + $sunday Pazar',
+                          AppLocalizations.of(context)!.laborSummaryDetail(worked, leave, sunday),
                           style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
                         ),
                       ],
@@ -618,14 +620,14 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     return _buildCardWrapper(
       child: Column(
         children: [
-          _buildDataRow('Toplam Satış (Matrah)', inv['sales'].toDouble()),
-          _buildDataRow('Toplam Alış (Matrah)', inv['purchases'].toDouble()),
+          _buildDataRow(AppLocalizations.of(context)!.totalSalesTaxBase, inv['sales'].toDouble()),
+          _buildDataRow(AppLocalizations.of(context)!.totalPurchaseTaxBase, inv['purchases'].toDouble()),
           const Divider(),
-          _buildDataRow('Satış KDV (%20)', inv['sales_vat'].toDouble(), valueColor: Colors.blue),
-          _buildDataRow('Alış KDV (%20)', inv['purchase_vat'].toDouble(), valueColor: Colors.orange),
+          _buildDataRow('${AppLocalizations.of(context)!.salesVat} (%20)', inv['sales_vat'].toDouble(), valueColor: Colors.blue),
+          _buildDataRow('${AppLocalizations.of(context)!.purchaseVat} (%20)', inv['purchase_vat'].toDouble(), valueColor: Colors.orange),
           const Divider(),
           _buildDataRow(
-            vatBalance >= 0 ? 'Ödenecek KDV' : 'Devreden KDV', 
+            vatBalance >= 0 ? AppLocalizations.of(context)!.vatToPay : AppLocalizations.of(context)!.vatDeferred, 
             vatBalance.abs(), 
             isBold: true, 
             valueColor: vatBalance >= 0 ? Colors.red : Colors.green
@@ -640,11 +642,11 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     return _buildCardWrapper(
       child: Column(
         children: [
-          _buildDataRow('Üretilen Hakediş (Net)', hakedis['total_net'].toDouble()),
-          _buildDataRow('Tahsil Edilen', hakedis['collected'].toDouble(), valueColor: Colors.green),
+          _buildDataRow(AppLocalizations.of(context)!.producedHakedisNet, hakedis['total_net'].toDouble()),
+          _buildDataRow(AppLocalizations.of(context)!.collected, hakedis['collected'].toDouble(), valueColor: Colors.green),
           const Divider(),
           _buildDataRow(
-            'Bekleyen Tahsilat', 
+            AppLocalizations.of(context)!.pendingCollection, 
             hakedis['pending'].toDouble(), 
             isBold: true, 
             valueColor: Colors.orange
@@ -659,11 +661,11 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     return _buildCardWrapper(
       child: Column(
         children: [
-          _buildDataRow('Müşteri Alacakları', ledger['total_receivable'].toDouble(), valueColor: Colors.green),
-          _buildDataRow('Tedarikçi Borçları', ledger['total_payable'].toDouble(), valueColor: Colors.red),
+          _buildDataRow(AppLocalizations.of(context)!.customerReceivables, ledger['total_receivable'].toDouble(), valueColor: Colors.green),
+          _buildDataRow(AppLocalizations.of(context)!.supplierPayables, ledger['total_payable'].toDouble(), valueColor: Colors.red),
           const Divider(),
           _buildDataRow(
-            'Ana Kasa (Güncel Durum)', 
+            AppLocalizations.of(context)!.mainCashStatus, 
             ledger['net_balance'].toDouble(), 
             isBold: true,
             valueColor: ledger['net_balance'] >= 0 ? Colors.green : Colors.red,

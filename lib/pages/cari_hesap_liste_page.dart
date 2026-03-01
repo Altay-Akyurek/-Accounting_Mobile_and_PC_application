@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../models/cari_hesap.dart';
 import '../services/database_helper.dart';
 import 'cari_hesap_ekle_page.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class CariHesapListePage extends StatefulWidget {
   const CariHesapListePage({super.key});
@@ -34,7 +36,7 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))));
     }
   }
 
@@ -54,7 +56,7 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('CARİ HESAPLAR'),
+        title: Text(AppLocalizations.of(context)!.cariAccounts),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -84,10 +86,11 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
           if (result == true) _yukleCariHesaplar();
         },
         icon: const Icon(Icons.person_add_rounded),
-        label: const Text('YENİ CARİ EKLE'),
+        label: Text(AppLocalizations.of(context)!.addNewCari),
         backgroundColor: const Color(0xFF003399),
         foregroundColor: Colors.white,
       ),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 
@@ -100,7 +103,7 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
         onChanged: _aramaYap,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
-          hintText: 'Ünvan, Vergi No veya Telefon ile ara...',
+          hintText: AppLocalizations.of(context)!.searchCariHint,
           hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
           prefixIcon: const Icon(Icons.search_rounded, color: Colors.white70),
           filled: true,
@@ -120,7 +123,7 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
           Icon(Icons.business_center_rounded, size: 80, color: Colors.grey.shade200),
           const SizedBox(height: 24),
           Text(
-            _cariHesaplar.isEmpty ? 'Henüz cari hesap eklenmemiş' : 'Arama sonucu bulunamadı',
+            _cariHesaplar.isEmpty ? AppLocalizations.of(context)!.noCariAccountsYet : AppLocalizations.of(context)!.noResultsFound,
             style: TextStyle(color: Colors.grey.shade400, fontSize: 16),
           ),
         ],
@@ -159,14 +162,14 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
     final onay = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Silme Onayı'),
-        content: Text('${cari.unvan} kaydını silmek istediğinize emin misiniz?'),
+        title: Text(AppLocalizations.of(context)!.deleteConfirmTitle),
+        content: Text(AppLocalizations.of(context)!.deleteCariConfirm(cari.unvan)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İPTAL')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancel_caps)),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('SİL'),
+            child: Text(AppLocalizations.of(context)!.delete_caps),
           ),
         ],
       ),
@@ -177,14 +180,14 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
         await DatabaseHelper.instance.deleteCariHesap(cari.id!);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cari hesap başarıyla silindi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.cariAccountDeleted)),
           );
           _yukleCariHesaplar();
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Silme işlemi başarısız: $e')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.deleteFailed(e.toString()))),
           );
         }
       }
@@ -231,7 +234,7 @@ class _CariCard extends StatelessWidget {
                       children: [
                         Text(cari.unvan, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
                         if (cari.vergiNo != null && cari.vergiNo!.isNotEmpty)
-                          Text('VN: ${cari.vergiNo}', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold)),
+                          Text('${AppLocalizations.of(context)!.taxNo_short}: ${cari.vergiNo}', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -246,11 +249,14 @@ class _CariCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          cari.isKasa ? 'NET NAKİT (KASA)' : 'GÜNCEL BAKİYE', 
+                          cari.isKasa ? AppLocalizations.of(context)!.netCashKasa_caps : AppLocalizations.of(context)!.currentBalance_caps, 
                           style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)
                         ),
                         Text(
-                          NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(cari.bakiye),
+                          NumberFormat.currency(
+                            locale: Localizations.localeOf(context).toString(),
+                            symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : '\$',
+                          ).format(cari.bakiye),
                           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: bakiyeColor),
                         ),
                       ],

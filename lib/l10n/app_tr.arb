@@ -1,0 +1,824 @@
+{
+  "@@locale": "tr",
+  "appTitle": "Muhasebe Pro",
+  "dashboard": "Ana Sayfa",
+  "netCash": "NET NAKİT (KASA)",
+  "current": "GÜNCEL",
+  "totalCollection": "TAHSİLAT",
+  "remainingDebt": "KALAN BORÇ",
+  "quickAccess": "HIZLI ERİŞİM",
+  "accounting": "Muhasebe",
+  "reports": "Raporlar",
+  "personnel": "Personel",
+  "settlement": "Hesap Kesimi",
+  "bottleneckAnalysis": "DARBOĞAZ VE KAZANÇ ANALİZİ",
+  "statusAnalysis": "DURUM ANALİZİ",
+  "profitableProjects": "EN KARLI PROJELER",
+  "performanceIndicator": "PERFORMANS GÖSTERGESİ",
+  "openedProjects": "Açık Projeler",
+  "totalCurrentAccounts": "Toplam Cari",
+  "incomeExpenseBalance": "Gelir / Gider Dengesi",
+  "positive": "Pozitif",
+  "incomeShare": "Gelir Payı",
+  "expenseShare": "Gider Payı",
+  "noProfitData": "Henüz kârlılık verisi olan proje yok.",
+  "premiumAnalysis": "PREMİUM ANALİZ",
+  "unlock": "Kilidi Aç",
+  "workerAnalysis": "İşçi Analizi",
+  "ourPortfolio": "Portföyümüz",
+  "laborSummary": "İşçilik Özeti",
+  "premiumPackages": "Premium Paketler",
+  "logout": "Çıkış Yap",
+  "language": "Dil Seçeneği",
+  "selectLanguage": "Dil Seçin",
+  "premiumSubtitle": "Muhasebe Pro Premium",
+  "premiumDescription": "İşinizi daha profesyonel yönetmek için yükseltin.",
+  "featureRemoveAds": "Tüm reklamları kaldırın",
+  "featureUnlimitedPDF": "Sınırsız PDF raporu oluşturun",
+  "featureCloudBackup": "Sınırsız bulut yedekleme",
+  "featureB2B": "B2B/Şirket özellikleri erişimi",
+  "monthlyPackage": "Aylık Paket",
+  "yearlyPackage": "Yıllık Paket",
+  "monthlyPrice": "₺99.99 / ay",
+  "yearlyPrice": "₺899.99 / yıl",
+  "cancelAnytime": "İstediğiniz zaman iptal edin.",
+  "save25": "%25 daha hesaplı!",
+  "mostPopular": "EN POPÜLER",
+  "continueButton": "Devam Et",
+  "congratulations": "Tebrikler!",
+  "premiumActivatedMonthly": "Aylık Premium üyeliğiniz başarıyla aktif edildi. Artık tüm sınırsız özelliklerin tadını çıkarabilirsiniz.",
+  "premiumActivatedYearly": "Yıllık Premium üyeliğiniz başarıyla aktif edildi. Artık tüm sınırsız özelliklerin tadını çıkarabilirsiniz.",
+  "great": "Harika!",
+  "premiumSuccessSnackBar": "Premium özellikler aktif edildi!",
+  "login": "Giriş Yap",
+  "register": "Kayıt Ol",
+  "email": "E-posta Adresi",
+  "password": "Şifre",
+  "forgotPassword": "Şifremi Unuttum",
+  "loginButton": "GİRİŞ YAP",
+  "registerButton": "KAYIT OL",
+  "noAccount": "Henüz hesabınız yok mu? ",
+  "haveAccount": "Zaten hesabınız var mı? ",
+  "fillAllFields": "Lütfen tüm alanları doldurun",
+  "accountAlreadyRegistered": "Bu hesapla daha önce kayıt yapılmış.",
+  "invalidCredentials": "E-posta adresi veya şifre hatalı.",
+  "emailNotConfirmed": "E-posta Onayı Gerekli",
+  "emailNotConfirmedDetail": "Giriş yapabilmek için e-posta adresinizi onaylamanız gerekiyor. Lütfen gelen kutunuzu (ve gereksiz kutusunu) kontrol edin.",
+  "rateLimitExceeded": "Çok fazla e-posta gönderim denemesi yaptınız. Lütfen bir süre sonra tekrar deneyin.",
+  "registrationSuccess": "Kayıt Başarılı!",
+  "registrationSuccessDetail": "Hesabınızı oluşturduk! Lütfen e-posta adresinize gönderdiğimiz onay linkine tıklayın.",
+  "registrationInstruction": "Onaylamadan giriş yapamazsınız.",
+  "okIUnderstand": "Tamam, Anladım",
+  "close": "Kapat",
+  "emailSent": "E-posta Gönderildi",
+  "resetPasswordEmailSent": "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi. Lütfen kontrol edin.",
+  "ok": "Tamam",
+  "emailSendError": "E-posta gönderilemedi. Lütfen SMTP ayarlarınızı kontrol edin veya 5 dakika sonra tekrar deneyin.",
+  "corporateCloudSolution": "Kurumsal Bulut Çözümü",
+  "secureConnection": "SSL GÜVENLİ BAĞLANTI",
+  "appTagline": "Geleceğin Finans Yönetimi",
+  "projects": "PROJELER",
+  "newProjectCard": "YENİ PROJE KARTI",
+  "noProjectsDefined": "Henüz tanımlı proje bulunmuyor",
+  "noProjectsInStatus": "{status} durumunda proje bulunmuyor",
+  "@noProjectsInStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "createFirstProject": "İLK PROJEYİ OLUŞTUR",
+  "all": "Hepsi",
+  "active": "Aktif",
+  "suspended": "Askıda",
+  "completed": "Bitti",
+  "deleteProject": "Projeyi Sil",
+  "deleteProjectConfirm": "\"{name}\" projesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+  "@deleteProjectConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "İPTAL",
+  "delete": "SİL",
+  "projectDeleted": "Proje başarıyla silindi",
+  "projectName": "Proje Adı",
+  "customerFirm": "Müşteri / Firma (Cari)",
+  "estimatedBudget": "Tahmini Bütçe",
+  "status": "Durum",
+  "saveProject": "PROJEYİ KAYDET",
+  "projectCreated": "Proje başarıyla oluşturuldu",
+  "enterProjectName": "Lütfen proje adını girin",
+  "errorPrefix": "Hata: {message}",
+  "@errorPrefix": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetLabel": "BÜTÇE",
+  "summary": "ÖZET",
+  "hakedisler": "HAKEDİŞLER",
+  "expenses": "GİDERLER",
+  "collected": "Tahsil Edilen",
+  "totalExpense": "Toplam Gider",
+  "netProfit": "Net Kar",
+  "projectBudget": "Proje Bütçesi",
+  "projectDetails": "Proje Detayları",
+  "startingDate": "Başlangıç",
+  "description": "Açıklama",
+  "notEntered": "Girilmemiş",
+  "changeProjectStatus": "Proje Durumu Değiştir",
+  "statusUpdated": "Proje durumu {status} olarak güncellendi",
+  "@statusUpdated": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "noHakedisYet": "Henüz hakediş girilmemiş",
+  "downloadAllHakedisPDF": "TÜM HAKEDİŞLERİ PDF İNDİR",
+  "newHakedis": "YENİ HAKEDİŞ",
+  "collected_caps": "TAHSİL EDİLDİ",
+  "pending": "BEKLİYOR",
+  "markAsPending": "Bekliyor İşaretle",
+  "markAsCollected": "Tahsil Edildi İşaretle",
+  "materialService": "Malzeme/Hizmet",
+  "laborPaid": "İşçilik (Ödenen)",
+  "accountPayments": "Cari Ödemeler",
+  "cashOutflows": "Kasa Çıkışları",
+  "sunday": "Pazar",
+  "downloadPDF": "PDF İndir",
+  "deleteHakedis": "Hakedişi Sil",
+  "gross": "Brüt",
+  "deductions": "Kesintiler",
+  "netCollection": "Net Tahsilat",
+  "deleteHakedisConfirm": "\"{title}\" hakedişini silmek istediğinize emin misiniz?",
+  "@deleteHakedisConfirm": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "expense": "Gider",
+  "laborPayment": "İşçilik Ödemesi",
+  "puantajRecord": "Puantaj Kaydı",
+  "noExpensesYet": "Henüz gider kaydı bulunamadı",
+  "hakedisEntry": "Hakediş Girişi",
+  "hakedisTitle": "Hakediş Başlığı",
+  "hakedisTitleHint": "örn: 1. Hakediş veya Ocak Ayı Hakedişi",
+  "hakedisAmountExcVat": "Hakediş Tutarı (KDV Hariç)",
+  "taxAndDeductionRates": "Vergi ve Kesinti Oranları (%)",
+  "vat": "KDV",
+  "withholding": "Stopaj",
+  "guarantee": "Teminat",
+  "hakedisDate": "Hakediş Tarihi",
+  "descriptionOptional": "Açıklama / Not (Opsiyonel)",
+  "saveHakedis": "HAKEDİŞİ KAYDET",
+  "enterTitleAndAmount": "Lütfen başlık ve tutar giriniz.",
+  "accountingAndCurrent": "MUHASEBE & CARİ",
+  "pleaseSelectCari": "Lütfen bir cari hesap seçiniz",
+  "descriptionRequired": "Açıklama zorunludur",
+  "amountRequired": "Borç veya Alacak tutarından biri girilmelidir",
+  "transactionSaved": "İşlem kaydedildi",
+  "transactionDeleted": "İşlem silindi",
+  "collectionIn": "Tahsilat (Giriş)",
+  "paymentOut": "Ödeme (Çıkış)",
+  "incomingDebt": "Gelecek (Borç)",
+  "outgoingCredit": "Çıkacak (Alacak)",
+  "netCashKasa": "Net Nakit (Kasa)",
+  "netStatusBalance": "Net Durum (Bakiye)",
+  "addNewTransaction": "YENİ İŞLEM EKLE",
+  "quickTransactionEntry": "Hızlı İşlem Girişi",
+  "cariAccountSelection": "Cari Hesap Seçimi",
+  "descriptionNote": "Açıklama / Not",
+  "debtIncoming": "Borç (Alınacak)",
+  "creditOutgoing": "Alacak (Verilen)",
+  "saveTransaction": "İŞLEMİ KAYDET",
+  "allCaris": "Tüm Cariler",
+  "selectProject": "Proje Seç",
+  "allProjects": "Tüm Projeler",
+  "statusIn": "GİRİŞ",
+  "statusOut": "ÇIKIŞ",
+  "statusDebt": "BORÇ",
+  "statusCredit": "ALACAK",
+  "tableDate": "TARİH",
+  "tableCari": "CARİ",
+  "tableDescription": "AÇIKLAMA",
+  "tableStatus": "DURUM",
+  "tableIncoming": "GELECEK",
+  "tableOutgoing": "ÇIKACAK",
+  "tableBalance": "BAKİYE",
+  "adminDashboard": "Yönetici Kontrol Paneli",
+  "financialAnalysis": "Finansal Analiz",
+  "profitabilityRate": "Karlılık Oranı",
+  "expenseBreakdown": "GİDER KIRILIMI",
+  "projectBasedPerformance": "PROJE BAZLI PERFORMANS",
+  "pendingWorkerPayment": "Bekleyen İşçi Ödemesi",
+  "personnelTracking": "PERSONEL TAKİBİ",
+  "fieldPersonnelManagement": "Saha Personel Yönetimi",
+  "personnelSubtitle": "Puantaj ve maaş tahakkuk takibi",
+  "getSummary": "ÖZET AL",
+  "personnelRegistration": "PERSONEL KAYIT",
+  "dismissed": "İŞTEN AYRILDI",
+  "fieldWorker": "Saha Personeli",
+  "attendance": "PUANTAJ",
+  "dismissWorker": "İşten Çıkar",
+  "documents": "Belgeler",
+  "permanentlyDelete": "Kalıcı Olarak Sil",
+  "personnelListEmpty": "Personel listesi boş",
+  "newPersonnelCard": "Yeni Personel Kartı",
+  "nameSurname": "Ad Soyad",
+  "rolePosition": "Görev / Pozisyon",
+  "salaryAmount": "Maaş Tutarı",
+  "salaryType": "Maaş Türü",
+  "daily": "Günlük",
+  "monthly": "Aylık",
+  "hourly": "Saatlik",
+  "saveAsCari": "Cari Hesap Olarak Kaydet",
+  "completeRegistration": "KAYDI TAMAMLA",
+  "personnelGeneralSummary": "PERSONEL GENEL ÖZETİ",
+  "totalPersonnel": "Toplam Personel",
+  "activePersonnel": "Aktif Personel",
+  "dismissedPersonnel": "Ayrılan Personel",
+  "totalAccrued": "Toplam Tahakkuk (Hak)",
+  "totalPaid": "Toplam Ödenen",
+  "remainingBalance": "Kalan Borç (Bakiye)",
+  "workingHours": "Çalışma Saati",
+  "overtimeHours": "Mesai Saati",
+  "hourlyWage": "Saatlik Ücret",
+  "calculatedAmount": "HESAPLANAN TUTAR",
+  "selectStatus": "DURUM SEÇİN",
+  "normal": "Normal",
+  "onLeave": "İzinli",
+  "medicalLeave": "Raporlu",
+  "excusedLeave": "Mazeretli",
+  "unexcusedLeave": "İzinsiz",
+  "refresh": "Yenile",
+  "stockManagement": "Stok Yönetimi",
+  "stockCode": "Stok Kodu",
+  "stockCodeRequired": "Stok kodu zorunludur",
+  "stockName": "Stok Adı",
+  "stockNameRequired": "Stok adı zorunludur",
+  "unit": "Birim",
+  "stockAmount": "Stok Miktarı",
+  "criticalStockLevel": "Kritik Stok Seviyesi",
+  "purchasePriceLabel": "Alış Fiyatı",
+  "salePriceLabel": "Satış Fiyatı",
+  "vatRate": "KDV Oranı",
+  "newStock": "Yeni Stok",
+  "editStock": "Stok Düzenle",
+  "noStocksYet": "Henüz stok eklenmemiş",
+  "noSearchResultFound": "Arama sonucu bulunamadı",
+  "code": "Kod",
+  "stockLabel": "Stok",
+  "companyPortfolio": "Şirket Portföyü",
+  "visionarySolutions": "Vizyoner Çözümler",
+  "buildingFutureWithXActiveProjects": "{count} Aktif Proje ile Geleceği İnşa Ediyoruz",
+  "@buildingFutureWithXActiveProjects": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "companySummary": "Şirket Özeti",
+  "financialHealth": "Finansal Sağlık",
+  "ourProjects": "Projelerimiz",
+  "ourTeam": "Ekibimiz",
+  "milestones": "Kilometre Taşları",
+  "collectionDebtRatio": "Tahsilat / Borç Oranı",
+  "greenCollectionsRedDebts": "Yeşil: Tahsilatlar, Kırmızı: Bekleyen Borçlar",
+  "companyOverviewText": "Şirketimiz, finansal yönetim alanında uzman personeliyle sektöre liderlik etmektedir. Bugüne kadar {revenue} değerinde hakediş tahsilatı gerçekleştirilmiş ve şu an {debt} tutarında işçilik borcu yönetilmektedir.",
+  "@companyOverviewText": {
+    "placeholders": {
+      "revenue": {
+        "type": "String"
+      },
+      "debt": {
+        "type": "String"
+      }
+    }
+  },
+  "noProjectRecordsYet": "Henüz proje kaydı bulunmuyor.",
+  "noActiveWorkersYet": "Henüz aktif çalışan bulunmuyor.",
+  "monthlyPersonnel": "Aylık Personel",
+  "dailyPersonnel": "Yevmiyeli Personel",
+  "pendingSalary": "Bekleyen Maaş",
+  "noMilestonesYet": "Kilometre taşı bulunmuyor.",
+  "newProjectStarted": "Yeni Proje Başlatıldı",
+  "projectCompletedSuccessfully": "Proje Başarıyla Tamamlandı",
+  "projectSuspendedTemporarily": "Proje Geçici Olarak Durduruldu",
+  "newTeamMemberJoined": "Yeni Ekip Arkadaşı Katıldı",
+  "teamMemberLeft": "Ekip Arkadaşı Ayrıldı",
+  "financialCollectionMade": "Finansal Tahsilat Yapıldı",
+  "highAmountExpenseRecord": "Yüksek Tutarlı Gider Kaydı",
+  "unknownEvent": "Bilinmeyen Olay",
+  "periodIncomeExpenseBalance": "Dönem Gelir / Gider Dengesi",
+  "xPercentPositive": "%{percent} Pozitif",
+  "@xPercentPositive": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "laborSummaryReport_caps": "İŞÇİLİK ÖZET RAPORU",
+  "dateRange": "Tarih Aralığı",
+  "selectedPeriodRecords": "Seçili Dönem Kayıtları",
+  "xHoursWork": "{hours} Saat Çalışma",
+  "@xHoursWork": {
+    "placeholders": {
+      "hours": {
+        "type": "double"
+      }
+    }
+  },
+  "noRecordFoundInRange": "Bu tarih aralığında kayıt bulunamadı.",
+  "unknown": "Bilinmiyor",
+  "total": "Toplam",
+  "xHours": "{hours} Saat",
+  "@xHours": {
+    "placeholders": {
+      "hours": {
+        "type": "double"
+      }
+    }
+  },
+  "tableProject_caps": "PROJE",
+  "tableHour_caps": "SAAT",
+  "tableMesai_caps": "MESAİ",
+  "tableAmount_caps": "TUTAR",
+  "tableDate_caps": "TARİH",
+  "workerDocuments": "{name} - Belgeler",
+  "@workerDocuments": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "severanceAndRights": "Tazminat ve Haklar (Düzenlenebilir)",
+  "severancePay": "Kıdem Tazminatı",
+  "noticePay": "İhbar Tazminatı",
+  "leavePay": "İzin Ücretleri",
+  "separationReason": "Ayrılma Nedeni",
+  "createDocument": "Belge Oluştur",
+  "serviceCertificate": "Çalışma Belgesi",
+  "releaseForm": "İbraname",
+  "compensationBreakdown": "Tazminat Dökümü",
+  "payrollPusula": "Ücret Pusulası",
+  "sgkStatement": "SGK Bildirgesi",
+  "paymentReceipt": "Ödeme Dekontu",
+  "editDocument": "{title} - Düzenle",
+  "@editDocument": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "save": "KAYDET",
+  "reasonHint": "Örn: Emeklilik, İstifa, 4857/25-II...",
+  "serviceCertificate_template": "Sayın {name}, işyerimizde {startDate} tarihinden {endDate} tarihine kadar \"{position}\" görevinde çalışmıştır. Ayrılma nedeni: {reason}. Bu belge, ilgilinin isteği üzerine düzenlenmiştir.",
+  "@serviceCertificate_template": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "startDate": {
+        "type": "String"
+      },
+      "endDate": {
+        "type": "String"
+      },
+      "position": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "releaseForm_template": "İşyerinden {date} tarihinde ayrılırken; almış olduğum maaş, kıdem tazminatı, ihbar tazminatı ve diğer tüm sosyal haklarımı eksiksiz olarak teslim aldığımı, işverenden herhangi bir hak ve alacağımın kalmadığını beyan ederek işvereni tamamen ibra ederim.",
+  "@releaseForm_template": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "compensationBreakdown_template": "PERSONEL HAK VE ALACAK DÖKÜMÜ:\n\n1. Kıdem Tazminatı: {severance}\n2. İhbar Tazminatı: {notice}\n3. İzin Ücretleri: {leave}\n\nTOPLAM ÖDENEN: {total}\n\nİşbu döküm personelin iş akdi sonlandığında hak ettiği yasal alacakları göstermektedir.",
+  "@compensationBreakdown_template": {
+    "placeholders": {
+      "severance": {
+        "type": "String"
+      },
+      "notice": {
+        "type": "String"
+      },
+      "leave": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "payrollPusula_template": "ÜCRET HESAP PUSULASI:\n\nPersonelin görev süresi boyunca tahakkuk eden son ay ücreti ve ek ödemeleri aşağıda belirtilen banka hesaplarına veya elden teslim edilmiştir.\n\nÖdeme Kalemi: Kıdem/İhbar/Maaş\nAçıklama: İş akdi feshi neticesinde yapılan toplu ödeme.",
+  "sgkStatement_template": "SGK İŞTEN AYRILIŞ BİLDİRGESİ ÖZETİ:\n\nPersonel: {name}\nTC No: {tcNo}\nAyrılış Tarihi: {date}\nAyrılış Nedeni: {reason}\n\nBu döküm SGK sistemine girilen işten ayrılış bildiriminin bir kopyasıdır.",
+  "@sgkStatement_template": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "tcNo": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentReceipt_template": "BANKA ÖDEME DEKONTU / TEDİYE MAKBUZU:\n\nÖdeme Yapılan: {name}\nTutar: {amount}\nAçıklama: Maaş, kıdem, ihbar ve tüm yan hakların toplu tasfiye ödemesidir.\n\nÖdeme Tarihi: {date}",
+  "@paymentReceipt_template": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "personnelInfo": "PERSONEL BİLGİLERİ:",
+  "idNo": "TC No",
+  "employerSignature": "İşveren İmza",
+  "workerSignature": "İşçi İmza",
+  "categoryLabel": "Kategori",
+  "cariLabel": "Cari",
+  "dateLabel": "Tarih",
+  "edit": "Düzenle",
+  "financeKasaManagement": "FİNANS & KASA YÖNETİMİ",
+  "recentTransactions": "Son Hareketler",
+  "pendingCollections": "Bekleyen Tahsilatlar",
+  "noBalanceToReset": "Sıfırlanacak bakiye bulunamadı.",
+  "passwordResetSuccess": "Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz.",
+  "passwordsDoNotMatch": "Şifreler eşleşmiyor",
+  "pleaseEnterNewPassword": "Lütfen yeni şifre girin",
+  "secondPage": "İkinci Sayfa",
+  "goBack": "Geri Dön",
+  "bankKasa": "BANKA / KASA",
+  "cekSenet": "ÇEK / SENET",
+  "cashMovement": "NAKİT HAREKETİ",
+  "documentEntry": "EVRAK GİRİŞİ",
+  "mainVault": "Ana Kasa (TL)",
+  "checksGiven": "Verilen Çekler",
+  "dailyPay": "YEVMİYE",
+  "monthlyPay": "MAAŞ",
+  "hourlyRate": "Saatlik Ücret",
+  "overtimeHourly": "Mesai Ücreti",
+  "deleteWorkerConfirmNote": "isimli personeli ve tüm verilerini (puantaj, ödemeler vb.) kalıcı olarak silmek istediğinize emin misiniz?",
+  "dismissConfirmNote": "isimli personeli işten çıkarmak istediğinize emin misiniz? (Geçmiş veriler korunur)",
+  "attendanceAndSalaryTracking": "Puantaj ve maaş tahakkuk takibi",
+  "workerDismissedInfo": "Personel işten çıkarıldı",
+  "workerDeletedInfo": "Personel silindi",
+  "fullName": "Ad Soyad",
+  "dutyPosition": "Görev / Pozisyon",
+  "saveAsCariAccount": "Cari Hesap Olarak Kaydet",
+  "requiredForSalaryPayments": "Maaş ödemeleri takibi için gereklidir",
+  "remainingDebtBalance": "Kalan Borç (Bakiye)",
+  "onReport": "Raporlu",
+  "onExcuse": "Mazeretli",
+  "unauthorized": "İzinsiz",
+  "noProjectSelected": "Proje Seçilmedi",
+  "relatedProject": "İlgili Proje",
+  "deleteRecord": "Kaydı Sil",
+  "monday_short": "Pzt",
+  "tuesday_short": "Sal",
+  "wednesday_short": "Çar",
+  "thursday_short": "Per",
+  "friday_short": "Cum",
+  "saturday_short": "Cmt",
+  "sunday_short": "Paz",
+  "work_caps": "ÇALIŞMA",
+  "leave_report_caps": "İZİN/RAPOR",
+  "unauthorized_caps": "İZİNSİZ",
+  "sunday_caps": "PAZAR",
+  "netIncomes": "Net Gelirler",
+  "workerRegistration": "PERSONEL KAYIT",
+  "statusDismissed": "İŞTEN AYRILDI",
+  "fieldPersonnel": "Saha Personeli",
+  "deletePermanently": "Kalıcı Olarak Sil",
+  "newWorkerCard": "Yeni Personel Kartı",
+  "incomeAndExpense": "Gelir / Gider Dengesi",
+  "netCashStatus": "Net Nakit Durumu",
+  "top3ProfitableProjects": "EN KARLI 3 PROJE",
+  "cariTransaction": "Cari İşlem",
+  "workerAnalysisSubtitle": "{worked} gün çalışma, {leave} gün izin/rapor",
+  "@workerAnalysisSubtitle": {
+    "placeholders": {
+      "worked": {
+        "type": "int"
+      },
+      "leave": {
+        "type": "int"
+      }
+    }
+  },
+  "noDataEntryThisMonth": "Bu ay seçili aralıkta henüz veri girişi bulunmuyor.",
+  "productivity_caps": "VERİMLİLİK",
+  "editDocumentContentHint": "Belge içeriğini buraya yazın...",
+  "workerAnalysisTitle": "Personel Performans Analizi",
+  "performanceOverTime": "Zaman İçinde Performans",
+  "workerDistribution": "Personel Dağılımı (Çalışma x İzin)",
+  "attendanceSummary": "Puantaj Özeti",
+  "noWorkerFound": "Henüz personel kaydı bulunmuyor.",
+  "excelFeatureSoon": "Excel çıktı özelliği yakında eklenecek",
+  "printFeatureSoon": "Yazdırma özelliği yakında eklenecek",
+  "turkish": "Türkçe",
+  "english": "English",
+  "subtotal": "Ara Toplam",
+  "vatTotal": "KDV Toplamı",
+  "totalSalesTaxBase": "Toplam Satış Matrahı",
+  "totalPurchaseTaxBase": "Toplam Alış Matrahı",
+  "salesVat": "Hesaplanan KDV",
+  "purchaseVat": "İndirilecek KDV",
+  "vatToPay": "Ödenecek KDV",
+  "vatDeferred": "Sonraki Döneme Devreden KDV",
+  "cariAccountDeleted": "Cari hesap başarıyla silindi",
+  "balance": "Bakiye",
+  "accountNotLinkedToWorker": "Bu cari hesap herhangi bir personelle ilişkilendirilmemiş.",
+  "noLaborRecordsYet": "Henüz işçilik kaydı bulunmuyor.",
+  "project": "Proje",
+  "overtime_caps": "MESAİ",
+  "hakedis_short": "Hak.",
+  "notSpecified": "Belirtilmedi",
+  "downloadExcel": "Excel İndir",
+  "markAsCashInfo": "Kasa hesabı olarak işaretleyin (Örn: Nakit Kasa)",
+  "completeRecord": "KAYDI TAMAMLA",
+  "workerAnalysisDetail": "{workerName} Analiz Detayı",
+  "@workerAnalysisDetail": {
+    "placeholders": {
+      "workerName": {
+        "type": "String",
+        "description": "The name of the worker"
+      }
+    }
+  },
+  "accountDetail": "accountDetail",
+  "collectionIn_caps": "collectionIn_caps",
+  "incomingDebt_caps": "incomingDebt_caps",
+  "paymentOut_caps": "paymentOut_caps",
+  "outgoingCredit_caps": "outgoingCredit_caps",
+  "netCashKasa_caps": "netCashKasa_caps",
+  "netStatusBalance_caps": "netStatusBalance_caps",
+  "exportExcel": "exportExcel",
+  "print": "print",
+  "createReceipt": "createReceipt",
+  "back": "back",
+  "noTransactionsYet": "noTransactionsYet",
+  "newCariRecord": "newCariRecord",
+  "editCariRecord": "editCariRecord",
+  "generalInfo": "generalInfo",
+  "accountTitle": "accountTitle",
+  "titleRequired": "titleRequired",
+  "contactInfo": "contactInfo",
+  "address": "address",
+  "financialSettings": "financialSettings",
+  "startingBalance": "startingBalance",
+  "cashAccount": "cashAccount",
+  "cariAccounts": "cariAccounts",
+  "addNewCari": "addNewCari",
+  "searchCariHint": "searchCariHint",
+  "noCariAccountsYet": "noCariAccountsYet",
+  "noResultsFound": "noResultsFound",
+  "deleteConfirmTitle": "deleteConfirmTitle",
+  "deleteCariConfirm": "{arg} carisini silmek istediğinize emin misiniz?",
+  "cancel_caps": "cancel_caps",
+  "delete_caps": "delete_caps",
+  "deleteFailed": "{arg} silinemedi.",
+  "taxNo_short": "taxNo_short",
+  "currentBalance_caps": "currentBalance_caps",
+  "totalExpenses": "totalExpenses",
+  "mustAddAtLeastOneItem": "mustAddAtLeastOneItem",
+  "invoiceAdded": "invoiceAdded",
+  "invoiceUpdated": "invoiceUpdated",
+  "sales": "sales",
+  "purchase": "purchase",
+  "newInvoiceType": "newInvoiceType",
+  "editInvoiceType": "editInvoiceType",
+  "invoiceNo": "invoiceNo",
+  "invoiceNoRequired": "invoiceNoRequired",
+  "pleaseSelectDate": "pleaseSelectDate",
+  "dueDate": "dueDate",
+  "selectCariAccount": "selectCariAccount",
+  "invoiceItems": "invoiceItems",
+  "addItem": "addItem",
+  "noItemsYet": "noItemsYet",
+  "item": "item",
+  "amountLabel": "amountLabel",
+  "priceLabel": "priceLabel",
+  "grandTotal": "grandTotal",
+  "editItem": "editItem",
+  "newItem": "newItem",
+  "itemName": "itemName",
+  "unitPrice": "unitPrice",
+  "vatRatePercent": "vatRatePercent",
+  "invoices": "invoices",
+  "salesInvoices": "salesInvoices",
+  "purchaseInvoices": "purchaseInvoices",
+  "noInvoicesYet": "noInvoicesYet",
+  "deleteInvoiceConfirm": "{arg} faturasını silmek istediğinize emin misiniz?",
+  "invoiceDeleted": "invoiceDeleted",
+  "recordAdded": "recordAdded",
+  "recordUpdated": "recordUpdated",
+  "income": "income",
+  "newItemType": "Yeni {arg}",
+  "editItemType": "{arg} Düzenle",
+  "newInvoiceType": "Yeni {arg} Faturası",
+  "@newInvoiceType": {
+    "placeholders": {
+      "arg": {
+        "type": "String"
+      }
+    }
+  },
+  "editInvoiceType": "{arg} Faturası Düzenle",
+  "@editInvoiceType": {
+    "placeholders": {
+      "arg": {
+        "type": "String"
+      }
+    }
+  },
+  "titleLabel": "titleLabel",
+  "pleaseEnterValidAmount": "pleaseEnterValidAmount",
+  "selectCariAccountOptional": "selectCariAccountOptional",
+  "selectProjectOptional": "selectProjectOptional",
+  "incomeExpense": "incomeExpense",
+  "incomes": "incomes",
+  "noIncomeExpenseYet": "Henüz {arg} bulunmuyor.",
+  "@noIncomeExpenseYet": {
+    "placeholders": {
+      "arg": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteRecordConfirm": "{arg} kaydını silmek istediğinize emin misiniz?",
+  "@deleteRecordConfirm": {
+    "placeholders": {
+      "arg": {
+        "type": "String"
+      }
+    }
+  },
+  "recordDeleted": "recordDeleted",
+  "settlementReport_caps": "HESAP KESİM RAPORU",
+  "noDataFound": "Veri Bulunamadı",
+  "settlementPeriod_caps": "HESAP KESİM DÖNEMİ",
+  "selectDate_caps": "TARİH SEÇ",
+  "personnelSalaryStatus_caps": "PERSONEL MAAŞ DURUMU",
+  "projectHakedis_caps": "PROJE HAKEDİŞLERİ",
+  "settleAccount_caps": "HESABI KAPAT",
+  "noPendingHakedisFound": "noPendingHakedisFound",
+  "processHakedisCollection": "processHakedisCollection",
+  "hakedisSettleConfirm": "{count} adet hakediş ve toplam {amount} tutarı tahsil edilecek. Onaylıyor musunuz?",
+  "@hakedisSettleConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "hakedisCollectionsProcessed": "hakedisCollectionsProcessed",
+  "settlePersonnelAccount": "settlePersonnelAccount",
+  "laborSettleConfirm": "{count} adet işçilik ve toplam {amount} tutarı ödenecek. Onaylıyor musunuz?",
+  "@laborSettleConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "personnelPaymentsProcessed": "personnelPaymentsProcessed",
+  "closeCariAccounts": "closeCariAccounts",
+  "cariSettleConfirm": "{count} adet cari işlem kapatılacak. Onaylıyor musunuz?",
+  "@cariSettleConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cariAccountBalancesClosed": "cariAccountBalancesClosed",
+  "confirm_caps": "confirm_caps",
+  "periodNetProfit_caps": "DÖNEM NET KARI",
+  "totalRevenue_caps": "TOPLAM GELİR",
+  "totalCost_caps": "TOPLAM MALİYET",
+  "totalEarned": "Toplam Hak Edilen",
+  "remainingPersonnelDebt": "Kalan Personel Borcu",
+  "seePersonnelDetails": "Personel Detaylarını Gör",
+  "laborSummaryDetail": "Çalışılan: {worked} | İzinli: {leave} | Pazar: {sunday}",
+  "@laborSummaryDetail": {
+    "placeholders": {
+      "worked": {
+        "type": "int"
+      },
+      "leave": {
+        "type": "int"
+      },
+      "sunday": {
+        "type": "int"
+      }
+    }
+  },
+  "producedHakedisNet": "Üretilen Net Hakediş",
+  "pendingCollection": "Bekleyen Tahsilat",
+  "customerReceivables": "Müşteri Alacakları",
+  "supplierPayables": "Tedarikçi Borçları",
+  "mainCashStatus": "Ana Kasa Durumu",
+  "search": "Ara",
+  "workerSummaryReport_caps": "İŞÇİ ÖZET RAPORU",
+  "totalWorkHours": "{hours} Saat Toplam Çalışma",
+  "@totalWorkHours": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "workerReport_caps": "{name} ÖZET RAPORU",
+  "@workerReport_caps": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "totalHoursAndAmount": "Toplam: {hours} Saat | {amount}",
+  "@totalHoursAndAmount": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "hakedisDocument_caps": "HAKEDİŞ BELGESİ",
+  "projectHakedisReport_caps": "PROJE HAKEDİŞ RAPORU",
+  "brutAmount_caps": "BRÜT TUTAR",
+  "netAccrual_caps": "NET TAHAKKUK",
+  "quantity": "Adet",
+  "totalBrut": "Toplam Brüt",
+  "totalNet": "Toplam Net",
+  "reportDateLabel": "Rapor Tarihi: {date}",
+  "@reportDateLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "documentDateLabel": "Belge Tarihi: {date}",
+  "@documentDateLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyPolicy": "Gizlilik Politikası",
+  "date": "Tarih",
+  "hour": "Saat",
+  "mesai": "Mesai",
+  "personal": "Personel",
+  "item": "Kalem",
+  "rate": "Oran",
+  "amountLabel": "Tutar",
+  "stopaj": "Stopaj",
+  "teminat": "Teminat",
+  "pending_caps": "BEKLİYOR",
+  "titleLabel": "Başlık"
+}

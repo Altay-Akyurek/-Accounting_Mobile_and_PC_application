@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../l10n/app_localizations.dart';
 import 'home_page.dart';
 import 'login_page.dart';
 
@@ -100,7 +101,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       child: Column(
                         children: [
                           Text(
-                            'MUHASEBE PRO',
+                            AppLocalizations.of(context)!.appTitle.toUpperCase(),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 32 * _controller.value.clamp(0.8, 1.0),
@@ -109,8 +110,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Geleceğin Finans Yönetimi',
+                          Text(
+                            AppLocalizations.of(context)!.appTagline,
                             style: TextStyle(
                               color: Colors.white38,
                               fontSize: 14,

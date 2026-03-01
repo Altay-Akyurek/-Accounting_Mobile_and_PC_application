@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../models/project.dart';
 import '../models/hakedis.dart';
 import '../models/gelir_gider.dart';
@@ -7,6 +8,7 @@ import '../models/cari_islem.dart';
 import '../models/worker.dart';
 import '../services/database_helper.dart';
 import '../services/project_export_service.dart';
+import '../services/premium_manager.dart';
 
 class ProjectDetailPage extends StatefulWidget {
   final Project project;
@@ -75,7 +77,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
 
     // İşçilik (Puantaj) - Dinamik maliyet
     for (var p in puantajlar) {
-      final worker = workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
+      final worker = workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: AppLocalizations.of(context)!.unknown, baslangicTarihi: DateTime.now()));
       gider += DatabaseHelper.instance.calculateLaborCost(p, worker);
     }
 
@@ -93,7 +95,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
   }
 
   String _formatPara(double tutar) {
-    return NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 2).format(tutar);
+    final locale = Localizations.localeOf(context).toString();
+    return NumberFormat.currency(
+      locale: locale,
+      symbol: locale == 'tr' ? '₺' : '\$',
+      decimalDigits: 2,
+    ).format(tutar);
   }
 
   @override
@@ -108,10 +115,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
         ),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'ÖZET'),
-            Tab(text: 'HAKEDİŞLER'),
-            Tab(text: 'GİDERLER'),
+          tabs: [
+            Tab(text: AppLocalizations.of(context)!.summary),
+            Tab(text: AppLocalizations.of(context)!.hakedisler),
+            Tab(text: AppLocalizations.of(context)!.expenses),
           ],
         ),
       ),
@@ -127,7 +134,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
           ? FloatingActionButton.extended(
               onPressed: _showAddHakedisDialog,
               icon: const Icon(Icons.add_chart_rounded),
-              label: const Text('YENİ HAKEDİŞ'),
+              label: Text(AppLocalizations.of(context)!.newHakedis),
               backgroundColor: const Color(0xFF003399),
               foregroundColor: Colors.white,
             )
@@ -161,10 +168,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
         childAspectRatio: 2.1, // Adjusted ratio to allow more height (2.2 -> 2.1)
       ),
       children: [
-        _buildMiniStat('Tahsil Edilen', _formatPara(_tahsilEdilenHakedis), Colors.green),
-        _buildMiniStat('Toplam Gider', _formatPara(_toplamGider), Colors.red),
-        _buildMiniStat('Net Kar', _formatPara(_netKar), _netKar >= 0 ? Colors.blue : Colors.red),
-        _buildMiniStat('Proje Bütçesi', _formatPara(widget.project.toplamButce), Colors.orange),
+        _buildMiniStat(AppLocalizations.of(context)!.collected, _formatPara(_tahsilEdilenHakedis), Colors.green),
+        _buildMiniStat(AppLocalizations.of(context)!.totalExpense, _formatPara(_toplamGider), Colors.red),
+        _buildMiniStat(AppLocalizations.of(context)!.netProfit, _formatPara(_netKar), _netKar >= 0 ? Colors.blue : Colors.red),
+        _buildMiniStat(AppLocalizations.of(context)!.projectBudget, _formatPara(widget.project.toplamButce), Colors.orange),
       ],
     );
   }
@@ -201,11 +208,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Proje Detayları', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+          Text(AppLocalizations.of(context)!.projectDetails, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
           const SizedBox(height: 16),
-          _buildDetailRow('Başlangıç', DateFormat('dd.MM.yyyy').format(widget.project.baslangicTarihi)),
-          _buildDetailRow('Durum', widget.project.durum.name.toUpperCase()),
-          _buildDetailRow('Açıklama', widget.project.aciklama ?? 'Girilmemiş'),
+          _buildDetailRow(AppLocalizations.of(context)!.startingDate, DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(widget.project.baslangicTarihi)),
+          _buildDetailRow(AppLocalizations.of(context)!.status, 
+            (widget.project.durum == ProjectStatus.aktif ? AppLocalizations.of(context)!.active :
+             widget.project.durum == ProjectStatus.tamamlandi ? AppLocalizations.of(context)!.completed :
+             AppLocalizations.of(context)!.suspended).toUpperCase()),
+          _buildDetailRow(AppLocalizations.of(context)!.description, widget.project.aciklama ?? AppLocalizations.of(context)!.notEntered),
         ],
       ),
     );
@@ -240,13 +250,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Proje Durumu Değiştir', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+          Text(AppLocalizations.of(context)!.changeProjectStatus, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
           const SizedBox(height: 16),
           SegmentedButton<ProjectStatus>(
-            segments: const [
-              ButtonSegment(value: ProjectStatus.aktif, label: Text('Aktif'), icon: Icon(Icons.play_circle_outline)),
-              ButtonSegment(value: ProjectStatus.askida, label: Text('Askıda'), icon: Icon(Icons.pause_circle_outline)),
-              ButtonSegment(value: ProjectStatus.tamamlandi, label: Text('Bitti'), icon: Icon(Icons.check_circle_outline)),
+            segments: [
+              ButtonSegment(value: ProjectStatus.aktif, label: Text(AppLocalizations.of(context)!.active), icon: const Icon(Icons.play_circle_outline)),
+              ButtonSegment(value: ProjectStatus.askida, label: Text(AppLocalizations.of(context)!.suspended), icon: const Icon(Icons.pause_circle_outline)),
+              ButtonSegment(value: ProjectStatus.tamamlandi, label: Text(AppLocalizations.of(context)!.completed), icon: const Icon(Icons.check_circle_outline)),
             ],
             selected: {widget.project.durum},
             onSelectionChanged: (val) async {
@@ -258,8 +268,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                 );
                 await DatabaseHelper.instance.updateProject(updatedProject);
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Proje durumu ${newStatus.name} olarak güncellendi')),
+                  if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppLocalizations.of(context)!.statusUpdated(
+                      newStatus == ProjectStatus.aktif ? AppLocalizations.of(context)!.active :
+                      newStatus == ProjectStatus.tamamlandi ? AppLocalizations.of(context)!.completed :
+                      AppLocalizations.of(context)!.suspended
+                    ))),
                   );
                   Navigator.pop(context); // Refresh parent page
                 }
@@ -273,7 +288,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
 
   Widget _buildHakedisTab() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
-    if (_hakedisler.isEmpty) return _buildEmptyTab('Henüz hakediş girilmemiş');
+    if (_hakedisler.isEmpty) return _buildEmptyTab(AppLocalizations.of(context)!.noHakedisYet);
 
     // Sort: newest first
     final sortedHakedisler = List<Hakedis>.from(_hakedisler)..sort((a, b) => b.tarih.compareTo(a.tarih));
@@ -285,9 +300,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
           child: SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => ProjectExportService.exportProjectHakedislerPDF(widget.project, sortedHakedisler),
+              onPressed: () {
+                if (PremiumManager.instance.checkPremium(context)) {
+                  final l10n = AppLocalizations.of(context)!;
+                  ProjectExportService.exportProjectHakedislerPDF(l10n, widget.project, sortedHakedisler);
+                }
+              },
               icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.red),
-              label: const Text('TÜM HAKEDİŞLERİ PDF İNDİR', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+              label: Text(AppLocalizations.of(context)!.downloadAllHakedisPDF, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.red),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -326,7 +346,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              isTahsilEdildi ? 'TAHSİL EDİLDİ' : 'BEKLİYOR',
+                              isTahsilEdildi ? AppLocalizations.of(context)!.collected_caps : AppLocalizations.of(context)!.pending,
                               style: TextStyle(
                                 color: isTahsilEdildi ? Colors.green : Colors.orange,
                                 fontWeight: FontWeight.w900,
@@ -340,7 +360,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          DateFormat('dd MMMM yyyy', 'tr_TR').format(h.tarih),
+                          DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(h.tarih),
                           style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
                         ),
                       ),
@@ -348,7 +368,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                         icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
                         onSelected: (val) {
                           if (val == 'status') _toggleHakedisStatus(h);
-                          if (val == 'pdf') ProjectExportService.exportHakedisPDF(h, widget.project);
+                          if (val == 'pdf') {
+                            if (PremiumManager.instance.checkPremium(context)) {
+                              final l10n = AppLocalizations.of(context)!;
+           ProjectExportService.exportHakedisPDF(l10n, h, widget.project);
+                            }
+                          }
                           if (val == 'delete') _deleteHakedis(h);
                         },
                         itemBuilder: (context) => [
@@ -358,27 +383,27 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                               children: [
                                 Icon(isTahsilEdildi ? Icons.pending_actions_rounded : Icons.check_circle_outline_rounded, size: 20),
                                 const SizedBox(width: 12),
-                                Text(isTahsilEdildi ? 'Bekliyor İşaretle' : 'Tahsil Edildi İşaretle'),
+                                Text(isTahsilEdildi ? AppLocalizations.of(context)!.markAsPending : AppLocalizations.of(context)!.markAsCollected),
                               ],
                             ),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'pdf',
                             child: Row(
                               children: [
-                                Icon(Icons.picture_as_pdf_outlined, color: Colors.red, size: 20),
+                                const Icon(Icons.picture_as_pdf_outlined, color: Colors.red, size: 20),
                                 const SizedBox(width: 12),
-                                Text('PDF İndir'),
+                                Text(AppLocalizations.of(context)!.downloadPDF),
                               ],
                             ),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'delete',
                             child: Row(
                               children: [
-                                Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                                const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
                                 const SizedBox(width: 12),
-                                Text('Hakedişi Sil', style: TextStyle(color: Colors.red)),
+                                Text(AppLocalizations.of(context)!.deleteHakedis, style: const TextStyle(color: Colors.red)),
                               ],
                             ),
                           ),
@@ -405,9 +430,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildHakedisDetailItem('Brüt', _formatPara(h.tutar)),
-                          _buildHakedisDetailItem('Kesintiler', _formatPara(h.stopajTutari + h.teminatTutari)),
-                          _buildHakedisDetailItem('Net Tahsilat', _formatPara(h.netTutar), isBold: true, color: Colors.green),
+                          _buildHakedisDetailItem(AppLocalizations.of(context)!.gross, _formatPara(h.tutar)),
+                          _buildHakedisDetailItem(AppLocalizations.of(context)!.deductions, _formatPara(h.stopajTutari + h.teminatTutari)),
+                          _buildHakedisDetailItem(AppLocalizations.of(context)!.netCollection, _formatPara(h.netTutar), isBold: true, color: Colors.green),
                         ],
                       ),
                     ),
@@ -462,14 +487,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hakedişi Sil'),
-        content: Text('"${h.baslik}" hakedişini silmek istediğinize emin misiniz?'),
+        title: Text(AppLocalizations.of(context)!.deleteHakedis),
+        content: Text(AppLocalizations.of(context)!.deleteHakedisConfirm(h.baslik)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İPTAL')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancel)),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('SİL'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -491,7 +516,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
       if (gg.tipi == GelirGiderTipi.gider) {
         allExpenses.add({
           'title': gg.baslik,
-          'subtitle': gg.kategori ?? 'Gider',
+          'subtitle': gg.kategori ?? AppLocalizations.of(context)!.expense,
           'amount': gg.tutar,
           'date': gg.tarih,
           'icon': Icons.shopping_cart_rounded,
@@ -505,7 +530,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
       if (islem.alacak > 0) {
         allExpenses.add({
           'title': islem.aciklama,
-          'subtitle': islem.cariHesapUnvan ?? 'Cari İşlem',
+          'subtitle': islem.cariHesapUnvan ?? AppLocalizations.of(context)!.cariTransaction,
           'amount': islem.alacak,
           'date': islem.tarih,
           'icon': Icons.swap_horiz_rounded,
@@ -516,10 +541,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
 
     // Puantaj
     for (var p in _puantajlar) {
-      final worker = _workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
+      final worker = _workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: AppLocalizations.of(context)!.unknown, baslangicTarihi: DateTime.now()));
       allExpenses.add({
-        'title': 'İşçilik Ödemesi',
-        'subtitle': 'Puantaj Kaydı (${worker.adSoyad})',
+        'title': AppLocalizations.of(context)!.laborPayment,
+        'subtitle': '${AppLocalizations.of(context)!.puantajRecord} (${worker.adSoyad})',
         'amount': DatabaseHelper.instance.calculateLaborCost(p, worker),
         'date': p.tarih,
         'icon': Icons.engineering_rounded,
@@ -529,7 +554,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
 
     allExpenses.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
 
-    if (allExpenses.isEmpty) return _buildEmptyTab('Henüz gider kaydı bulunamadı');
+    if (allExpenses.isEmpty) return _buildEmptyTab(AppLocalizations.of(context)!.noExpensesYet);
 
     return ListView.builder(
       padding: const EdgeInsets.all(20),
@@ -545,7 +570,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
               child: Icon(exp['icon'] as IconData, color: exp['color'] as Color, size: 20),
             ),
             title: Text(exp['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('${exp['subtitle']} - ${DateFormat('dd.MM.yyyy').format(exp['date'] as DateTime)}'),
+            subtitle: Text('${exp['subtitle']} - ${DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(exp['date'] as DateTime)}'),
             trailing: Text(
               _formatPara(exp['amount'] as double),
               style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.red),
@@ -600,14 +625,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                     child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
                   ),
                   const SizedBox(height: 24),
-                  const Text('Hakediş Girişi', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF003399))),
+                  Text(AppLocalizations.of(context)!.hakedisEntry, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF003399))),
                   const SizedBox(height: 24),
                   TextField(
                     controller: titleController,
                     textCapitalization: TextCapitalization.words,
                     decoration: InputDecoration(
-                      labelText: 'Hakediş Başlığı',
-                      hintText: 'örn: 1. Hakediş veya Ocak Ayı Hakedişi',
+                      labelText: AppLocalizations.of(context)!.hakedisTitle,
+                      hintText: AppLocalizations.of(context)!.hakedisTitleHint,
                       prefixIcon: const Icon(Icons.title_rounded),
                       filled: true,
                       fillColor: Colors.grey.shade50,
@@ -619,7 +644,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                     controller: amountController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: 'Hakediş Tutarı (KDV Hariç)',
+                      labelText: AppLocalizations.of(context)!.hakedisAmountExcVat,
                       suffixText: '₺',
                       prefixIcon: const Icon(Icons.payments_rounded),
                       filled: true,
@@ -628,7 +653,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('Vergi ve Kesinti Oranları (%)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(AppLocalizations.of(context)!.taxAndDeductionRates, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -636,7 +661,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                         child: TextField(
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            labelText: 'KDV',
+                            labelText: AppLocalizations.of(context)!.vat,
                             hintText: '20',
                             filled: true,
                             fillColor: Colors.grey.shade50,
@@ -650,7 +675,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                         child: TextField(
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            labelText: 'Stopaj',
+                            labelText: AppLocalizations.of(context)!.withholding,
                             hintText: '0',
                             filled: true,
                             fillColor: Colors.grey.shade50,
@@ -664,7 +689,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                         child: TextField(
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            labelText: 'Teminat',
+                            labelText: AppLocalizations.of(context)!.guarantee,
                             hintText: '0',
                             filled: true,
                             fillColor: Colors.grey.shade50,
@@ -679,8 +704,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.calendar_today_rounded),
-                    title: const Text('Hakediş Tarihi', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    subtitle: Text(DateFormat('dd MMMM yyyy', 'tr_TR').format(selectedDate)),
+                    title: Text(AppLocalizations.of(context)!.hakedisDate, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    subtitle: Text(DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(selectedDate)),
                     onTap: () async {
                       final picked = await showDatePicker(
                         context: context,
@@ -698,7 +723,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                     controller: noteController,
                     maxLines: 2,
                     decoration: InputDecoration(
-                      labelText: 'Açıklama / Not (Opsiyonel)',
+                      labelText: AppLocalizations.of(context)!.descriptionOptional,
                       alignLabelWithHint: true,
                       prefixIcon: const Icon(Icons.notes_rounded),
                       filled: true,
@@ -736,10 +761,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                           }
                         } else {
                           if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lütfen başlık ve tutar giriniz.')));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.enterTitleAndAmount)));
                         }
                       },
-                      child: const Text('HAKEDİŞİ KAYDET', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: Text(AppLocalizations.of(context)!.saveHakedis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
                   ),
                 ],

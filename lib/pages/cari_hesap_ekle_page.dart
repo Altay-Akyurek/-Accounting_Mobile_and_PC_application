@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/cari_hesap.dart';
 import '../services/database_helper.dart';
 
@@ -78,7 +79,7 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -89,7 +90,7 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text(widget.cariHesap == null ? 'YENİ CARİ KAYIT' : 'CARİ KAYIT DÜZENLE'),
+        title: Text(widget.cariHesap == null ? AppLocalizations.of(context)!.newCariRecord : AppLocalizations.of(context)!.editCariRecord),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -103,9 +104,9 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _sectionTitle('Genel Bilgiler'),
+                        _sectionTitle(AppLocalizations.of(context)!.generalInfo),
                         _buildCard([
-                          _buildTextField(_unvanController, 'Cari Ünvan *', Icons.business_rounded, validator: (v) => v?.isEmpty ?? true ? 'Ünvan zorunludur' : null),
+                          _buildTextField(_unvanController, '${AppLocalizations.of(context)!.accountTitle} *', Icons.business_rounded, validator: (v) => v?.isEmpty ?? true ? AppLocalizations.of(context)!.titleRequired : null),
                           const SizedBox(height: 16),
                           Row(
                             children: [
@@ -116,7 +117,7 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
                           ),
                         ]),
                         const SizedBox(height: 32),
-                        _sectionTitle('İletişim Bilgileri'),
+                        _sectionTitle(AppLocalizations.of(context)!.contactInfo),
                         _buildCard([
                           Row(
                             children: [
@@ -126,16 +127,16 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          _buildTextField(_adresController, 'Adres', Icons.location_on_rounded, maxLines: 3),
+                          _buildTextField(_adresController, AppLocalizations.of(context)!.address, Icons.location_on_rounded, maxLines: 3),
                         ]),
                         const SizedBox(height: 32),
-                        _sectionTitle('Finansal Ayarlar'),
+                        _sectionTitle(AppLocalizations.of(context)!.financialSettings),
                         _buildCard([
-                          _buildTextField(_bakiyeController, 'Başlangıç Bakiyesi', Icons.account_balance_wallet_rounded, keyboardType: const TextInputType.numberWithOptions(decimal: true)),
+                          _buildTextField(_bakiyeController, AppLocalizations.of(context)!.startingBalance, Icons.account_balance_wallet_rounded, keyboardType: const TextInputType.numberWithOptions(decimal: true)),
                           const SizedBox(height: 16),
                           SwitchListTile(
-                            title: const Text('Kasa Hesabı', style: TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: const Text('Bu hesabı kasa olarak işaretle (Girişler gelire eklenir)'),
+                            title: Text(AppLocalizations.of(context)!.cashAccount, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(AppLocalizations.of(context)!.markAsCashInfo),
                             value: _isKasa,
                             onChanged: (val) => setState(() => _isKasa = val),
                             activeColor: const Color(0xFF003399),
@@ -151,7 +152,7 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
                             padding: const EdgeInsets.symmetric(vertical: 20),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          child: const Text('KAYDI TAMAMLA', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1.0)),
+                          child: Text(AppLocalizations.of(context)!.completeRecord, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1.0)),
                         ),
                       ],
                     ),
