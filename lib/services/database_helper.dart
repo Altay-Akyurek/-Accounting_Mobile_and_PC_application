@@ -78,12 +78,12 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      
+
       // 1. İlişkili Kayıtları Sil (Cascade Data - Onaylı)
       await _supabase.from('cari_islemler').delete().eq('cari_hesap_id', id).eq('user_id', userId);
       await _supabase.from('faturalar').delete().eq('cari_hesap_id', id).eq('user_id', userId);
       await _supabase.from('gelir_giderler').delete().eq('cari_hesap_id', id).eq('user_id', userId);
-      
+
       // 2. Worker/Project Bağlantılarını temizle (Unlink Infrastructure - Koruma Altında)
       await _supabase.from('workers').update({'cari_hesap_id': null}).eq('cari_hesap_id', id).eq('user_id', userId);
       await _supabase.from('projects').update({'cari_hesap_id': null}).eq('cari_hesap_id', id).eq('user_id', userId);
@@ -142,7 +142,7 @@ class DatabaseHelper {
     var query = _supabase.from('faturalar').select().eq('user_id', userId);
     if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
     if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
-    
+
     final List<dynamic> data = await query;
     return data.map((map) => Fatura.fromMap(map)).toList()
       ..sort((a, b) => b.tarih.compareTo(a.tarih));
@@ -292,7 +292,7 @@ class DatabaseHelper {
     var query = _supabase.from('gelir_giderler').select().eq('user_id', userId);
     if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
     if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
-    
+
     final List<dynamic> data = await query;
     return data.map((map) => GelirGider.fromMap(map)).toList()
       ..sort((a, b) => b.tarih.compareTo(a.tarih));
@@ -423,7 +423,7 @@ class DatabaseHelper {
     Map<int, double> workerPayments = {};
     for (var islem in cariIslemler) {
       // Skip hakedis tahsilatlari (already in realizedIncome via hakedis table)
-      bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || 
+      bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') ||
                          islem.aciklama.toLowerCase().contains('tahsilat') ||
                          islem.aciklama.contains('#H:[');
       if (isSettlement) continue;
@@ -438,7 +438,7 @@ class DatabaseHelper {
           workerPayments[wId] = (workerPayments[wId] ?? 0) + islem.alacak;
         }
       }
-      
+
       // Income Tracking
       if (isKasa && islem.borc > 0) {
         realizedIncome += islem.borc;
@@ -457,10 +457,10 @@ class DatabaseHelper {
       if (w.id == null) continue;
       final workerPuantaj = puantajlar.where((p) => p.workerId == w.id).toList();
       if (workerPuantaj.isEmpty) continue;
-      
+
       DateTime minDate = workerPuantaj.map((p) => p.tarih).reduce((a, b) => a.isBefore(b) ? a : b);
       DateTime maxDate = DateTime.now();
-      
+
       double bonus = await _calculateWorkerSundayBonuses(w, minDate, maxDate, workerPuantaj);
       if (bonus > 0) {
         workerAccruals[w.id!] = (workerAccruals[w.id!] ?? 0) + bonus;
@@ -483,13 +483,13 @@ class DatabaseHelper {
     final userId = currentUserId;
     if (userId == null) return [];
     var query = _supabase.from('puantajlar').select().eq('user_id', userId);
-    
+
     if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(_normalizeDate(baslangic)));
     if (bitis != null) {
       final endNormalized = _normalizeDate(bitis).add(const Duration(hours: 23, minutes: 59, seconds: 59));
       query = query.lte('tarih', _stripTimePrecision(endNormalized));
     }
-    
+
     final List<dynamic> data = await query;
     return data.map((map) => Puantaj.fromMap(map)).toList();
   }
@@ -505,12 +505,12 @@ class DatabaseHelper {
     for (var i in islemler) {
       if (cariId != null && i.cariHesapId != cariId) continue;
       if (projectId != null && i.projectId != projectId) continue;
-      
+
       // Ensure unvan is present
       final updatedIslem = i.cariHesapUnvan == null || i.cariHesapUnvan!.isEmpty || i.cariHesapUnvan == '---'
         ? i.copyWith(cariHesapUnvan: cariMap[i.cariHesapId] ?? '---')
         : i;
-        
+
       ledger.add(updatedIslem);
     }
 
@@ -537,14 +537,14 @@ class DatabaseHelper {
     final workers = results[3] as List<Worker>;
     final hakedisler = results[4] as List<Hakedis>;
     final cariler = results[5] as List<CariHesap>;
-    
+
     final workerCariIds = workers.map((w) => w.cariHesapId).where((id) => id != null).toSet();
     final kasaCariIds = cariler.where((c) => c.isKasa).map((c) => c.id).where((id) => id != null).toSet();
     final Map<int, int> cariToWorker = {for (var w in workers) if (w.cariHesapId != null) w.cariHesapId!: w.id!};
 
     double toplamGelir = 0;
     double toplamGider = 0;
-    
+
     // Period tracking
     double odenenIscilikThisPeriod = 0;
     double workValueProducedThisPeriod = 0;
@@ -556,6 +556,7 @@ class DatabaseHelper {
     // Balance tracking (Historical)
     Map<int, double> cumulativeAccrualUntilEnd = {};
     Map<int, double> cumulativePaymentUntilEnd = {};
+    Map<int, double> personPaymentInPeriod = {};
     double totalUnassignedLaborPaymentUntilEnd = 0;
     Map<String, double> giderKategorileri = {
       'Malzeme/Hizmet': 0,
@@ -568,7 +569,7 @@ class DatabaseHelper {
     // 1. Hakedişler ... [omitted for brevity in ReplacementChunk, will match target content]
     for (var h in hakedisler) {
       if (projectId != null && h.projectId != projectId) continue;
-      
+
       if (h.durum == HakedisDurum.tahsilEdildi &&
           h.tarih.isAfter(start.subtract(const Duration(days: 1))) &&
           h.tarih.isBefore(end.add(const Duration(days: 1)))) {
@@ -587,6 +588,10 @@ class DatabaseHelper {
           } else {
             if (isLabor) {
               odenenIscilikThisPeriod += gg.tutar;
+              if (gg.cariHesapId != null && workerCariIds.contains(gg.cariHesapId)) {
+                int wId = cariToWorker[gg.cariHesapId]!;
+                personPaymentInPeriod[wId] = (personPaymentInPeriod[wId] ?? 0) + gg.tutar;
+              }
             } else {
               toplamGider += gg.tutar;
               giderKategorileri['Malzeme/Hizmet'] = (giderKategorileri['Malzeme/Hizmet'] ?? 0) + gg.tutar;
@@ -607,7 +612,7 @@ class DatabaseHelper {
       if (islem.tarih.isBefore(end.add(const Duration(days: 1)))) {
         bool inPeriod = islem.tarih.isAfter(start.subtract(const Duration(days: 1)));
         if (inPeriod) {
-          // Proje filtresi varsa, projesiz işlemleri dahil etme 
+          // Proje filtresi varsa, projesiz işlemleri dahil etme
           // (İşçi ödemeleri hariç - onlar genel/unassigned olabilir ve bakiye kapatabilir)
           if (projectId != null && islem.projectId == null) {
             bool isWorker = workerCariIds.contains(islem.cariHesapId);
@@ -617,18 +622,20 @@ class DatabaseHelper {
           if (projectId != null && islem.projectId != null && islem.projectId != projectId) continue;
 
           // Hakediş tahsilatlarını geç (Çift saymamak için)
-          bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || 
+          bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') ||
                              islem.aciklama.toLowerCase().contains('tahsilat') ||
                              islem.aciklama.contains('#H:[');
-          
+
           if (!isSettlement) {
             // Kasa hesabı ise para girişi (borç) gelirdir
             toplamGelir += islem.borc;
           }
-          
+
           if (islem.alacak > 0) {
             if (isWorker) {
               odenenIscilikThisPeriod += islem.alacak;
+              int wId = cariToWorker[islem.cariHesapId]!;
+              personPaymentInPeriod[wId] = (personPaymentInPeriod[wId] ?? 0) + islem.alacak;
             } else if (isKasa) {
               // Kasa çıkışlarını gidere ekle
               toplamGider += islem.alacak;
@@ -643,7 +650,7 @@ class DatabaseHelper {
             if (!isLaborPayment) {
               toplamGider += islem.alacak;
               giderKategorileri['Cari Ödemeler'] = (giderKategorileri['Cari Ödemeler'] ?? 0) + islem.alacak;
-            }  
+            }
             }
           }
         }
@@ -660,7 +667,7 @@ class DatabaseHelper {
       if (p.tarih.isBefore(end.add(const Duration(days: 1)))) {
         final worker = workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
         double cost = calculateLaborCost(p, worker);
-        
+
         bool inPeriod = p.tarih.isAfter(start.subtract(const Duration(days: 1)));
         if (inPeriod) {
           workValueProducedThisPeriod += cost;
@@ -687,14 +694,16 @@ class DatabaseHelper {
         if (current.weekday == DateTime.sunday) {
           bool earnedBonus = true;
           int? lastProjectId;
-          for (int i = 1; i <= 6; i++) {
+          for (int i = 0; i <= 6; i++) {
             DateTime checkDate = current.subtract(Duration(days: i));
-            final dayPuantajlar = workerPuantaj.where((p) => 
+            final dayPuantajlar = workerPuantaj.where((p) =>
               p.tarih.year == checkDate.year && p.tarih.month == checkDate.month && p.tarih.day == checkDate.day
             ).toList();
-            if (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz)) {
-              earnedBonus = false;
-              break;
+            if (i > 0) {
+              if (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz)) {
+                earnedBonus = false;
+                break;
+              }
             }
             if (lastProjectId == null && dayPuantajlar.isNotEmpty) {
               lastProjectId = dayPuantajlar.last.projectId;
@@ -708,14 +717,14 @@ class DatabaseHelper {
           }
           if (earnedBonus) {
             // Check if Sunday itself has a paid leave record (Izinli/Raporlu/Mazeretli)
-            final sundayRecords = workerPuantaj.where((p) => 
+            final sundayRecords = workerPuantaj.where((p) =>
               p.tarih.year == current.year && p.tarih.month == current.month && p.tarih.day == current.day
             ).toList();
-            
-            bool isPaidHolidayRecord = sundayRecords.any((p) => 
+
+            bool isPaidHolidayRecord = sundayRecords.any((p) =>
               [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)
             );
-            
+
             if (!isPaidHolidayRecord) {
               periodBonusCount++;
             }
@@ -729,47 +738,54 @@ class DatabaseHelper {
       DateTime minDate = workerPuantaj.map((p) => p.tarih).reduce((a, b) => a.isBefore(b) ? a : b);
       DateTime maxDate = DateTime.now();
       double bonusAmount = await _calculateWorkerSundayBonuses(worker, minDate, maxDate, workerPuantaj);
-      
+
       if (bonusAmount > 0) {
         // Add to period-specific gider if needed
         double dailyRate = _getDailyRate(worker);
         workValueProducedThisPeriod += periodBonusCount * dailyRate;
-        
+
         cumulativeAccrualUntilEnd[worker.id!] = (cumulativeAccrualUntilEnd[worker.id!] ?? 0) + bonusAmount;
       }
     }
 
     // Bekleyen hesapla (Dönem içi hak edilen vs Ödenen)
-    double laborCostThisPeriod = workValueProducedThisPeriod > odenenIscilikThisPeriod 
-        ? workValueProducedThisPeriod 
+    double laborCostThisPeriod = workValueProducedThisPeriod > odenenIscilikThisPeriod
+        ? workValueProducedThisPeriod
         : odenenIscilikThisPeriod;
 
-    double totalPendingLabor = workValueProducedThisPeriod - odenenIscilikThisPeriod;
-    if (totalPendingLabor < 0) totalPendingLabor = 0;
+    // Remove old totalPendingLabor calculation
+    // double totalPendingLabor = workValueProducedThisPeriod - odenenIscilikThisPeriod;
+    // if (totalPendingLabor < 0) totalPendingLabor = 0;
 
     // Worker breakdown for the period UI
     Map<String, Map<String, dynamic>> workerBreakdown = {};
+    double sumOfWorkerPendingAmounts = 0;
+
     for (var wId in workedCounts.keys.toSet().followedBy(sundayCounts.keys.toSet())) {
-      final name = workers.firstWhere((w) => w.id == wId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now())).adSoyad;
-      
+      final worker = workers.firstWhere((w) => w.id == wId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
+      final name = worker.adSoyad;
+
       // Calculate individual accrual in period for breakdown
       double personAccrualInPeriod = 0;
       for (var p in puantajlar) {
         if (p.workerId == wId && (projectId == null || p.projectId == projectId)) {
           if (p.tarih.isAfter(start.subtract(const Duration(days: 1))) && p.tarih.isBefore(end.add(const Duration(days: 1)))) {
-               final worker = workers.firstWhere((w) => w.id == wId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
                personAccrualInPeriod += calculateLaborCost(p, worker);
           }
         }
       }
-      
+
       // Add bonuses to breakdown accrual
-      final worker = workers.firstWhere((w) => w.id == wId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
       personAccrualInPeriod += (sundayCounts[wId] ?? 0) * _getDailyRate(worker);
 
       if (personAccrualInPeriod > 0) {
+        double personPending = personAccrualInPeriod - (personPaymentInPeriod[wId] ?? 0);
+        double finalPending = personPending < 0 ? 0.0 : personPending;
+        
+        sumOfWorkerPendingAmounts += finalPending;
+
         workerBreakdown[name] = {
-          'amount': personAccrualInPeriod,
+          'amount': finalPending,
           'worked': workedCounts[wId] ?? 0,
           'leave': leaveCounts[wId] ?? 0,
           'sunday': sundayCounts[wId] ?? 0,
@@ -778,8 +794,9 @@ class DatabaseHelper {
     }
 
     giderKategorileri['İşçilik (Ödenen)'] = odenenIscilikThisPeriod;
-    giderKategorileri['İşçilik (Bekleyen)'] = totalPendingLabor;
-    
+    // Set the category total to exactly match the sum of individual breakdowns
+    giderKategorileri['İşçilik (Bekleyen)'] = sumOfWorkerPendingAmounts;
+
     // Final Gider = Non-Labor Expenses + max(Accruals, Payments)
     toplamGider += laborCostThisPeriod;
 
@@ -808,7 +825,7 @@ class DatabaseHelper {
     final islemler = results[3] as List<CariIslem>;
     final puantajlar = results[4] as List<Puantaj>;
     final workers = results[5] as List<Worker>;
-    
+
     final workerCariIds = workers.map((w) => w.cariHesapId).where((id) => id != null).toSet();
     final Map<int, int> cariToWorker = {for (var w in workers) if (w.cariHesapId != null) w.cariHesapId!: w.id!};
 
@@ -817,7 +834,7 @@ class DatabaseHelper {
     for (var project in projects) {
       double gelir = 0;
       double nonLaborGider = 0;
-      
+
       Map<int, double> projectWorkerAccrual = {};
       Map<int, double> projectWorkerPayment = {};
       double unassignedLaborPayment = 0;
@@ -848,12 +865,12 @@ class DatabaseHelper {
       for (var islem in islemler) {
         if (islem.projectId == project.id) {
           // Hakediş tahsilatlarını geç (Çünkü hakedisler tablosundan zaten ekleniyor)
-          bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || 
+          bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') ||
                              islem.aciklama.contains('#H:[');
           if (!isSettlement) {
             gelir += islem.borc;
           }
-          
+
           if (islem.alacak > 0) {
             bool isWorker = workerCariIds.contains(islem.cariHesapId);
             if (isWorker) {
@@ -892,21 +909,23 @@ class DatabaseHelper {
 
         DateTime minDate = workerPuantaj.map((p) => p.tarih).reduce((a, b) => a.isBefore(b) ? a : b);
         DateTime maxDate = DateTime.now();
-        
+
         DateTime current = DateTime(minDate.year, minDate.month, minDate.day);
         while (current.isBefore(maxDate.add(const Duration(seconds: 1)))) {
           if (current.weekday == DateTime.sunday) {
             bool earnedBonus = true;
             int? lastProjectId;
-            for (int i = 1; i <= 6; i++) {
+            for (int i = 0; i <= 6; i++) {
               DateTime checkDate = current.subtract(Duration(days: i));
-              final dayPuantajlar = workerPuantaj.where((p) => 
+              final dayPuantajlar = workerPuantaj.where((p) =>
                 p.tarih.year == checkDate.year && p.tarih.month == checkDate.month && p.tarih.day == checkDate.day
               ).toList();
 
-              if (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz)) {
-                earnedBonus = false;
-                break;
+              if (i > 0) {
+                if (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz)) {
+                  earnedBonus = false;
+                  break;
+                }
               }
               if (lastProjectId == null && dayPuantajlar.isNotEmpty) {
                 lastProjectId = dayPuantajlar.last.projectId;
@@ -914,10 +933,10 @@ class DatabaseHelper {
             }
 
             if (earnedBonus) {
-              final sundayRecords = workerPuantaj.where((p) => 
+              final sundayRecords = workerPuantaj.where((p) =>
                 p.tarih.year == current.year && p.tarih.month == current.month && p.tarih.day == current.day
               ).toList();
-              bool isPaidHolidayRecord = sundayRecords.any((p) => 
+              bool isPaidHolidayRecord = sundayRecords.any((p) =>
                 [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)
               );
               if (!isPaidHolidayRecord && lastProjectId == project.id) {
@@ -934,17 +953,20 @@ class DatabaseHelper {
       double projectLaborCost = unassignedLaborPayment;
       double totalPaidLabor = unassignedLaborPayment;
       double totalAccruedLabor = 0;
-      
+      double totalBekleyen = 0; // Directly sum pending amounts
+
       for (var w in workers) {
         double acc = projectWorkerAccrual[w.id] ?? 0;
         double paid = projectWorkerPayment[w.id] ?? 0;
         totalAccruedLabor += acc;
         totalPaidLabor += paid;
         projectLaborCost += acc > paid ? acc : paid;
+        
+        double pending = acc - paid;
+        if (pending > 0) {
+          totalBekleyen += pending;
+        }
       }
-
-      double totalBekleyen = projectLaborCost - totalPaidLabor;
-      if (totalBekleyen < 0) totalBekleyen = 0;
 
       reports.add({
         'projeId': project.id,
@@ -996,7 +1018,7 @@ class DatabaseHelper {
     var query = _supabase.from('cari_islemler').select().eq('user_id', userId);
     if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
     if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
-    
+
     final List<dynamic> data = await query;
     return data.map((map) => CariIslem.fromMap(map)).toList()
       ..sort((a, b) {
@@ -1182,7 +1204,7 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      
+
       // 1. İlişkili Cari İşlemleri al ve Cari Bakiyelerini güncelle
       final projectIslemler = await getCariIslemlerByProjectId(id);
       for (var islem in projectIslemler) {
@@ -1200,7 +1222,7 @@ class DatabaseHelper {
       await _supabase.from('puantajlar').delete().eq('project_id', id);
       await _supabase.from('gelir_giderler').delete().eq('project_id', id);
       await _supabase.from('cari_islemler').delete().eq('project_id', id);
-      
+
       // 3. Projeyi sil - Burada user_id kontrolü şart! Sadece kendi projemizi silebiliriz.
       await _supabase.from('projects').delete().eq('id', id).eq('user_id', userId);
       return id;
@@ -1235,7 +1257,7 @@ class DatabaseHelper {
     var query = _supabase.from('hakedisler').select().eq('user_id', userId);
     if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
     if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
-    
+
     final List<dynamic> data = await query;
     return data.map((map) => Hakedis.fromMap(map)).toList();
   }
@@ -1386,7 +1408,7 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      
+
       final normalizedDate = _normalizeDate(puantaj.tarih);
       final map = puantaj.toMap();
       map['user_id'] = userId;
@@ -1418,7 +1440,7 @@ class DatabaseHelper {
       if (existing != null && (existing as List).isNotEmpty) {
         final List existingList = existing;
         final existingId = existingList.first['id'] as int;
-        
+
         // Eğer birden fazla varsa (mükerrer), ilkini güncelle diğerlerini sil
         await _supabase
             .from('puantajlar')
@@ -1457,7 +1479,7 @@ class DatabaseHelper {
       final endNormalized = _normalizeDate(bitis).add(const Duration(hours: 23, minutes: 59, seconds: 59));
       query = query.lte('tarih', _stripTimePrecision(endNormalized));
     }
-    
+
     final List<dynamic> data = await query;
     return data.map((map) => Puantaj.fromMap(map)).toList();
   }
@@ -1487,7 +1509,7 @@ class DatabaseHelper {
 
   double calculateLaborCost(Puantaj p, Worker w) {
     if (p.status == PuantajStatus.izinsiz) return 0;
-    
+
     double hourlyRate = 0;
     if (w.maasTuru == WorkerSalaryType.saatlik) {
       hourlyRate = w.maasTutari;
@@ -1496,7 +1518,7 @@ class DatabaseHelper {
     } else if (w.maasTuru == WorkerSalaryType.aylik) {
       hourlyRate = w.maasTutari / 240; // 30 gün * 8 saat = 240 saat
     }
-    
+
     // Normal çalışma normal ücret, fazla mesai 1.5 katı ücret
     return (p.saat * hourlyRate) + (p.mesai * hourlyRate * 1.5);
   }
@@ -1519,31 +1541,33 @@ class DatabaseHelper {
       if (current.weekday == DateTime.sunday) {
         // Found a Sunday, check the 6 days before it (Mon-Sat)
         bool earnedBonus = true;
-        for (int i = 1; i <= 6; i++) {
+        for (int i = 0; i <= 6; i++) {
           DateTime checkDate = current.subtract(Duration(days: i));
           // Check if there is a puantaj for this date
-          final dayPuantajlar = allWorkerPuantaj.where((p) => 
-            p.tarih.year == checkDate.year && 
-            p.tarih.month == checkDate.month && 
+          final dayPuantajlar = allWorkerPuantaj.where((p) =>
+            p.tarih.year == checkDate.year &&
+            p.tarih.month == checkDate.month &&
             p.tarih.day == checkDate.day
           ).toList();
 
-          if (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz)) {
-            earnedBonus = false;
-            break;
+          if (i > 0) {
+            if (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz)) {
+              earnedBonus = false;
+              break;
+            }
           }
         }
 
         if (earnedBonus) {
           // Rule: If sunday itself has a paid leave record, bonus is not added (record is the bonus).
-          final sundayRecords = allWorkerPuantaj.where((p) => 
+          final sundayRecords = allWorkerPuantaj.where((p) =>
             p.tarih.year == current.year && p.tarih.month == current.month && p.tarih.day == current.day
           ).toList();
-          
-          bool isPaidHolidayRecord = sundayRecords.any((p) => 
+
+          bool isPaidHolidayRecord = sundayRecords.any((p) =>
             [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)
           );
-          
+
           if (!isPaidHolidayRecord) {
             totalBonus += dailyRate;
           }
@@ -1580,11 +1604,11 @@ class DatabaseHelper {
     for (var w in workers) {
       final workerPuantaj = puantajlar.where((p) => p.workerId == w.id).toList();
       if (workerPuantaj.isEmpty) continue;
-      
+
       final firstDate = workerPuantaj.map((p) => p.tarih).reduce((a, b) => a.isBefore(b) ? a : b);
       // We check until today or the last puantaj date
       final lastDate = DateTime.now();
-      
+
       double bonus = await _calculateWorkerSundayBonuses(w, firstDate, lastDate, workerPuantaj);
       totalAccrued += bonus;
     }
@@ -1608,7 +1632,7 @@ class DatabaseHelper {
   Future<Map<String, dynamic>> getSettlementReport(DateTime start, DateTime end, {List<int>? projectIds}) async {
     final rangeEnd = end.add(const Duration(hours: 23, minutes: 59, seconds: 59));
     final rangeStart = DateTime(start.year, start.month, start.day);
-    
+
     final results = await Future.wait<List<dynamic>>([
       getAllPuantajlar(baslangic: rangeStart.subtract(const Duration(days: 6)), bitis: rangeEnd),
       getAllWorkers(),
@@ -1626,10 +1650,10 @@ class DatabaseHelper {
     final cariIslemler = results[4] as List<CariIslem>;
     final hakedisler = results[5] as List<Hakedis>;
     final projects = results[6] as List<Project>;
-    
+
     // Helper to check if a date is within range
     bool inRange(DateTime d) {
-      return d.isAfter(rangeStart.subtract(const Duration(seconds: 1))) && 
+      return d.isAfter(rangeStart.subtract(const Duration(seconds: 1))) &&
              d.isBefore(rangeEnd.add(const Duration(seconds: 1)));
     }
 
@@ -1637,7 +1661,7 @@ class DatabaseHelper {
     double toplamIscilikHakedis = 0;
     double toplamIscilikOdeme = 0;
     Map<int, Map<String, dynamic>> workerDuesMap = {};
-    
+
     final workerMap = {for (var w in workers) w.id!: w};
     final workerCariIds = workers.map((w) => w.cariHesapId).whereType<int>().toSet();
     final cariToWorkerName = {for (var w in workers) if (w.cariHesapId != null) w.cariHesapId!: w.adSoyad};
@@ -1652,8 +1676,8 @@ class DatabaseHelper {
           toplamIscilikHakedis += cost;
           if (!workerDuesMap.containsKey(w.id)) {
             workerDuesMap[w.id!] = {
-              'name': w.adSoyad, 
-              'cariId': w.cariHesapId, 
+              'name': w.adSoyad,
+              'cariId': w.cariHesapId,
               'amount': 0.0,
               'worked': 0,
               'leave': 0,
@@ -1673,7 +1697,7 @@ class DatabaseHelper {
     // Sunday Bonus calculation
     for (var w in workers) {
       final workerPuantaj = puantajlar.where((p) => p.workerId == w.id).toList();
-      
+
       // Calculate bonuses for the range specifically to get count
       int bonusCount = 0;
       DateTime current = DateTime(rangeStart.year, rangeStart.month, rangeStart.day);
@@ -1681,14 +1705,16 @@ class DatabaseHelper {
         if (current.weekday == DateTime.sunday) {
           bool earnedBonus = true;
           int? lastProjectId;
-          for (int i = 1; i <= 6; i++) {
+          for (int i = 0; i <= 6; i++) {
             DateTime checkDate = current.subtract(Duration(days: i));
-            final dayPuantajlar = workerPuantaj.where((p) => 
+            final dayPuantajlar = workerPuantaj.where((p) =>
               p.tarih.year == checkDate.year && p.tarih.month == checkDate.month && p.tarih.day == checkDate.day
             ).toList();
-            if (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz)) {
-              earnedBonus = false;
-              break;
+            if (i > 0) {
+              if (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz)) {
+                earnedBonus = false;
+                break;
+              }
             }
             if (lastProjectId == null && dayPuantajlar.isNotEmpty) {
               lastProjectId = dayPuantajlar.last.projectId;
@@ -1702,14 +1728,14 @@ class DatabaseHelper {
           }
           if (earnedBonus) {
             // Rule check for double counting on Sunday itself
-            final sundayRecords = workerPuantaj.where((p) => 
+            final sundayRecords = workerPuantaj.where((p) =>
               p.tarih.year == current.year && p.tarih.month == current.month && p.tarih.day == current.day
             ).toList();
-            
-            bool isPaidHolidayRecord = sundayRecords.any((p) => 
+
+            bool isPaidHolidayRecord = sundayRecords.any((p) =>
               [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)
             );
-            
+
             if (!isPaidHolidayRecord) {
               bonusCount++;
             }
@@ -1724,8 +1750,8 @@ class DatabaseHelper {
         toplamIscilikHakedis += bonusTotal;
         if (!workerDuesMap.containsKey(w.id)) {
           workerDuesMap[w.id!] = {
-            'name': w.adSoyad, 
-            'cariId': w.cariHesapId, 
+            'name': w.adSoyad,
+            'cariId': w.cariHesapId,
             'amount': 0.0,
             'worked': 0,
             'leave': 0,
@@ -1746,7 +1772,7 @@ class DatabaseHelper {
           bool isWorker = workerCariIds.contains(islem.cariHesapId);
           if (!isWorker) continue;
         }
-        
+
         if (workerCariIds.contains(islem.cariHesapId)) {
           toplamIscilikOdeme += islem.alacak;
           // Find worker for this cariId
@@ -1765,7 +1791,7 @@ class DatabaseHelper {
     double satisKdv = 0;
     double alisKdv = 0;
     Map<int, Map<String, dynamic>> invoiceBalances = {};
-    
+
     for (var f in faturalar) {
       if (inRange(f.tarih)) {
         // Faturalarda şu an proje ID'si yok, bu yüzden bir proje seçiliyse faturaları dahil etmiyoruz
@@ -1826,7 +1852,7 @@ class DatabaseHelper {
            bool isWorker = workerCariIds.contains(islem.cariHesapId);
            if (!isWorker) continue;
         }
-        
+
         if (!workerCariIds.contains(islem.cariHesapId)) {
           toplamCariBorcValue += islem.borc;
           toplamCariAlacakValue += islem.alacak;
@@ -1841,13 +1867,13 @@ class DatabaseHelper {
           cariBalances[islem.cariHesapId]!['balance'] += (islem.borc - islem.alacak);
 
           // Kar/Zarar hesabı için manuel girişleri say (Maaş ve Hakediş ödemelerini geç)
-          bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') || 
-                             islem.aciklama.toLowerCase().contains('maaş ödemesi') || 
+          bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') ||
+                             islem.aciklama.toLowerCase().contains('maaş ödemesi') ||
                              islem.aciklama.toLowerCase().contains('avans') ||
                              islem.aciklama.toLowerCase().contains('işçi ödemesi') ||
                              islem.aciklama.contains('#H:[') ||
                              islem.aciklama == 'Hesap Kapatma';
-          
+
           if (!isSettlement) {
             manuallyEnteredGelir += islem.borc;
             manuallyEnteredGider += islem.alacak;
@@ -1861,7 +1887,7 @@ class DatabaseHelper {
     double tahsilEdilenHakedisValue = 0;
     double bekleyenHakedisValue = 0;
     Map<int, Map<String, dynamic>> projectHakedisMap = {};
-    
+
     for (var h in hakedisler) {
       if (inRange(h.tarih)) {
         // Proje filtresi kontrolü
@@ -1919,7 +1945,7 @@ class DatabaseHelper {
         'extra_expense': extraGider + manuallyEnteredGider,
         'total_revenue': toplamSatis + extraGelir + manuallyEnteredGelir + toplamHakedisNetValue,
         'total_cost': toplamAlis + extraGider + manuallyEnteredGider + toplamIscilikHakedis,
-        'net_profit': (toplamSatis + extraGelir + manuallyEnteredGelir + toplamHakedisNetValue) - 
+        'net_profit': (toplamSatis + extraGelir + manuallyEnteredGelir + toplamHakedisNetValue) -
                       (toplamAlis + extraGider + manuallyEnteredGider + toplamIscilikHakedis),
       },
       'ledger': {
@@ -1947,7 +1973,7 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      
+
       final rangeStart = DateTime(start.year, start.month, start.day);
       final rangeEnd = DateTime(end.year, end.month, end.day, 23, 59, 59);
 
@@ -1965,3 +1991,4 @@ class DatabaseHelper {
     }
   }
 }
+
