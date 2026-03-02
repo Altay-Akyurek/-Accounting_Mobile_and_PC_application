@@ -1303,10 +1303,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get outgoingCredit_caps => 'outgoingCredit_caps';
 
   @override
-  String get netCashKasa_caps => 'netCashKasa_caps';
+  String get netCashKasa_caps => 'NET NAKİT KASA';
 
   @override
-  String get netStatusBalance_caps => 'netStatusBalance_caps';
+  String get netStatusBalance_caps => 'NET DURUM BAKİYESİ';
 
   @override
   String get exportExcel => 'exportExcel';
@@ -1324,43 +1324,43 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noTransactionsYet => 'noTransactionsYet';
 
   @override
-  String get newCariRecord => 'newCariRecord';
+  String get newCariRecord => 'YENİ CARİ KART';
 
   @override
-  String get editCariRecord => 'editCariRecord';
+  String get editCariRecord => 'CARİ KARTI DÜZENLE';
 
   @override
-  String get generalInfo => 'generalInfo';
+  String get generalInfo => 'GENEL BİLGİLER';
 
   @override
-  String get accountTitle => 'accountTitle';
+  String get accountTitle => 'Firma / Şahıs Adı (Ünvan)';
 
   @override
-  String get titleRequired => 'titleRequired';
+  String get titleRequired => 'Cari ünvanı (Ad Soyad/Firma Adı) zorunludur.';
 
   @override
-  String get contactInfo => 'contactInfo';
+  String get contactInfo => 'İLETİŞİM BİLGİLERİ';
 
   @override
-  String get address => 'address';
+  String get address => 'Adres';
 
   @override
-  String get financialSettings => 'financialSettings';
+  String get financialSettings => 'FİNANSAL AYARLAR';
 
   @override
-  String get startingBalance => 'startingBalance';
+  String get startingBalance => 'Açılış Bakiyesi';
 
   @override
-  String get cashAccount => 'cashAccount';
+  String get cashAccount => 'Kasa Hesabı (Nakit vs.)?';
 
   @override
-  String get cariAccounts => 'cariAccounts';
+  String get cariAccounts => 'Cari Hesaplar';
 
   @override
-  String get addNewCari => 'addNewCari';
+  String get addNewCari => 'Yeni Cari Ekle';
 
   @override
-  String get searchCariHint => 'searchCariHint';
+  String get searchCariHint => 'Cari adı veya yetkili ara...';
 
   @override
   String get noCariAccountsYet => 'noCariAccountsYet';
@@ -1388,10 +1388,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get taxNo_short => 'taxNo_short';
+  String get taxNo_short => 'Vergi No';
 
   @override
-  String get currentBalance_caps => 'currentBalance_caps';
+  String get currentBalance_caps => 'GÜNCEL BAKİYE';
 
   @override
   String get totalExpenses => 'Toplam Giderler';

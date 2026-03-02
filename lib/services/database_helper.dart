@@ -20,6 +20,23 @@ class DatabaseHelper {
 
   DatabaseHelper._init();
 
+  DateTime _getEffectiveDate(CariIslem islem) {
+    final String descStr = islem.aciklama;
+    final String descLower = descStr.toLowerCase();
+    final String descLowerTr = descStr.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
+    
+    bool isSettlement = 
+        descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
+        descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
+        descStr.contains('#H:[') ||
+        descStr == 'Hesap Kapatma';
+
+    if (isSettlement && islem.vade != null) {
+      return islem.vade!;
+    }
+    return islem.tarih;
+  }
+
   Future<void> init() async {
     // Supabase main.dart'ta initialize edildiği için burada bir şey yapmaya gerek yok
   }
@@ -524,7 +541,7 @@ class DatabaseHelper {
   Future<Map<String, dynamic>> getDetailedFinancialAnalysis(DateTime start, DateTime end, {int? projectId}) async {
     final results = await Future.wait([
       getAllGelirGider(baslangic: start, bitis: end),
-      getAllCariIslemler(baslangic: start, bitis: end),
+      getAllCariIslemler(), // Fetch all to allow matching by vade (effectiveDate)
       getAllPuantajlar(baslangic: start.subtract(const Duration(days: 6)), bitis: end),
       getAllWorkers(),
       getAllHakedisler(baslangic: start, bitis: end),
@@ -571,8 +588,8 @@ class DatabaseHelper {
       if (projectId != null && h.projectId != projectId) continue;
 
       if (h.durum == HakedisDurum.tahsilEdildi &&
-          h.tarih.isAfter(start.subtract(const Duration(days: 1))) &&
-          h.tarih.isBefore(end.add(const Duration(days: 1)))) {
+          h.tarih.isAfter(start.subtract(const Duration(seconds: 1))) &&
+          h.tarih.isBefore(end.add(const Duration(seconds: 1)))) {
         toplamGelir += h.netTutar;
       }
     }
@@ -580,8 +597,8 @@ class DatabaseHelper {
     // 2. Gelir/Gider ...
     for (var gg in gelirGiderler) {
       bool isLabor = (gg.kategori?.contains('İşçi') ?? false) || (gg.kategori?.contains('Maaş') ?? false);
-      if (gg.tarih.isBefore(end.add(const Duration(days: 1)))) {
-        bool inPeriod = gg.tarih.isAfter(start.subtract(const Duration(days: 1)));
+      if (gg.tarih.isBefore(end.add(const Duration(seconds: 1)))) {
+        bool inPeriod = gg.tarih.isAfter(start.subtract(const Duration(seconds: 1)));
         if (inPeriod) {
           if (gg.tipi == GelirGiderTipi.gelir) {
             toplamGelir += gg.tutar;
@@ -608,9 +625,10 @@ class DatabaseHelper {
     for (var islem in cariIslemler) {
       bool isWorker = workerCariIds.contains(islem.cariHesapId);
       bool isKasa = kasaCariIds.contains(islem.cariHesapId);
+      DateTime effectiveDate = _getEffectiveDate(islem);
 
-      if (islem.tarih.isBefore(end.add(const Duration(days: 1)))) {
-        bool inPeriod = islem.tarih.isAfter(start.subtract(const Duration(days: 1)));
+      if (effectiveDate.isBefore(end.add(const Duration(seconds: 1)))) {
+        bool inPeriod = effectiveDate.isAfter(start.subtract(const Duration(seconds: 1)));
         if (inPeriod) {
           // Proje filtresi varsa, projesiz işlemleri dahil etme
           // (İşçi ödemeleri hariç - onlar genel/unassigned olabilir ve bakiye kapatabilir)
@@ -664,11 +682,11 @@ class DatabaseHelper {
     // 4. Puantaj
     for (var p in puantajlar) {
       if (projectId != null && p.projectId != projectId) continue;
-      if (p.tarih.isBefore(end.add(const Duration(days: 1)))) {
+      if (p.tarih.isBefore(end.add(const Duration(seconds: 1)))) {
         final worker = workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
         double cost = calculateLaborCost(p, worker);
 
-        bool inPeriod = p.tarih.isAfter(start.subtract(const Duration(days: 1)));
+        bool inPeriod = p.tarih.isAfter(start.subtract(const Duration(seconds: 1)));
         if (inPeriod) {
           workValueProducedThisPeriod += cost;
           if (p.status == PuantajStatus.normal) {
@@ -775,7 +793,7 @@ class DatabaseHelper {
       double personAccrualInPeriod = 0;
       for (var p in puantajlar) {
         if (p.workerId == wId && (projectId == null || p.projectId == projectId)) {
-          if (p.tarih.isAfter(start.subtract(const Duration(days: 1))) && p.tarih.isBefore(end.add(const Duration(days: 1)))) {
+          if (p.tarih.isAfter(start.subtract(const Duration(seconds: 1))) && p.tarih.isBefore(end.add(const Duration(seconds: 1)))) {
                personAccrualInPeriod += calculateLaborCost(p, worker);
           }
         }
@@ -817,12 +835,12 @@ class DatabaseHelper {
     };
   }
 
-  Future<List<Map<String, dynamic>>> getProjectReports() async {
+  Future<List<Map<String, dynamic>>> getProjectReports({DateTime? start, DateTime? end, List<int>? projectIds}) async {
     final results = await Future.wait([
       getAllProjects(),
       getAllHakedisler(),
       getAllGelirGider(),
-      getAllCariIslemler(),
+      getAllCariIslemler(), // Fetch all to allow matching by vade
       getAllPuantajlar(),
       getAllWorkers(),
     ]);
@@ -834,12 +852,46 @@ class DatabaseHelper {
     final puantajlar = results[4] as List<Puantaj>;
     final workers = results[5] as List<Worker>;
 
+    DateTime? rangeStart;
+    DateTime? rangeEnd;
+    if (start != null) rangeStart = DateTime(start.year, start.month, start.day);
+    if (end != null) rangeEnd = end.add(const Duration(hours: 23, minutes: 59, seconds: 59));
+
+    bool inRange(DateTime d) {
+      if (rangeStart != null && d.isBefore(rangeStart.subtract(const Duration(seconds: 1)))) return false;
+      if (rangeEnd != null && d.isAfter(rangeEnd.add(const Duration(seconds: 1)))) return false;
+      return true;
+    }
+
+    bool belongsToPeriod(CariIslem islem) {
+      final String descStr = islem.aciklama;
+      final String descLower = descStr.toLowerCase();
+      final String descLowerTr = descStr.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
+      
+      bool isSettlement = 
+          descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
+          descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
+          descLower.contains('avans') || descLower.contains('işçi ödemesi') ||
+          descLowerTr.contains('işçi ödemesi') ||
+          descStr.contains('#H:[') ||
+          descStr == 'Hesap Kapatma';
+
+      if (isSettlement && islem.vade != null) {
+        return inRange(islem.vade!);
+      }
+      return inRange(islem.tarih);
+    }
+
     final workerCariIds = workers.map((w) => w.cariHesapId).where((id) => id != null).toSet();
     final Map<int, int> cariToWorker = {for (var w in workers) if (w.cariHesapId != null) w.cariHesapId!: w.id!};
 
     List<Map<String, dynamic>> reports = [];
 
     for (var project in projects) {
+      if (projectIds != null && projectIds.isNotEmpty && !projectIds.contains(project.id)) {
+        continue; // Skip if filter is set and this project is not in it
+      }
+
       double gelir = 0;
       double nonLaborGider = 0;
 
@@ -850,6 +902,7 @@ class DatabaseHelper {
       // Hakedişler (Sadece tahsil edilenleri gelire ekle)
       for (var h in hakedisler) {
         if (h.projectId == project.id && h.durum == HakedisDurum.tahsilEdildi) {
+          if (!inRange(h.tarih)) continue;
           gelir += h.netTutar;
         }
       }
@@ -857,6 +910,7 @@ class DatabaseHelper {
       // Projeye bağlı Gelir/Gider
       for (var gg in gelirGiderler) {
         if (gg.projectId == project.id) {
+          if (!inRange(gg.tarih)) continue;
           if (gg.tipi == GelirGiderTipi.gelir) gelir += gg.tutar;
           if (gg.tipi == GelirGiderTipi.gider) {
             bool isLabor = (gg.kategori?.contains('İşçi') ?? false) || (gg.kategori?.contains('Maaş') ?? false);
@@ -872,6 +926,8 @@ class DatabaseHelper {
       // Projeye bağlı Cari İşlemler
       for (var islem in islemler) {
         if (islem.projectId == project.id) {
+          if (!belongsToPeriod(islem)) continue;
+          
           // Hakediş tahsilatlarını geç (Çünkü hakedisler tablosundan zaten ekleniyor)
           bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') ||
                              islem.aciklama.contains('#H:[');
@@ -902,6 +958,7 @@ class DatabaseHelper {
       // Projeye bağlı İşçilik (Puantaj)
       for (var p in puantajlar) {
         if (p.projectId == project.id) {
+          if (!inRange(p.tarih)) continue;
           final worker = workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
           double cost = calculateLaborCost(p, worker);
           projectWorkerAccrual[p.workerId] = (projectWorkerAccrual[p.workerId] ?? 0) + cost;
@@ -909,17 +966,18 @@ class DatabaseHelper {
       }
 
       // Projeye bağlı Pazar Bonusları
-      // Eğer işçi o hafta bu projede çalıştıysa ve Pazar hak ettiyse bu projeye yansıtılır.
       for (var w in workers) {
         if (w.id == null) continue;
         final workerPuantaj = puantajlar.where((p) => p.workerId == w.id).toList();
         if (workerPuantaj.isEmpty) continue;
 
-        DateTime minDate = workerPuantaj.map((p) => p.tarih).reduce((a, b) => a.isBefore(b) ? a : b);
-        DateTime maxDate = DateTime.now();
+        // start and end are already checked by inRange, but we need strictly bounded range for loop
+        // We evaluate bonuses for the period between rangeStart and rangeEnd (if provided)
+        DateTime loopStart = rangeStart ?? workerPuantaj.map((p) => p.tarih).reduce((a, b) => a.isBefore(b) ? a : b);
+        DateTime loopEnd = rangeEnd ?? DateTime.now();
 
-        DateTime current = DateTime(minDate.year, minDate.month, minDate.day);
-        while (current.isBefore(maxDate.add(const Duration(seconds: 1)))) {
+        DateTime current = DateTime(loopStart.year, loopStart.month, loopStart.day);
+        while (current.isBefore(loopEnd.add(const Duration(seconds: 1)))) {
           if (current.weekday == DateTime.sunday) {
             bool earnedBonus = true;
             Map<int, int> projectCounts = {};
@@ -1650,7 +1708,7 @@ class DatabaseHelper {
       getAllWorkers(),
       getAllFaturalar(baslangic: rangeStart, bitis: rangeEnd),
       getAllGelirGider(baslangic: rangeStart, bitis: rangeEnd),
-      getAllCariIslemler(baslangic: rangeStart, bitis: rangeEnd),
+      getAllCariIslemler(), // Fetch all to allow matching by vade
       getAllHakedisler(baslangic: rangeStart, bitis: rangeEnd),
       getAllProjects(),
     ]);
@@ -1668,6 +1726,27 @@ class DatabaseHelper {
       return d.isAfter(rangeStart.subtract(const Duration(seconds: 1))) &&
              d.isBefore(rangeEnd.add(const Duration(seconds: 1)));
     }
+
+    bool belongsToPeriod(CariIslem islem) {
+    // Only use 'vade' to override the period for settlement transactions.
+    // For normal transactions, 'vade' means 'due date' and shouldn't affect which period's report it appears in.
+    final String descStr = islem.aciklama;
+    final String descLower = descStr.toLowerCase();
+    final String descLowerTr = descStr.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
+    
+    bool isSettlement = 
+        descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
+        descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
+        descLower.contains('avans') || descLower.contains('işçi ödemesi') ||
+        descLowerTr.contains('işçi ödemesi') ||
+        descStr.contains('#H:[') ||
+        descStr == 'Hesap Kapatma';
+
+    if (isSettlement && islem.vade != null) {
+      return inRange(islem.vade!);
+    }
+    return inRange(islem.tarih);
+  }  
 
     // 1. Personel / Maaş Hesaplama
     double toplamIscilikHakedis = 0;
@@ -1783,7 +1862,7 @@ class DatabaseHelper {
     }
 
     for (var islem in cariIslemler) {
-      if (inRange(islem.tarih)) {
+      if (belongsToPeriod(islem)) {
         // Fix: Ensure we include unassigned (projectId == null) worker payments even when filtering by project
         // This ensures settlements made in the general account offset project-specific labor costs.
         if (projectIds != null && islem.projectId != null && !projectIds.contains(islem.projectId)) continue;
@@ -1794,6 +1873,7 @@ class DatabaseHelper {
 
         if (workerCariIds.contains(islem.cariHesapId)) {
           toplamIscilikOdeme += islem.alacak;
+          
           // Find worker for this cariId
           final w = workers.firstWhere((w) => w.cariHesapId == islem.cariHesapId);
           if (!workerDuesMap.containsKey(w.id)) {
@@ -1865,7 +1945,7 @@ class DatabaseHelper {
     double manuallyEnteredGider = 0;
 
     for (var islem in cariIslemler) {
-      if (inRange(islem.tarih)) {
+      if (belongsToPeriod(islem)) {
         // Fix: Ensure unassigned (projesiz) transactions are excluded ONLY for non-worker items
         if (projectIds != null && (islem.projectId == null || !projectIds.contains(islem.projectId))) {
            bool isWorker = workerCariIds.contains(islem.cariHesapId);
@@ -1886,12 +1966,17 @@ class DatabaseHelper {
           cariBalances[islem.cariHesapId]!['balance'] += (islem.borc - islem.alacak);
 
           // Kar/Zarar hesabı için manuel girişleri say (Maaş ve Hakediş ödemelerini geç)
-          bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') ||
-                             islem.aciklama.toLowerCase().contains('maaş ödemesi') ||
-                             islem.aciklama.toLowerCase().contains('avans') ||
-                             islem.aciklama.toLowerCase().contains('işçi ödemesi') ||
-                             islem.aciklama.contains('#H:[') ||
-                             islem.aciklama == 'Hesap Kapatma';
+          final String descStr = islem.aciklama;
+          final String descLower = descStr.toLowerCase();
+          final String descLowerTr = descStr.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
+          
+          bool isSettlement = 
+              descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
+              descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
+              descLower.contains('avans') || descLowerTr.contains('avans') ||
+              descLower.contains('işçi ödemesi') || descLowerTr.contains('işçi ödemesi') ||
+              descStr.contains('#H:[') ||
+              descStr == 'Hesap Kapatma';
 
           if (!isSettlement) {
             manuallyEnteredGelir += islem.borc;

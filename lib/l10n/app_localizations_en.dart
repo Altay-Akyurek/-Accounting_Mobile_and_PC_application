@@ -1303,10 +1303,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get outgoingCredit_caps => 'outgoingCredit_caps';
 
   @override
-  String get netCashKasa_caps => 'netCashKasa_caps';
+  String get netCashKasa_caps => 'NET CASH / VAULT';
 
   @override
-  String get netStatusBalance_caps => 'netStatusBalance_caps';
+  String get netStatusBalance_caps => 'NET STATUS BALANCE';
 
   @override
   String get exportExcel => 'exportExcel';
@@ -1324,43 +1324,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noTransactionsYet => 'noTransactionsYet';
 
   @override
-  String get newCariRecord => 'newCariRecord';
+  String get newCariRecord => 'NEW ACCOUNT RECORD';
 
   @override
-  String get editCariRecord => 'editCariRecord';
+  String get editCariRecord => 'EDIT RECORD';
 
   @override
-  String get generalInfo => 'generalInfo';
+  String get generalInfo => 'GENERAL INFO';
 
   @override
-  String get accountTitle => 'accountTitle';
+  String get accountTitle => 'Account Title (Name / Company)';
 
   @override
-  String get titleRequired => 'titleRequired';
+  String get titleRequired => 'Account title is required.';
 
   @override
-  String get contactInfo => 'contactInfo';
+  String get contactInfo => 'CONTACT INFO';
 
   @override
-  String get address => 'address';
+  String get address => 'Address';
 
   @override
-  String get financialSettings => 'financialSettings';
+  String get financialSettings => 'FINANCIAL SETTINGS';
 
   @override
-  String get startingBalance => 'startingBalance';
+  String get startingBalance => 'Starting Balance';
 
   @override
-  String get cashAccount => 'cashAccount';
+  String get cashAccount => 'Cash Account (Register, etc.)?';
 
   @override
-  String get cariAccounts => 'cariAccounts';
+  String get cariAccounts => 'Current Accounts';
 
   @override
-  String get addNewCari => 'addNewCari';
+  String get addNewCari => 'Add New Account';
 
   @override
-  String get searchCariHint => 'searchCariHint';
+  String get searchCariHint => 'Search by name or representative...';
 
   @override
   String get noCariAccountsYet => 'noCariAccountsYet';
@@ -1388,10 +1388,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get taxNo_short => 'taxNo_short';
+  String get taxNo_short => 'Tax No';
 
   @override
-  String get currentBalance_caps => 'currentBalance_caps';
+  String get currentBalance_caps => 'CURRENT BALANCE';
 
   @override
   String get totalExpenses => 'Total Expenses';

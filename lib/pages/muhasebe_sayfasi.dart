@@ -34,6 +34,13 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
   DateTime? _vade;
   DateTime? _vadeBitis;
   String _hesapTipi = 'Nakit';
+  
+  // Dönemsel Ödeme Değişkenleri
+  bool _isDonemsel = false;
+  DateTime? _donemBaslangic;
+  DateTime? _donemBitis;
+  double _donemBekleyenAlacak = 0.0;
+  bool _donemSorgulaniyor = false;
 
   Map<String, double> _toplamlar = {'borc': 0.0, 'alacak': 0.0, 'bakiye': 0.0};
 
@@ -156,15 +163,20 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
       return;
     }
 
+    DateTime? islemVade = _vade;
+    if (_isDonemsel && _donemBitis != null) {
+      islemVade = _donemBitis;
+    }
+
     try {
       final islem = CariIslem(
         cariHesapId: _seciliCari!.id!,
         cariHesapUnvan: _seciliCari!.unvan,
         tarih: _tarih,
-        aciklama: _aciklamaController.text.trim(),
+        aciklama: _isDonemsel ? (_aciklamaController.text.trim().isEmpty ? 'Döneme Özel İşçi Ödemesi' : _aciklamaController.text.trim()) : _aciklamaController.text.trim(),
         hesapTipi: _hesapTipi,
         evrakNo: _evrakNoController.text.trim().isEmpty ? null : _evrakNoController.text.trim(),
-        vade: _vade,
+        vade: islemVade,
         vadeBitis: _vadeBitis,
         borc: borc,
         alacak: alacak,
@@ -199,6 +211,52 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
     _hesapTipi = 'Nakit';
     _vade = null;
     _vadeBitis = null;
+    _isDonemsel = false;
+    _donemBaslangic = null;
+    _donemBitis = null;
+    _donemBekleyenAlacak = 0.0;
+  }
+
+  Future<void> _getDonemBorcu() async {
+    if (_seciliCari == null || _donemBaslangic == null || _donemBitis == null) return;
+    
+    setState(() => _donemSorgulaniyor = true);
+    
+    try {
+      final worker = await DatabaseHelper.instance.getWorkerByCariId(_seciliCari!.id!);
+      if (worker != null && worker.id != null) {
+        final report = await DatabaseHelper.instance.getSettlementReport(
+          _donemBaslangic!,
+          _donemBitis!,
+          projectIds: _seciliProje != null && _seciliProje!.id != null ? [_seciliProje!.id!] : null,
+        );
+        
+        final laborItems = List<Map<String, dynamic>>.from(report['labor']['items'] ?? []);
+        Map<String, dynamic>? wData;
+        for (var l in laborItems) {
+          if (l['name'] == worker.adSoyad) {
+            wData = l;
+            break;
+          }
+        }
+        
+        if (mounted) {
+          setState(() {
+            _donemBekleyenAlacak = (wData?['amount'] ?? 0.0).toDouble();
+            _donemSorgulaniyor = false;
+          });
+        }
+      } else {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Seçili cari bir işçi hesabı değildir.')));
+           setState(() => _donemSorgulaniyor = false);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _donemSorgulaniyor = false);
+      }
+    }
   }
 
   Future<void> _silIslem(CariIslem islem) async {
@@ -430,55 +488,127 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(32),
-              topRight: Radius.circular(32),
-            ),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 24),
-              Text(AppLocalizations.of(context)!.quickTransactionEntry, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-              const SizedBox(height: 24),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<CariHesap?>(
-                      value: _seciliCari,
-                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.cariAccountSelection),
-                      items: _cariHesaplar.map((cari) => DropdownMenuItem(value: cari, child: Text(cari.unvan))).toList(),
-                      onChanged: (cari) => setState(() => _seciliCari = cari),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    height: 56,
-                    width: 56,
-                    decoration: BoxDecoration(color: const Color(0xFF003399).withOpacity(0.05), borderRadius: BorderRadius.circular(16)),
-                    child: IconButton(
-                      icon: const Icon(Icons.add_rounded, color: Color(0xFF003399)),
-                      onPressed: () async {
-                        final result = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => const CariEkleDialog(),
-                        );
-                        if (result == true) _yukleVeriler();
-                      },
-                    ),
-                  ),
-                ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<Project?>(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(2))),
+                  const SizedBox(height: 24),
+                  Text(AppLocalizations.of(context)!.quickTransactionEntry, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                  const SizedBox(height: 24),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<CariHesap?>(
+                          value: _seciliCari,
+                          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.cariAccountSelection),
+                          items: _cariHesaplar.map((cari) => DropdownMenuItem(value: cari, child: Text(cari.unvan))).toList(),
+                          onChanged: (cari) {
+                             setState(() => _seciliCari = cari);
+                             setModalState(() {});
+                             if (_isDonemsel && _donemBaslangic != null) _getDonemBorcu().then((_) => setModalState((){}));
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        height: 56,
+                        width: 56,
+                        decoration: BoxDecoration(color: const Color(0xFF003399).withOpacity(0.05), borderRadius: BorderRadius.circular(16)),
+                        child: IconButton(
+                          icon: const Icon(Icons.add_rounded, color: Color(0xFF003399)),
+                          onPressed: () async {
+                            final result = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => const CariEkleDialog(),
+                            );
+                            if (result == true) {
+                               await _yukleVeriler();
+                               setModalState((){});
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Dönemsel Ödeme Seçeneği
+                  SwitchListTile(
+                    title: const Text('Döneme Özel İşçi Ödemesi (Avans)'),
+                    subtitle: const Text('Aşağıdan seçeceğiniz dönemin borcundan düşer.'),
+                    value: _isDonemsel,
+                    activeColor: const Color(0xFF003399),
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) {
+                      setState(() {
+                         _isDonemsel = val;
+                      });
+                      setModalState(() {});
+                    },
+                  ),
+                  if (_isDonemsel) ...[
+                    GestureDetector(
+                      onTap: () async {
+                        final picked = await showDateRangePicker(
+                          context: context,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2030),
+                        );
+                        if (picked != null) {
+                           setState(() {
+                             _donemBaslangic = picked.start;
+                             _donemBitis = picked.end;
+                           });
+                           setModalState(() {});
+                           await _getDonemBorcu();
+                           setModalState(() {});
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                           border: Border.all(color: Colors.grey.shade400),
+                           borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                           children: [
+                             const Icon(Icons.date_range, color: Colors.indigo),
+                             const SizedBox(width: 8),
+                             Expanded(child: Text(
+                                _donemBaslangic == null 
+                                  ? 'Tarih Aralığı Seçiniz' 
+                                  : '${DateFormat('dd MMM').format(_donemBaslangic!)} - ${DateFormat('dd MMM yyyy').format(_donemBitis!)}'
+                             )),
+                           ],
+                        )
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (_donemSorgulaniyor)
+                       const CircularProgressIndicator()
+                    else if (_donemBaslangic != null && _seciliCari != null)
+                       Text(
+                         'Seçili Dönem Bekleyen İşçilik: ${_formatPara(_donemBekleyenAlacak)}',
+                         style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+                       ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  DropdownButtonFormField<Project?>(
                 value: _seciliProje,
                 isExpanded: true,
                 decoration: InputDecoration(labelText: '${AppLocalizations.of(context)!.selectProject} (${AppLocalizations.of(context)!.descriptionOptional})'),
@@ -486,7 +616,11 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                    DropdownMenuItem(value: null, child: Text('- ${AppLocalizations.of(context)!.notEntered} -')),
                    ..._projeler.map((p) => DropdownMenuItem(value: p, child: Text(p.ad))).toList(),
                 ],
-                onChanged: (p) => setState(() => _seciliProje = p),
+                onChanged: (p) {
+                   setState(() => _seciliProje = p);
+                   setModalState(() {});
+                   if (_isDonemsel && _donemBaslangic != null) _getDonemBorcu().then((_) => setModalState((){}));
+                },
               ),
               const SizedBox(height: 16),
               TextField(controller: _aciklamaController, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.descriptionNote)),
@@ -524,8 +658,10 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
             ],
           ),
         ),
-      ),
-    );
+      );
+     },
+    ),
+   );
   }
 
   Widget _buildCariFilter() {

@@ -309,6 +309,10 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     );
   }
 
+  DateTime _getSettlementDate() {
+    return DateTime.now();
+  }
+
   Future<void> _settleHakedis() async {
     final hakedis = _reportData!['hakedis'];
     final items = List<Map<String, dynamic>>.from(hakedis['items'] ?? []);
@@ -329,14 +333,16 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     setState(() => _isLoading = true);
     try {
       final List<CariIslem> transactions = [];
+      final islemTarihi = _getSettlementDate();
       for (var item in items) {
         final double amount = item['amount'].toDouble();
         if (amount > 0) {
           transactions.add(CariIslem(
             cariHesapId: item['cariId'],
-            cariHesapUnvan: item['cariName'] ?? 'Bilinmeyen',
+            cariHesapUnvan: item['name'] ?? 'Bilinmeyen',
             projectId: item['projectId'],
-            tarih: DateTime.now(),
+            tarih: islemTarihi,
+            vade: _endDate, // Indicate this settles the selected period
             aciklama: 'Hakediş tahsilatı: ${item['name']} #H:[${(item['hakedisIds'] as List<int>).join(',')}]',
             hesapTipi: 'Nakit',
             borc: amount,
@@ -385,13 +391,15 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     setState(() => _isLoading = true);
     try {
       final List<CariIslem> transactions = [];
+      final islemTarihi = _getSettlementDate();
       for (var item in toSettle) {
         final double amount = item['amount'].toDouble();
         transactions.add(CariIslem(
           cariHesapId: item['cariId'],
           cariHesapUnvan: item['name'],
           projectId: _selectedProjectIds.length == 1 ? _selectedProjectIds.first : null,
-          tarih: DateTime.now(),
+          tarih: islemTarihi,
+          vade: _endDate, // Indicate this settles the selected period
           aciklama: 'Maaş Ödemesi: ${item['name']}',
           hesapTipi: 'Nakit',
           borc: 0,
@@ -430,6 +438,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     setState(() => _isLoading = true);
     try {
       final List<CariIslem> transactions = [];
+      final islemTarihi = _getSettlementDate();
       for (var item in toSettle) {
         final balance = item['balance'].toDouble();
         
@@ -437,7 +446,8 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
         transactions.add(CariIslem(
           cariHesapId: item['cariId'],
           cariHesapUnvan: item['name'],
-          tarih: DateTime.now(),
+          tarih: islemTarihi,
+          vade: _endDate, // Indicate this settles the selected period
           aciklama: 'Hesap Kapatma',
           hesapTipi: 'Nakit',
           borc: balance < 0 ? balance.abs() : 0,

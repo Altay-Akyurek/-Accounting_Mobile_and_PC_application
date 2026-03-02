@@ -2559,13 +2559,13 @@ abstract class AppLocalizations {
   /// No description provided for @netCashKasa_caps.
   ///
   /// In tr, this message translates to:
-  /// **'netCashKasa_caps'**
+  /// **'NET NAKİT KASA'**
   String get netCashKasa_caps;
 
   /// No description provided for @netStatusBalance_caps.
   ///
   /// In tr, this message translates to:
-  /// **'netStatusBalance_caps'**
+  /// **'NET DURUM BAKİYESİ'**
   String get netStatusBalance_caps;
 
   /// No description provided for @exportExcel.
@@ -2601,79 +2601,79 @@ abstract class AppLocalizations {
   /// No description provided for @newCariRecord.
   ///
   /// In tr, this message translates to:
-  /// **'newCariRecord'**
+  /// **'YENİ CARİ KART'**
   String get newCariRecord;
 
   /// No description provided for @editCariRecord.
   ///
   /// In tr, this message translates to:
-  /// **'editCariRecord'**
+  /// **'CARİ KARTI DÜZENLE'**
   String get editCariRecord;
 
   /// No description provided for @generalInfo.
   ///
   /// In tr, this message translates to:
-  /// **'generalInfo'**
+  /// **'GENEL BİLGİLER'**
   String get generalInfo;
 
   /// No description provided for @accountTitle.
   ///
   /// In tr, this message translates to:
-  /// **'accountTitle'**
+  /// **'Firma / Şahıs Adı (Ünvan)'**
   String get accountTitle;
 
   /// No description provided for @titleRequired.
   ///
   /// In tr, this message translates to:
-  /// **'titleRequired'**
+  /// **'Cari ünvanı (Ad Soyad/Firma Adı) zorunludur.'**
   String get titleRequired;
 
   /// No description provided for @contactInfo.
   ///
   /// In tr, this message translates to:
-  /// **'contactInfo'**
+  /// **'İLETİŞİM BİLGİLERİ'**
   String get contactInfo;
 
   /// No description provided for @address.
   ///
   /// In tr, this message translates to:
-  /// **'address'**
+  /// **'Adres'**
   String get address;
 
   /// No description provided for @financialSettings.
   ///
   /// In tr, this message translates to:
-  /// **'financialSettings'**
+  /// **'FİNANSAL AYARLAR'**
   String get financialSettings;
 
   /// No description provided for @startingBalance.
   ///
   /// In tr, this message translates to:
-  /// **'startingBalance'**
+  /// **'Açılış Bakiyesi'**
   String get startingBalance;
 
   /// No description provided for @cashAccount.
   ///
   /// In tr, this message translates to:
-  /// **'cashAccount'**
+  /// **'Kasa Hesabı (Nakit vs.)?'**
   String get cashAccount;
 
   /// No description provided for @cariAccounts.
   ///
   /// In tr, this message translates to:
-  /// **'cariAccounts'**
+  /// **'Cari Hesaplar'**
   String get cariAccounts;
 
   /// No description provided for @addNewCari.
   ///
   /// In tr, this message translates to:
-  /// **'addNewCari'**
+  /// **'Yeni Cari Ekle'**
   String get addNewCari;
 
   /// No description provided for @searchCariHint.
   ///
   /// In tr, this message translates to:
-  /// **'searchCariHint'**
+  /// **'Cari adı veya yetkili ara...'**
   String get searchCariHint;
 
   /// No description provided for @noCariAccountsYet.
@@ -2721,13 +2721,13 @@ abstract class AppLocalizations {
   /// No description provided for @taxNo_short.
   ///
   /// In tr, this message translates to:
-  /// **'taxNo_short'**
+  /// **'Vergi No'**
   String get taxNo_short;
 
   /// No description provided for @currentBalance_caps.
   ///
   /// In tr, this message translates to:
-  /// **'currentBalance_caps'**
+  /// **'GÜNCEL BAKİYE'**
   String get currentBalance_caps;
 
   /// No description provided for @totalExpenses.

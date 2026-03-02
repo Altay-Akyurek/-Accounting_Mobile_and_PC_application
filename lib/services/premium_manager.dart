@@ -17,6 +17,14 @@ class PremiumManager {
   static const int adIntervalMinutes = 10;
 
   Future<void> init() async {
+    // Auth durum değişikliklerini dinle
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+      if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.signedOut) {
+        checkSubscriptionStatus();
+      }
+    });
+
     await checkSubscriptionStatus();
     
     /* // Geliştirme aşamasında (Debug mode) reklamları devre dışı bırakıyoruz
@@ -81,11 +89,34 @@ class PremiumManager {
     }
 
     try {
-      // Bu kısım veritabanında user_subscriptions tablosu kurulduktan sonra güncellenecek
-      // Şimdilik varsayılan olarak false
+      // Önce mevcut durumu sıfırla ki hesaptan çıkış yapılıp girilmişse eski veri kalmasın
+      _isPremium = false;
+      
+      // Supabase'den user_subscriptions tablosundaki veriyi çek
+      final response = await Supabase.instance.client
+          .from('user_subscriptions')
+          .select('is_premium, expires_at')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (response != null) {
+        // Eğer expires_at (bitiş tarihi) bugünden ileriyse Premium kalsın
+        DateTime? expiresAt;
+        if (response['expires_at'] != null) {
+          expiresAt = DateTime.parse(response['expires_at'].toString());
+        }
+
+        if (response['is_premium'] == true) {
+           if (expiresAt == null || expiresAt.isAfter(DateTime.now())) {
+             _isPremium = true;
+             return;
+           }
+        }
+      }
+      
       _isPremium = false; 
     } catch (e) {
-      // debugPrint('Abonelik kontrolü hatası: $e');
+      debugPrint('Abonelik kontrolü hatası: $e');
       _isPremium = false;
     }
   }

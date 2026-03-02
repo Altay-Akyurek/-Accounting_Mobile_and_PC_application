@@ -22,7 +22,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
   Map<String, dynamic> _workerBreakdown = {};
   List<Map<String, dynamic>> _projeRaporlari = [];
   List<Project> _projeler = [];
-  int? _seciliProjeId;
+  List<int> _selectedProjectIds = [];
   bool _isLoading = false;
 
   @override
@@ -52,17 +52,50 @@ class _RaporlarPageState extends State<RaporlarPage> {
   Future<void> _yukleRapor() async {
     setState(() => _isLoading = true);
     try {
-      final analysis = await DatabaseHelper.instance
-          .getDetailedFinancialAnalysis(_baslangicTarihi!, _bitisTarihi!, projectId: _seciliProjeId);
-      final projeler = await DatabaseHelper.instance.getProjectReports();
+      final report = await DatabaseHelper.instance.getSettlementReport(
+        _baslangicTarihi!,
+        _bitisTarihi!,
+        projectIds: _selectedProjectIds.isEmpty ? null : _selectedProjectIds,
+      );
+      final projeler = await DatabaseHelper.instance.getProjectReports(
+        start: _baslangicTarihi,
+        end: _bitisTarihi,
+        projectIds: _selectedProjectIds.isEmpty ? null : _selectedProjectIds,
+      );
+
+      final fin = report['financials'];
+      final labor = report['labor'];
+      final invoices = report['invoices'];
+
       setState(() {
         _genelOzet = {
-          'gelir': analysis['gelir'],
-          'gider': analysis['gider'],
-          'kar': analysis['kar'],
+          'gelir': fin['total_revenue'].toDouble(),
+          'gider': fin['total_cost'].toDouble(),
+          'kar': fin['net_profit'].toDouble(),
         };
-        _kategoriler = Map<String, double>.from(analysis['kategoriler']);
-        _workerBreakdown = Map<String, dynamic>.from(analysis['worker_breakdown'] ?? {});
+        
+        // Match the categories used by _buildExpenseBreakdown
+        _kategoriler = {
+          'Malzeme/Hizmet': invoices['purchases'].toDouble() + fin['extra_expense'].toDouble(),
+          'İşçilik (Ödenen)': labor['total_paid'].toDouble(),
+          'İşçilik (Bekleyen)': labor['net_debt'].toDouble(),
+          'Cari/Diğer Çıkışlar': 0.0, // Replaced specific tracking handled in getSettlementReport
+        };
+        
+        final breakDownMap = <String, dynamic>{};
+        final laborItems = List<Map<String, dynamic>>.from(labor['items'] ?? []);
+        for (var item in laborItems) {
+          if ((item['amount'] ?? 0) > 0) {
+            breakDownMap[item['name']] = {
+              'amount': item['amount'],
+              'worked': item['worked'] ?? 0,
+              'leave': item['leave'] ?? 0,
+              'sunday': item['sunday'] ?? 0,
+            };
+          }
+        }
+        
+        _workerBreakdown = breakDownMap;
         _projeRaporlari = projeler;
         _isLoading = false;
       });
@@ -196,7 +229,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
                     ),
                   ),
                   Text(
-                    '${DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(_baslangicTarihi!)} ${AppLocalizations.of(context)!.summary}', // simplified
+                    '${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_baslangicTarihi!)} - ${DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(_bitisTarihi!)}',
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontWeight: FontWeight.w500,
@@ -239,19 +272,25 @@ class _RaporlarPageState extends State<RaporlarPage> {
   }
 
   Widget _buildFilterChip(int? id, String label) {
-    final bool isSelected = _seciliProjeId == id;
+    final bool isSelected = id == null ? _selectedProjectIds.isEmpty : _selectedProjectIds.contains(id);
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
+      child: FilterChip(
         label: Text(label),
         selected: isSelected,
         onSelected: (selected) {
-          if (selected) {
-            setState(() {
-              _seciliProjeId = id;
-            });
-            _yukleRapor();
-          }
+          setState(() {
+            if (id == null) {
+              _selectedProjectIds.clear();
+            } else {
+              if (selected) {
+                _selectedProjectIds.add(id);
+              } else {
+                _selectedProjectIds.remove(id);
+              }
+            }
+          });
+          _yukleRapor();
         },
         selectedColor: const Color(0xFF011627),
         backgroundColor: Colors.white,
