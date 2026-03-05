@@ -2109,13 +2109,13 @@ abstract class AppLocalizations {
   /// No description provided for @deleteWorkerConfirmNote.
   ///
   /// In tr, this message translates to:
-  /// **'isimli personeli ve tüm verilerini (puantaj, ödemeler vb.) kalıcı olarak silmek istediğinize emin misiniz?'**
+  /// **'{name} isimli personeli ve tüm verilerini (puantaj, ödemeler vb.) kalıcı olarak silmek istediğinize emin misiniz?'**
   String deleteWorkerConfirmNote(Object name);
 
   /// No description provided for @dismissConfirmNote.
   ///
   /// In tr, this message translates to:
-  /// **'isimli personeli işten çıkarmak istediğinize emin misiniz? (Geçmiş veriler korunur)'**
+  /// **'{name} isimli personeli işten çıkarmak istediğinize emin misiniz? (Geçmiş veriler korunur)'**
   String dismissConfirmNote(Object name);
 
   /// No description provided for @attendanceAndSalaryTracking.

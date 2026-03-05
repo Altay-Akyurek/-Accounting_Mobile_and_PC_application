@@ -1067,12 +1067,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String deleteWorkerConfirmNote(Object name) {
-    return 'isimli personeli ve tüm verilerini (puantaj, ödemeler vb.) kalıcı olarak silmek istediğinize emin misiniz?';
+    return '$name isimli personeli ve tüm verilerini (puantaj, ödemeler vb.) kalıcı olarak silmek istediğinize emin misiniz?';
   }
 
   @override
   String dismissConfirmNote(Object name) {
-    return 'isimli personeli işten çıkarmak istediğinize emin misiniz? (Geçmiş veriler korunur)';
+    return '$name isimli personeli işten çıkarmak istediğinize emin misiniz? (Geçmiş veriler korunur)';
   }
 
   @override
