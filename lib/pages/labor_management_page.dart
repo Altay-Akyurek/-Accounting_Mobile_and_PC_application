@@ -192,7 +192,9 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         onSelected: (val) {
-                          if (val == 'dismiss') {
+                          if (val == 'edit') {
+                            _showEditWorkerDialog(worker);
+                          } else if (val == 'dismiss') {
                             _showDismissDialog(worker);
                           } else if (val == 'documents') {
                             _showDocumentsDialog(worker);
@@ -201,6 +203,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                           }
                         },
                         itemBuilder: (context) => [
+                          if (worker.aktif) PopupMenuItem(value: 'edit', child: Text(AppLocalizations.of(context)!.edit)),
                           if (worker.aktif) PopupMenuItem(value: 'dismiss', child: Text(AppLocalizations.of(context)!.dismissWorker)),
                           PopupMenuItem(value: 'documents', child: Text(AppLocalizations.of(context)!.documents)),
                           if (!worker.aktif) PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.deletePermanently, style: const TextStyle(color: Colors.red))),
@@ -286,6 +289,88 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
           const SizedBox(height: 16),
           Text(AppLocalizations.of(context)!.personnelListEmpty, style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600)),
         ],
+      ),
+    );
+  }
+
+  void _showEditWorkerDialog(Worker worker) {
+    final nameController = TextEditingController(text: worker.adSoyad);
+    final posController = TextEditingController(text: worker.pozisyon);
+    final salaryController = TextEditingController(text: worker.maasTutari.toString());
+    WorkerSalaryType selectedType = worker.maasTuru;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Container(
+            decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32))),
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(AppLocalizations.of(context)!.edit, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
+                const SizedBox(height: 24),
+                TextField(controller: nameController, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.fullName)),
+                const SizedBox(height: 16),
+                TextField(controller: posController, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.dutyPosition)),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: TextField(controller: salaryController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.salaryAmount))),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<WorkerSalaryType>(
+                        value: selectedType,
+                        items: [
+                          DropdownMenuItem(value: WorkerSalaryType.gunluk, child: Text(AppLocalizations.of(context)!.daily)),
+                          DropdownMenuItem(value: WorkerSalaryType.aylik, child: Text(AppLocalizations.of(context)!.monthly)),
+                          DropdownMenuItem(value: WorkerSalaryType.saatlik, child: Text(AppLocalizations.of(context)!.hourly)),
+                        ],
+                        onChanged: (v) => setModalState(() => selectedType = v!),
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.salaryType),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (nameController.text.isNotEmpty) {
+                        final updatedWorker = worker.copyWith(
+                          adSoyad: nameController.text,
+                          pozisyon: posController.text,
+                          maasTutari: double.tryParse(salaryController.text) ?? 0.0,
+                          maasTuru: selectedType,
+                        );
+                        await DatabaseHelper.instance.updateWorker(updatedWorker);
+                        
+                        // Update linked cari hesap if exists
+                        if (worker.cariHesapId != null) {
+                          final cari = await DatabaseHelper.instance.getCariHesap(worker.cariHesapId!);
+                          if (cari != null && cari.unvan != nameController.text) {
+                            await DatabaseHelper.instance.updateCariHesap(cari.copyWith(unvan: nameController.text));
+                          }
+                        }
+
+                        if (mounted) {
+                          Navigator.pop(context);
+                          _loadWorkers();
+                        }
+                      }
+                    },
+                    child: Text(AppLocalizations.of(context)!.save.toUpperCase()),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
