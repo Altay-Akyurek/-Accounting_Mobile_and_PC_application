@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -19,6 +20,10 @@ import 'pages/premium_page.dart';
 import 'services/premium_manager.dart';
 import 'services/language_service.dart';
 import 'l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
+import 'providers/worker_provider.dart';
+import 'services/sync_manager.dart';
+import 'services/iap_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,9 +45,13 @@ void main() async {
 
   await initializeDateFormatting('tr_TR', null);
   await DatabaseHelper.instance.init();
+  await SyncManager.instance.init();
   
   // Premium durumunu, dili ve reklamları başlat
   await PremiumManager.instance.init();
+  if (Platform.isAndroid || Platform.isIOS) {
+    IAPService.instance.init(); // Gerçek satın alma servisini başlat
+  }
   await LanguageService.instance.init();
   
   runApp(const MyApp());
@@ -53,10 +62,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<Locale>(
-      valueListenable: LanguageService.instance.localeNotifier,
-      builder: (context, locale, child) {
-        return MaterialApp(
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => WorkerProvider()),
+      ],
+      child: ValueListenableBuilder<Locale>(
+        valueListenable: LanguageService.instance.localeNotifier,
+        builder: (context, locale, child) {
+          return MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'MuhasebePro',
           theme: ThemeData(
@@ -151,9 +164,10 @@ class MyApp extends StatelessWidget {
             '/labor_summary': (context) => const LaborSummaryReportPage(),
             '/premium': (context) => const PremiumPage(),
           },
-        );
-      },
-    );
+          ); // return MaterialApp
+        },
+      ), // child: ValueListenableBuilder
+    ); // return MultiProvider
   }
 }
 

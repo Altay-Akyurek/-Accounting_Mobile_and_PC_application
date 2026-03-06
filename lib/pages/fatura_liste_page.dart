@@ -3,6 +3,8 @@ import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../models/fatura.dart';
 import '../services/database_helper.dart';
+import '../services/sync_manager.dart';
+import 'dart:async';
 import 'fatura_ekle_page.dart';
 
 class FaturaListePage extends StatefulWidget {
@@ -18,6 +20,10 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
   bool _isLoading = true;
   late TabController _tabController;
   FaturaTipi _seciliTip = FaturaTipi.satis;
+  StreamSubscription? _syncSubscription;
+  final ScrollController _scrollController = ScrollController();
+  final int _perPage = 20;
+  List<Fatura> _displayedFaturalar = [];
 
   @override
   void initState() {
@@ -32,11 +38,39 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
       }
     });
     _yukleFaturalar();
+
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((_) {
+      if (mounted) {
+        _yukleFaturalar();
+      }
+    });
+
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreData();
+    }
+  }
+
+  void _loadMoreData() {
+    if (_displayedFaturalar.length < _filtrelenmisFaturalar.length) {
+      setState(() {
+        int nextCount = _displayedFaturalar.length + _perPage;
+        if (nextCount > _filtrelenmisFaturalar.length) {
+          nextCount = _filtrelenmisFaturalar.length;
+        }
+        _displayedFaturalar = _filtrelenmisFaturalar.sublist(0, nextCount);
+      });
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _syncSubscription?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -67,6 +101,10 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
   void _filtrele() {
     setState(() {
       _filtrelenmisFaturalar = _faturalar.where((f) => f.tipi == _seciliTip).toList();
+      _displayedFaturalar = _filtrelenmisFaturalar.sublist(
+        0, 
+        _filtrelenmisFaturalar.length > _perPage ? _perPage : _filtrelenmisFaturalar.length
+      );
     });
   }
 
@@ -131,9 +169,14 @@ class _FaturaListePageState extends State<FaturaListePage> with SingleTickerProv
               : RefreshIndicator(
                   onRefresh: _yukleFaturalar,
                   child: ListView.builder(
-                    itemCount: _filtrelenmisFaturalar.length,
+                    controller: _scrollController,
+                    itemCount: _displayedFaturalar.length + (_displayedFaturalar.length < _filtrelenmisFaturalar.length ? 1 : 0),
                     itemBuilder: (context, index) {
-                      final fatura = _filtrelenmisFaturalar[index];
+                      if (index == _displayedFaturalar.length) {
+                        return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
+                      }
+
+                      final fatura = _displayedFaturalar[index];
                       return Card(
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: ListTile(

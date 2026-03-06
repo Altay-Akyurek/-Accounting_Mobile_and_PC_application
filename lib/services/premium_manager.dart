@@ -121,10 +121,26 @@ class PremiumManager {
     }
   }
 
-  void setPremium(bool status) {
+  Future<void> setPremium(bool status) async {
     _isPremium = status;
     if (status) {
       _adIntervalTimer?.cancel();
+    }
+    
+    // Supabase tarafında da (opsiyonel) güncelleme yapılabilir
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null && status) {
+       try {
+         await Supabase.instance.client
+            .from('user_subscriptions')
+            .upsert({
+              'user_id': user.id,
+              'is_premium': true,
+              'expires_at': DateTime.now().add(const Duration(days: 365)).toIso8601String(), // Örnek olarak 1 yıl
+            });
+       } catch (e) {
+         debugPrint('Premium status sync error: $e');
+       }
     }
   }
 

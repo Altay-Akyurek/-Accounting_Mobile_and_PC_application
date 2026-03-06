@@ -67,6 +67,36 @@ class GelirGider {
           : DateTime.now(),
     );
   }
+
+  GelirGider copyWith({
+    int? id,
+    GelirGiderTipi? tipi,
+    String? baslik,
+    double? tutar,
+    DateTime? tarih,
+    String? kategori,
+    int? cariHesapId,
+    String? cariHesapUnvan,
+    String? aciklama,
+    String? faturaNo,
+    int? projectId,
+    DateTime? olusturmaTarihi,
+  }) {
+    return GelirGider(
+      id: id ?? this.id,
+      tipi: tipi ?? this.tipi,
+      baslik: baslik ?? this.baslik,
+      tutar: tutar ?? this.tutar,
+      tarih: tarih ?? this.tarih,
+      kategori: kategori ?? this.kategori,
+      cariHesapId: cariHesapId ?? this.cariHesapId,
+      cariHesapUnvan: cariHesapUnvan ?? this.cariHesapUnvan,
+      aciklama: aciklama ?? this.aciklama,
+      faturaNo: faturaNo ?? this.faturaNo,
+      projectId: projectId ?? this.projectId,
+      olusturmaTarihi: olusturmaTarihi ?? this.olusturmaTarihi,
+    );
+  }
 }
 
 enum GelirGiderTipi { gelir, gider }

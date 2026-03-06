@@ -18,3 +18,12 @@
 # Google Play Core
 -dontwarn com.google.android.play.core.**
 -keep class com.google.android.play.core.** { *; }
+
+# Google Mobile Ads
+-keep public class com.google.android.gms.ads.** {
+   public *;
+}
+
+# In-App Purchase (Billing)
+-keep class com.android.vending.billing.** { *; }
+-dontwarn com.android.vending.billing.**

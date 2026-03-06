@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/worker.dart';
 import '../models/cari_hesap.dart';
 import '../models/project.dart';
 import '../services/database_helper.dart';
 import '../services/language_service.dart';
+import '../providers/worker_provider.dart';
 import 'worker_documents_page.dart';
 import '../widgets/banner_ad_widget.dart';
 
@@ -17,26 +19,20 @@ class LaborManagementPage extends StatefulWidget {
 }
 
 class _LaborManagementPageState extends State<LaborManagementPage> {
-  List<Worker> _workers = [];
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
-    _loadWorkers();
-  }
-
-  Future<void> _loadWorkers() async {
-    setState(() => _isLoading = true);
-    final workers = await DatabaseHelper.instance.getAllWorkers();
-    setState(() {
-      _workers = workers;
-      _isLoading = false;
+    // Load workers using Provider when page initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WorkerProvider>().loadWorkers();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final workerProvider = context.watch<WorkerProvider>();
+    final _workers = workerProvider.workers;
+    final _isLoading = workerProvider.isLoading;
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
@@ -50,7 +46,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                 ? const Center(child: CircularProgressIndicator())
                 : _workers.isEmpty
                     ? _buildEmptyState()
-                    : _buildWorkerGrid(),
+                    : _buildWorkerGrid(_workers),
           ),
         ],
       ),
@@ -101,12 +97,12 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
     );
   }
 
-  Widget _buildWorkerGrid() {
+  Widget _buildWorkerGrid(List<Worker> workers) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: _workers.length,
+      itemCount: workers.length,
       itemBuilder: (context, index) {
-        final worker = _workers[index];
+        final worker = workers[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
@@ -231,10 +227,9 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
           TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancel.toUpperCase())),
           ElevatedButton(
             onPressed: () async {
-              await DatabaseHelper.instance.dismissWorker(worker.id!, DateTime.now());
+              await context.read<WorkerProvider>().dismissWorker(worker.id!, DateTime.now());
               if (mounted) {
                 Navigator.pop(context);
-                _loadWorkers();
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.workerDismissedInfo)));
               }
             },
@@ -256,10 +251,9 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
           TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.cancel.toUpperCase())),
           ElevatedButton(
             onPressed: () async {
-              await DatabaseHelper.instance.deleteWorker(worker.id!);
+              await context.read<WorkerProvider>().deleteWorker(worker.id!);
               if (mounted) {
                 Navigator.pop(context);
-                _loadWorkers();
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.workerDeletedInfo)));
               }
             },
@@ -348,7 +342,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                           maasTutari: double.tryParse(salaryController.text) ?? 0.0,
                           maasTuru: selectedType,
                         );
-                        await DatabaseHelper.instance.updateWorker(updatedWorker);
+                        await context.read<WorkerProvider>().updateWorker(updatedWorker);
                         
                         // Update linked cari hesap if exists
                         if (worker.cariHesapId != null) {
@@ -358,9 +352,8 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                           }
                         }
 
-                        if (mounted) {
+                        if (context.mounted) {
                           Navigator.pop(context);
-                          _loadWorkers();
                         }
                       }
                     },
@@ -448,11 +441,10 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                           baslangicTarihi: DateTime.now(),
                           cariHesapId: linkedCariId,
                         );
-                        await DatabaseHelper.instance.insertWorker(w);
+                        await context.read<WorkerProvider>().addWorker(w);
                         
-                        if (mounted) {
+                        if (context.mounted) {
                           Navigator.pop(context);
-                          _loadWorkers();
                         }
                       }
                     },

@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../models/project.dart';
 import '../services/database_helper.dart';
+import '../services/sync_manager.dart';
+import 'dart:async';
 import 'project_detail_page.dart';
 import '../models/cari_hesap.dart';
 import '../widgets/cari_ekle_dialog.dart';
@@ -20,11 +22,49 @@ class _ProjectsPageState extends State<ProjectsPage> {
   List<CariHesap> _cariHesaplar = [];
   ProjectStatus? _filterStatus;
   bool _isLoading = true;
+  StreamSubscription? _syncSubscription;
+  final ScrollController _scrollController = ScrollController();
+  final int _perPage = 20;
+  List<Project> _displayedProjects = [];
+  List<Project> _filteredProjects = [];
 
   @override
   void initState() {
     super.initState();
     _loadProjects();
+    
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((_) {
+      if (mounted) {
+        _loadProjects();
+      }
+    });
+
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreData();
+    }
+  }
+
+  void _loadMoreData() {
+    if (_displayedProjects.length < _filteredProjects.length) {
+      setState(() {
+        int nextCount = _displayedProjects.length + _perPage;
+        if (nextCount > _filteredProjects.length) {
+          nextCount = _filteredProjects.length;
+        }
+        _displayedProjects = _filteredProjects.sublist(0, nextCount);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _syncSubscription?.cancel();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProjects() async {
@@ -34,8 +74,17 @@ class _ProjectsPageState extends State<ProjectsPage> {
     setState(() {
       _projects = projects;
       _cariHesaplar = cariler;
+      _applyFilter();
       _isLoading = false;
     });
+  }
+
+  void _applyFilter() {
+    _filteredProjects = _filterStatus == null ? _projects : _projects.where((p) => p.durum == _filterStatus).toList();
+    _displayedProjects = _filteredProjects.sublist(
+      0, 
+      _filteredProjects.length > _perPage ? _perPage : _filteredProjects.length
+    );
   }
 
   String _formatPara(double tutar) {
@@ -114,25 +163,37 @@ class _ProjectsPageState extends State<ProjectsPage> {
           FilterChip(
             label: Text(AppLocalizations.of(context)!.all),
             selected: _filterStatus == null,
-            onSelected: (val) => setState(() => _filterStatus = null),
+            onSelected: (val) => setState(() {
+              _filterStatus = null;
+              _applyFilter();
+            }),
           ),
           const SizedBox(width: 8),
           FilterChip(
             label: Text(AppLocalizations.of(context)!.active),
             selected: _filterStatus == ProjectStatus.aktif,
-            onSelected: (val) => setState(() => _filterStatus = ProjectStatus.aktif),
+            onSelected: (val) => setState(() {
+              _filterStatus = ProjectStatus.aktif;
+              _applyFilter();
+            }),
           ),
           const SizedBox(width: 8),
           FilterChip(
             label: Text(AppLocalizations.of(context)!.suspended),
             selected: _filterStatus == ProjectStatus.askida,
-            onSelected: (val) => setState(() => _filterStatus = ProjectStatus.askida),
+            onSelected: (val) => setState(() {
+              _filterStatus = ProjectStatus.askida;
+              _applyFilter();
+            }),
           ),
           const SizedBox(width: 8),
           FilterChip(
             label: Text(AppLocalizations.of(context)!.completed),
             selected: _filterStatus == ProjectStatus.tamamlandi,
-            onSelected: (val) => setState(() => _filterStatus = ProjectStatus.tamamlandi),
+            onSelected: (val) => setState(() {
+              _filterStatus = ProjectStatus.tamamlandi;
+              _applyFilter();
+            }),
           ),
         ],
       ),
@@ -140,16 +201,19 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 
   Widget _buildProjectGrid() { // Renamed internally for consistency if needed, but keeping name for now
-    final filteredProjects = _filterStatus == null ? _projects : _projects.where((p) => p.durum == _filterStatus).toList();
-
-    if (filteredProjects.isEmpty) return _buildEmptyState();
+    if (_filteredProjects.isEmpty) return _buildEmptyState();
 
     return ListView.separated(
+      controller: _scrollController,
       padding: const EdgeInsets.all(24),
-      itemCount: filteredProjects.length,
+      itemCount: _displayedProjects.length + (_displayedProjects.length < _filteredProjects.length ? 1 : 0),
       separatorBuilder: (context, index) => const SizedBox(height: 24),
       itemBuilder: (context, index) {
-        final project = filteredProjects[index];
+        if (index == _displayedProjects.length) {
+          return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
+        }
+
+        final project = _displayedProjects[index];
         return _ProjectCard(
           project: project,
           onTap: () async {

@@ -1,5 +1,10 @@
 {
   "@@locale": "tr",
+  "deleteAccount": "Hesabımı Sil",
+  "deleteAccountConfirm": "Hesabınızı ve tüm verilerinizi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+  "deleteAccountSuccess": "Silme talebiniz alındı. Hesabınızdan çıkış yapılıyor.",
+  "demoDataLoaded": "Örnek veriler başarıyla yüklendi. Görseller için uygulama hazır!",
+  "processingPayment": "İşlem başlatıldı...",
   "appTitle": "Muhasebe Pro",
   "dashboard": "Ana Sayfa",
   "netCash": "NET NAKİT (KASA)",

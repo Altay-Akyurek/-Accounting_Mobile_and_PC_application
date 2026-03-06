@@ -208,6 +208,15 @@ class _DashboardPageState extends State<DashboardPage> {
                       }
                     },
                   ),
+                   _buildDrawerItem(
+                    icon: Icons.delete_forever_rounded,
+                    label: AppLocalizations.of(context)!.deleteAccount,
+                    color: const Color(0xFFE71D36).withOpacity(0.7),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showDeleteAccountDialog();
+                    },
+                  ),
                   const Divider(indent: 20, endIndent: 20),
                   _buildDrawerItem(
                     icon: Icons.logout_rounded,
@@ -221,11 +230,11 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(20.0),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
               child: Text(
                 'v1.0.0',
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.grey,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -238,77 +247,77 @@ class _DashboardPageState extends State<DashboardPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _yukleOzetBilgiler,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTopOzet(),
-                    const SizedBox(height: 32),
-                    Text(
-                      AppLocalizations.of(context)!.quickAccess,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF011627),
-                        fontSize: 13,
-                        letterSpacing: 1.2,
+                onRefresh: _yukleOzetBilgiler,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTopOzet(),
+                      const SizedBox(height: 32),
+                      Text(
+                        AppLocalizations.of(context)!.quickAccess,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF011627),
+                          fontSize: 13,
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildMainActions(),
-                    const SizedBox(height: 32),
-                    Text(
-                      AppLocalizations.of(context)!.bottleneckAnalysis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF011627),
-                        fontSize: 13,
-                        letterSpacing: 1.2,
+                      const SizedBox(height: 16),
+                      _buildMainActions(),
+                      const SizedBox(height: 32),
+                      Text(
+                        AppLocalizations.of(context)!.bottleneckAnalysis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF011627),
+                          fontSize: 13,
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildPremiumCharts(),
-                    const SizedBox(height: 32),
-                    Text(
-                      AppLocalizations.of(context)!.statusAnalysis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF011627),
-                        fontSize: 13,
-                        letterSpacing: 1.2,
+                      const SizedBox(height: 16),
+                      _buildPremiumCharts(),
+                      const SizedBox(height: 32),
+                      Text(
+                        AppLocalizations.of(context)!.statusAnalysis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF011627),
+                          fontSize: 13,
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildStatusGrid(),
-                    const SizedBox(height: 32),
-                    Text(
-                      AppLocalizations.of(context)!.profitableProjects,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF011627),
-                        fontSize: 13,
-                        letterSpacing: 1.2,
+                      const SizedBox(height: 16),
+                      _buildStatusGrid(),
+                      const SizedBox(height: 32),
+                      Text(
+                        AppLocalizations.of(context)!.profitableProjects,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF011627),
+                          fontSize: 13,
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTopProjects(),
-                    const SizedBox(height: 32),
-                    Text(
-                      AppLocalizations.of(context)!.performanceIndicator,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF011627),
-                        fontSize: 13,
-                        letterSpacing: 1.2,
+                      const SizedBox(height: 16),
+                      _buildTopProjects(),
+                      const SizedBox(height: 32),
+                      Text(
+                        AppLocalizations.of(context)!.performanceIndicator,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF011627),
+                          fontSize: 13,
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildPerformanceIndicator(),
-                  ],
+                      const SizedBox(height: 16),
+                      _buildPerformanceIndicator(),
+                    ],
+                  ),
                 ),
               ),
-            ),
       bottomNavigationBar: const BannerAdWidget(),
     );
   }
@@ -924,6 +933,63 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+    );
+  }
+
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.deleteAccount),
+        content: Text(AppLocalizations.of(context)!.deleteAccountConfirm),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              
+              // Yükleme göstergesi
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(child: CircularProgressIndicator()),
+              );
+
+              try {
+                await AuthService().deleteAccount();
+                if (mounted) {
+                  Navigator.pop(context); // Yükleme göstergesini kapat
+                  
+                  // Şimdi güvenle çıkış yapabiliriz
+                  await AuthService().signOut();
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppLocalizations.of(context)!.deleteAccountSuccess)),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context); // Yükleme göstergesini kapat
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Hata: Hesap silme isteği iletilemedi.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text(
+              AppLocalizations.of(context)!.deleteAccount,
+              style: const TextStyle(color: Color(0xFFE71D36), fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

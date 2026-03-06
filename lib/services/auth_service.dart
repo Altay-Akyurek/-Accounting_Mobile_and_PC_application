@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'database_helper.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -44,5 +45,30 @@ class AuthService {
     await _supabase.auth.updateUser(
       UserAttributes(password: newPassword),
     );
+  }
+
+  // Hesabı sil (Veri silme talebi ve çıkış)
+  Future<void> deleteAccount() async {
+    final user = _supabase.auth.currentUser;
+    if (user != null) {
+      try {
+        // 1. Supabase metadata güncellemesi (Google Play silme talebi için yeterlidir)
+        await _supabase.auth.updateUser(
+          UserAttributes(data: {
+            'account_deleted': true, 
+            'deletion_request_date': DateTime.now().toIso8601String(),
+            'status': 'pending_deletion'
+          }),
+        );
+
+        // 2. Yerel verileri temizle (Hive)
+        await DatabaseHelper.instance.clearAllData();
+
+        // NOT: Çıkış işlemini UI tarafında loader'ı kapattıktan sonra yapacağız.
+      } catch (e) {
+        print('Hesap silme hatası: $e');
+        rethrow;
+      }
+    }
   }
 }

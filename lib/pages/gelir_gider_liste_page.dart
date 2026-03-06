@@ -3,6 +3,8 @@ import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../models/gelir_gider.dart';
 import '../services/database_helper.dart';
+import '../services/sync_manager.dart';
+import 'dart:async';
 import 'gelir_gider_ekle_page.dart';
 
 class GelirGiderListePage extends StatefulWidget {
@@ -18,6 +20,10 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
   bool _isLoading = true;
   late TabController _tabController;
   GelirGiderTipi _seciliTip = GelirGiderTipi.gelir;
+  StreamSubscription? _syncSubscription;
+  final ScrollController _scrollController = ScrollController();
+  final int _perPage = 20;
+  List<GelirGider> _displayedGelirGiderler = [];
 
   @override
   void initState() {
@@ -32,11 +38,39 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
       }
     });
     _yukleGelirGiderler();
+
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((_) {
+      if (mounted) {
+        _yukleGelirGiderler();
+      }
+    });
+
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreData();
+    }
+  }
+
+  void _loadMoreData() {
+    if (_displayedGelirGiderler.length < _filtrelenmisGelirGiderler.length) {
+      setState(() {
+        int nextCount = _displayedGelirGiderler.length + _perPage;
+        if (nextCount > _filtrelenmisGelirGiderler.length) {
+          nextCount = _filtrelenmisGelirGiderler.length;
+        }
+        _displayedGelirGiderler = _filtrelenmisGelirGiderler.sublist(0, nextCount);
+      });
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _syncSubscription?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -62,6 +96,10 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
   void _filtrele() {
     setState(() {
       _filtrelenmisGelirGiderler = _gelirGiderler.where((g) => g.tipi == _seciliTip).toList();
+      _displayedGelirGiderler = _filtrelenmisGelirGiderler.sublist(
+        0, 
+        _filtrelenmisGelirGiderler.length > _perPage ? _perPage : _filtrelenmisGelirGiderler.length
+      );
     });
   }
 
@@ -130,9 +168,14 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
               : RefreshIndicator(
                   onRefresh: _yukleGelirGiderler,
                   child: ListView.builder(
-                    itemCount: _filtrelenmisGelirGiderler.length,
+                    controller: _scrollController,
+                    itemCount: _displayedGelirGiderler.length + (_displayedGelirGiderler.length < _filtrelenmisGelirGiderler.length ? 1 : 0),
                     itemBuilder: (context, index) {
-                      final item = _filtrelenmisGelirGiderler[index];
+                      if (index == _displayedGelirGiderler.length) {
+                        return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
+                      }
+
+                      final item = _displayedGelirGiderler[index];
                       return Card(
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: ListTile(

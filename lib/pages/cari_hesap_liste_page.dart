@@ -3,6 +3,8 @@ import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../models/cari_hesap.dart';
 import '../services/database_helper.dart';
+import '../services/sync_manager.dart';
+import 'dart:async';
 import 'cari_hesap_ekle_page.dart';
 import '../widgets/banner_ad_widget.dart';
 
@@ -18,11 +20,51 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
   List<CariHesap> _filtrelenmisCariHesaplar = [];
   bool _isLoading = true;
   final TextEditingController _searchController = TextEditingController();
+  StreamSubscription? _syncSubscription;
+  Timer? _debounce;
+  final ScrollController _scrollController = ScrollController();
+  final int _perPage = 20;
+  List<CariHesap> _displayedCariHesaplar = [];
 
   @override
   void initState() {
     super.initState();
     _yukleCariHesaplar();
+    
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((_) {
+      if (mounted) {
+        _yukleCariHesaplar();
+      }
+    });
+
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreData();
+    }
+  }
+
+  void _loadMoreData() {
+    if (_displayedCariHesaplar.length < _filtrelenmisCariHesaplar.length) {
+      setState(() {
+        int nextCount = _displayedCariHesaplar.length + _perPage;
+        if (nextCount > _filtrelenmisCariHesaplar.length) {
+          nextCount = _filtrelenmisCariHesaplar.length;
+        }
+        _displayedCariHesaplar = _filtrelenmisCariHesaplar.sublist(0, nextCount);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _syncSubscription?.cancel();
+    _debounce?.cancel();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _yukleCariHesaplar() async {
@@ -32,6 +74,7 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
       setState(() {
         _cariHesaplar = cariHesaplar;
         _filtrelenmisCariHesaplar = cariHesaplar;
+        _displayedCariHesaplar = _filtrelenmisCariHesaplar.sublist(0, _filtrelenmisCariHesaplar.length > _perPage ? _perPage : _filtrelenmisCariHesaplar.length);
         _isLoading = false;
       });
     } catch (e) {
@@ -41,13 +84,18 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
   }
 
   void _aramaYap(String query) {
-    setState(() {
-      _filtrelenmisCariHesaplar = _cariHesaplar.where((cari) {
-        final q = query.toLowerCase();
-        return cari.unvan.toLowerCase().contains(q) ||
-               (cari.vergiNo?.toLowerCase().contains(q) ?? false) ||
-               (cari.telefon?.toLowerCase().contains(q) ?? false);
-      }).toList();
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      setState(() {
+        _filtrelenmisCariHesaplar = _cariHesaplar.where((cari) {
+          final q = query.toLowerCase();
+          return cari.unvan.toLowerCase().contains(q) ||
+                 (cari.vergiNo?.toLowerCase().contains(q) ?? false) ||
+                 (cari.telefon?.toLowerCase().contains(q) ?? false);
+        }).toList();
+        _displayedCariHesaplar = _filtrelenmisCariHesaplar.sublist(0, _filtrelenmisCariHesaplar.length > _perPage ? _perPage : _filtrelenmisCariHesaplar.length);
+      });
     });
   }
 
@@ -133,6 +181,7 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
 
   Widget _buildCariGrid() {
     return GridView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(24),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 400,
@@ -140,9 +189,13 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
         crossAxisSpacing: 20,
         childAspectRatio: 1.8,
       ),
-      itemCount: _filtrelenmisCariHesaplar.length,
+      itemCount: _displayedCariHesaplar.length + (_displayedCariHesaplar.length < _filtrelenmisCariHesaplar.length ? 1 : 0),
       itemBuilder: (context, index) {
-        final cari = _filtrelenmisCariHesaplar[index];
+        if (index == _displayedCariHesaplar.length) {
+          return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
+        }
+        
+        final cari = _displayedCariHesaplar[index];
         return _CariCard(
           cari: cari,
           onTap: () async {

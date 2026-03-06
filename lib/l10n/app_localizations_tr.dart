@@ -9,6 +9,24 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get deleteAccount => 'Hesabımı Sil';
+
+  @override
+  String get deleteAccountConfirm =>
+      'Hesabınızı ve tüm verilerinizi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
+
+  @override
+  String get deleteAccountSuccess =>
+      'Silme talebiniz alındı. Hesabınızdan çıkış yapılıyor.';
+
+  @override
+  String get demoDataLoaded =>
+      'Örnek veriler başarıyla yüklendi. Görseller için uygulama hazır!';
+
+  @override
+  String get processingPayment => 'İşlem başlatıldı...';
+
+  @override
   String get appTitle => 'Muhasebe Pro';
 
   @override

@@ -1,5 +1,10 @@
 {
   "@@locale": "en",
+  "deleteAccount": "Delete My Account",
+  "deleteAccountConfirm": "Are you sure you want to delete your account and all data? This action cannot be undone.",
+  "deleteAccountSuccess": "Deletion request received. You are being logged out.",
+  "demoDataLoaded": "Demo data successfully loaded. App is ready for screenshots!",
+  "processingPayment": "Processing payment...",
   "appTitle": "Accounting Pro",
   "dashboard": "Dashboard",
   "netCash": "NET CASH",

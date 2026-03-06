@@ -98,6 +98,36 @@ abstract class AppLocalizations {
     Locale('tr'),
   ];
 
+  /// No description provided for @deleteAccount.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabımı Sil'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınızı ve tüm verilerinizi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @deleteAccountSuccess.
+  ///
+  /// In tr, this message translates to:
+  /// **'Silme talebiniz alındı. Hesabınızdan çıkış yapılıyor.'**
+  String get deleteAccountSuccess;
+
+  /// No description provided for @demoDataLoaded.
+  ///
+  /// In tr, this message translates to:
+  /// **'Örnek veriler başarıyla yüklendi. Görseller için uygulama hazır!'**
+  String get demoDataLoaded;
+
+  /// No description provided for @processingPayment.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlem başlatıldı...'**
+  String get processingPayment;
+
   /// No description provided for @appTitle.
   ///
   /// In tr, this message translates to:

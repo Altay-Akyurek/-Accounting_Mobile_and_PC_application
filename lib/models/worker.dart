@@ -154,4 +154,27 @@ class Puantaj {
       ),
     );
   }
+
+  Puantaj copyWith({
+    int? id,
+    int? workerId,
+    DateTime? tarih,
+    double? saat,
+    double? mesai,
+    String? aciklama,
+    int? projectId,
+    PuantajStatus? status,
+  }) {
+    return Puantaj(
+      id: id ?? this.id,
+      workerId: workerId ?? this.workerId,
+      tarih: tarih ?? this.tarih,
+      saat: saat ?? this.saat,
+      mesai: mesai ?? this.mesai,
+      aciklama: aciklama ?? this.aciklama,
+      projectId: projectId ?? this.projectId,
+      status: status ?? this.status,
+    );
+  }
 }
+

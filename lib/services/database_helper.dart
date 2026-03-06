@@ -8,10 +8,21 @@ import '../models/cari_islem.dart';
 import '../models/project.dart';
 import '../models/hakedis.dart';
 import '../models/worker.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'sync_manager.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   final SupabaseClient _supabase = Supabase.instance.client;
+  
+  late Box<String> _workersBox;
+  late Box<String> _projectsBox;
+  late Box<String> _carisBox;
+  late Box<String> _faturasBox;
+  late Box<String> _stoksBox;
+  late Box<String> _gelirGiderBox;
+  late Box<String> _cariIslemlerBox;
+  late Box<String> _puantajBox;
 
   String? _testUserId;
   void setTestUserId(String? id) => _testUserId = id;
@@ -39,21 +50,56 @@ class DatabaseHelper {
 
   Future<void> init() async {
     // Supabase main.dart'ta initialize edildiği için burada bir şey yapmaya gerek yok
+    _workersBox = await Hive.openBox<String>('workers_box');
+    _projectsBox = await Hive.openBox<String>('projects_box');
+    _carisBox = await Hive.openBox<String>('caris_box');
+    _faturasBox = await Hive.openBox<String>('faturas_box');
+    _stoksBox = await Hive.openBox<String>('stoks_box');
+    _gelirGiderBox = await Hive.openBox<String>('gelir_gider_box');
+    _cariIslemlerBox = await Hive.openBox<String>('cari_islemler_box');
+    _puantajBox = await Hive.openBox<String>('puantaj_box');
+  }
+
+  Future<void> clearAllData() async {
+    try {
+      await Future.wait([
+        _workersBox.clear(),
+        _projectsBox.clear(),
+        _carisBox.clear(),
+        _faturasBox.clear(),
+        _stoksBox.clear(),
+        _gelirGiderBox.clear(),
+        _cariIslemlerBox.clear(),
+        _puantajBox.clear(),
+      ]);
+    } catch (e) {
+      print('DatabaseHelper.clearAllData error: $e');
+    }
   }
 
   // ========== CARİ HESAP İŞLEMLERİ ==========
   Future<int> insertCariHesap(CariHesap cariHesap) async {
     try {
       final userId = currentUserId;
-      final map = cariHesap.toMap()..remove('id');
-      if (userId != null) map['user_id'] = userId;
+      if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
+      
+      final int tempId = -DateTime.now().millisecondsSinceEpoch;
+      final newCari = cariHesap.copyWith(id: tempId);
 
-      final response = await _supabase
-          .from('cari_hesaplar')
-          .insert(map)
-          .select()
-          .single();
-      return response['id'] as int;
+      final map = newCari.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'a kaydet
+      await _carisBox.put(tempId.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle
+      final syncMap = Map<String, dynamic>.from(map);
+      syncMap['temp_id'] = tempId;
+      syncMap.remove('id');
+      
+      await SyncManager.instance.enqueueOperation('insert', 'cari_hesaplar', syncMap);
+
+      return tempId;
     } catch (e) {
       print('DEBUG: insertCariHesap hatası: $e');
       rethrow;
@@ -63,9 +109,51 @@ class DatabaseHelper {
   Future<List<CariHesap>> getAllCariHesaplar() async {
     final userId = currentUserId;
     if (userId == null) return [];
-    final List<dynamic> data = await _supabase.from('cari_hesaplar').select().eq('user_id', userId);
-    return data.map((map) => CariHesap.fromMap(map)).toList()
-      ..sort((a, b) => a.unvan.compareTo(b.unvan));
+    
+    // 1. Önce Hive'dan oku
+    List<CariHesap> localCaris = [];
+    for (var value in _carisBox.values) {
+      try {
+        final Map<String, dynamic> map = jsonDecode(value);
+        if (map['user_id'] == userId) {
+            localCaris.add(CariHesap.fromMap(map));
+        }
+      } catch (e) {
+        print('DEBUG: Error parsing localized cari JSON: $e');
+      }
+    }
+
+    // 2. Online isek senkronize et
+    if (SyncManager.instance.isOnline) {
+      _syncCarisFromServer(userId, localCaris);
+    }
+    
+    localCaris.sort((a, b) => a.unvan.compareTo(b.unvan));
+    return localCaris;
+  }
+  
+  Future<void> _syncCarisFromServer(String userId, List<CariHesap> initialList) async {
+      try {
+        final List<dynamic> data = await _supabase.from('cari_hesaplar').select().eq('user_id', userId);
+        
+        List<CariHesap> serverCaris = data.map((m) => CariHesap.fromMap(m)).toList();
+        
+        // SADECE silme sırasına alınmamış olanları ekle
+        serverCaris = serverCaris.where((c) => !SyncManager.instance.isPendingDeletion('cari_hesaplar', c.id)).toList();
+        
+        List<CariHesap> tempList = initialList.where((c) => c.id! < 0).toList();
+        
+        final allUpdatedCaris = [...serverCaris, ...tempList];
+        
+        await _carisBox.clear();
+        for (var c in allUpdatedCaris) {
+           final map = c.toMap();
+           map['user_id'] = userId;
+           await _carisBox.put(c.id.toString(), jsonEncode(map));
+        }
+      } catch (e) {
+         print('DEBUG: Background sync failed for caris: $e');
+      }
   }
 
   Future<CariHesap?> getCariHesap(int id) async {
@@ -79,11 +167,17 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase
-          .from('cari_hesaplar')
-          .update(cariHesap.toMap())
-          .eq('id', cariHesap.id!)
-          .eq('user_id', userId);
+      
+      final map = cariHesap.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'ı güncelle
+      await _carisBox.put(cariHesap.id.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle (id > 0 ise)
+      if (cariHesap.id! > 0) {
+        await SyncManager.instance.enqueueOperation('update', 'cari_hesaplar', map);
+      }
       return cariHesap.id!;
     } catch (e) {
       print('DEBUG: updateCariHesap hatası: $e');
@@ -96,17 +190,26 @@ class DatabaseHelper {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
 
-      // 1. İlişkili Kayıtları Sil (Cascade Data - Onaylı)
-      await _supabase.from('cari_islemler').delete().eq('cari_hesap_id', id).eq('user_id', userId);
-      await _supabase.from('faturalar').delete().eq('cari_hesap_id', id).eq('user_id', userId);
-      await _supabase.from('gelir_giderler').delete().eq('cari_hesap_id', id).eq('user_id', userId);
+      // 3. Cariyi Hive'dan sil
+      await _carisBox.delete(id.toString());
+      
+      if (id > 0) {
+         await SyncManager.instance.enqueueOperation('delete', 'cari_hesaplar', {'id': id});
+         
+         // TODO: Tam Offline-first mimari için buralar kuyruklanıp düzeltilmeli
+         try {
+             // 1. İlişkili Kayıtları Sil (Cascade Data - Onaylı)
+             await _supabase.from('cari_islemler').delete().eq('cari_hesap_id', id).eq('user_id', userId);
+             await _supabase.from('faturalar').delete().eq('cari_hesap_id', id).eq('user_id', userId);
+             await _supabase.from('gelir_giderler').delete().eq('cari_hesap_id', id).eq('user_id', userId);
 
-      // 2. Worker/Project Bağlantılarını temizle (Unlink Infrastructure - Koruma Altında)
-      await _supabase.from('workers').update({'cari_hesap_id': null}).eq('cari_hesap_id', id).eq('user_id', userId);
-      await _supabase.from('projects').update({'cari_hesap_id': null}).eq('cari_hesap_id', id).eq('user_id', userId);
-
-      // 3. Cariyi sil
-      await _supabase.from('cari_hesaplar').delete().eq('id', id).eq('user_id', userId);
+             // 2. Worker/Project Bağlantılarını temizle (Unlink Infrastructure - Koruma Altında)
+             await _supabase.from('workers').update({'cari_hesap_id': null}).eq('cari_hesap_id', id).eq('user_id', userId);
+             await _supabase.from('projects').update({'cari_hesap_id': null}).eq('cari_hesap_id', id).eq('user_id', userId);
+         } catch(e) {
+             print("Child cascade deletion failed offline. Wait for SyncManager to fix relations: $e");
+         }
+      }
       return id;
     } catch (e) {
       print('DEBUG: deleteCariHesap hatası: $id : $e');
@@ -138,15 +241,25 @@ class DatabaseHelper {
   Future<int> insertFatura(Fatura fatura) async {
     try {
       final userId = currentUserId;
-      final map = fatura.toMap()..remove('id');
-      if (userId != null) map['user_id'] = userId;
+      if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
+      
+      final int tempId = -DateTime.now().millisecondsSinceEpoch;
+      final newFatura = fatura.copyWith(id: tempId);
 
-      final response = await _supabase
-          .from('faturalar')
-          .insert(map)
-          .select()
-          .single();
-      return response['id'] as int;
+      final map = newFatura.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'a kaydet
+      await _faturasBox.put(tempId.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle
+      final syncMap = Map<String, dynamic>.from(map);
+      syncMap['temp_id'] = tempId;
+      syncMap.remove('id');
+      
+      await SyncManager.instance.enqueueOperation('insert', 'faturalar', syncMap);
+
+      return tempId;
     } catch (e) {
       print('DEBUG: insertFatura hatası: $e');
       rethrow;
@@ -156,29 +269,79 @@ class DatabaseHelper {
   Future<List<Fatura>> getAllFaturalar({DateTime? baslangic, DateTime? bitis}) async {
     final userId = currentUserId;
     if (userId == null) return [];
-    var query = _supabase.from('faturalar').select().eq('user_id', userId);
-    if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
-    if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
+    
+    // 1. Önce Hive'dan oku
+    List<Fatura> localFaturas = [];
+    for (var value in _faturasBox.values) {
+      try {
+        final Map<String, dynamic> map = jsonDecode(value);
+        if (map['user_id'] == userId) {
+            final f = Fatura.fromMap(map);
+            bool match = true;
+            if (baslangic != null && f.tarih.isBefore(DateTime(baslangic.year, baslangic.month, baslangic.day))) match = false;
+            // The bitis filter in Supabase uses lte logic on stripped precision, so we include the whole day usually
+            if (bitis != null && f.tarih.isAfter(DateTime(bitis.year, bitis.month, bitis.day, 23, 59, 59))) match = false;
+            if (match) localFaturas.add(f);
+        }
+      } catch (e) {
+        print('DEBUG: Error parsing localized fatura JSON: $e');
+      }
+    }
 
-    final List<dynamic> data = await query;
-    return data.map((map) => Fatura.fromMap(map)).toList()
-      ..sort((a, b) => b.tarih.compareTo(a.tarih));
+    // 2. Online isek senkronize et
+    if (SyncManager.instance.isOnline) {
+      _syncFaturasFromServer(userId, localFaturas, baslangic, bitis);
+    }
+    
+    localFaturas.sort((a, b) => b.tarih.compareTo(a.tarih));
+    return localFaturas;
+  }
+  
+  Future<void> _syncFaturasFromServer(String userId, List<Fatura> initialList, DateTime? baslangic, DateTime? bitis) async {
+      try {
+        var query = _supabase.from('faturalar').select().eq('user_id', userId);
+        if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
+        if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
+        
+        final List<dynamic> data = await query;
+        List<Fatura> serverFaturas = data.map((m) => Fatura.fromMap(m)).toList();
+        
+        // SADECE silme sırasına alınmamış olanları ekle
+        serverFaturas = serverFaturas.where((f) => !SyncManager.instance.isPendingDeletion('faturalar', f.id)).toList();
+        
+        List<Fatura> tempList = initialList.where((f) => f.id! < 0).toList();
+        
+        final allUpdatedFaturas = [...serverFaturas, ...tempList];
+        
+        // Sadece ilgili filtre dekileri temizlersek karmaşıklık olur, tüm tablo listesini tazeleyelim (daha temiz)
+        // Optimizasyon için sadece ekleneni güncellemek de mümkün ama şimdilik veriyi ezelim.
+        // Ama dikkat! Filtreli bir çekimde filtre dışı offline veriyi silmemek lazım.
+        // Burada basitçe cache'e append/update ediyoruz (Eğer filtreli ise sil-yaz yapmamak daha iyi).
+        for (var f in allUpdatedFaturas) {
+           final map = f.toMap();
+           map['user_id'] = userId;
+           await _faturasBox.put(f.id.toString(), jsonEncode(map));
+        }
+      } catch (e) {
+         print('DEBUG: Background sync failed for faturas: $e');
+      }
   }
 
   Future<List<Fatura>> getFaturalarByTipi(FaturaTipi tipi) async {
-    final userId = currentUserId;
-    if (userId == null) return [];
-    final List<dynamic> data = await _supabase
-        .from('faturalar')
-        .select()
-        .eq('user_id', userId)
-        .eq('tipi', tipi.name);
-    return data.map((map) => Fatura.fromMap(map)).toList();
+    final all = await getAllFaturalar();
+    return all.where((f) => f.tipi == tipi).toList();
   }
 
   Future<Fatura?> getFatura(int id) async {
     final userId = currentUserId;
     if (userId == null) return null;
+    
+    // Hive'dan hızlı cevap
+    final val = _faturasBox.get(id.toString());
+    if (val != null) {
+      return Fatura.fromMap(jsonDecode(val));
+    }
+    
     final data = await _supabase.from('faturalar').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? Fatura.fromMap(data) : null;
   }
@@ -187,11 +350,17 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase
-          .from('faturalar')
-          .update(fatura.toMap())
-          .eq('id', fatura.id!)
-          .eq('user_id', userId);
+      
+      final map = fatura.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'ı güncelle
+      await _faturasBox.put(fatura.id.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle (id > 0 ise)
+      if (fatura.id! > 0) {
+        await SyncManager.instance.enqueueOperation('update', 'faturalar', map);
+      }
       return fatura.id!;
     } catch (e) {
       print('DEBUG: updateFatura hatası: $e');
@@ -203,7 +372,13 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase.from('faturalar').delete().eq('id', id).eq('user_id', userId);
+      
+      // 3. Faturayı Hive'dan sil
+      await _faturasBox.delete(id.toString());
+      
+      if (id > 0) {
+         await SyncManager.instance.enqueueOperation('delete', 'faturalar', {'id': id});
+      }
       return id;
     } catch (e) {
       print('DEBUG: deleteFatura hatası: $id : $e');
@@ -215,15 +390,25 @@ class DatabaseHelper {
   Future<int> insertStok(Stok stok) async {
     try {
       final userId = currentUserId;
-      final map = stok.toMap()..remove('id');
-      if (userId != null) map['user_id'] = userId;
+      if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
+      
+      final int tempId = -DateTime.now().millisecondsSinceEpoch;
+      final newStok = stok.copyWith(id: tempId);
 
-      final response = await _supabase
-          .from('stoklar')
-          .insert(map)
-          .select()
-          .single();
-      return response['id'] as int;
+      final map = newStok.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'a kaydet
+      await _stoksBox.put(tempId.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle
+      final syncMap = Map<String, dynamic>.from(map);
+      syncMap['temp_id'] = tempId;
+      syncMap.remove('id');
+      
+      await SyncManager.instance.enqueueOperation('insert', 'stoklar', syncMap);
+
+      return tempId;
     } catch (e) {
       print('DEBUG: insertStok hatası: $e');
       rethrow;
@@ -233,14 +418,62 @@ class DatabaseHelper {
   Future<List<Stok>> getAllStoklar() async {
     final userId = currentUserId;
     if (userId == null) return [];
-    final List<dynamic> data = await _supabase.from('stoklar').select().eq('user_id', userId);
-    return data.map((map) => Stok.fromMap(map)).toList()
-      ..sort((a, b) => a.ad.compareTo(b.ad));
+    
+    // 1. Önce Hive'dan oku
+    List<Stok> localStoks = [];
+    for (var value in _stoksBox.values) {
+      try {
+        final Map<String, dynamic> map = jsonDecode(value);
+        if (map['user_id'] == userId) {
+            localStoks.add(Stok.fromMap(map));
+        }
+      } catch (e) {
+        print('DEBUG: Error parsing localized stok JSON: $e');
+      }
+    }
+
+    // 2. Online isek senkronize et
+    if (SyncManager.instance.isOnline) {
+      _syncStoksFromServer(userId, localStoks);
+    }
+    
+    localStoks.sort((a, b) => a.ad.compareTo(b.ad));
+    return localStoks;
+  }
+  
+  Future<void> _syncStoksFromServer(String userId, List<Stok> initialList) async {
+      try {
+        final List<dynamic> data = await _supabase.from('stoklar').select().eq('user_id', userId);
+        
+        List<Stok> serverStoks = data.map((m) => Stok.fromMap(m)).toList();
+        
+        // SADECE silme sırasına alınmamış olanları ekle
+        serverStoks = serverStoks.where((s) => !SyncManager.instance.isPendingDeletion('stoks', s.id)).toList();
+        
+        List<Stok> tempList = initialList.where((s) => s.id! < 0).toList();
+        
+        final allUpdatedStoks = [...serverStoks, ...tempList];
+        
+        await _stoksBox.clear();
+        for (var s in allUpdatedStoks) {
+           final map = s.toMap();
+           map['user_id'] = userId;
+           await _stoksBox.put(s.id.toString(), jsonEncode(map));
+        }
+      } catch (e) {
+         print('DEBUG: Background sync failed for stoks: $e');
+      }
   }
 
   Future<Stok?> getStok(int id) async {
     final userId = currentUserId;
     if (userId == null) return null;
+    
+    final val = _stoksBox.get(id.toString());
+    if (val != null) {
+      return Stok.fromMap(jsonDecode(val));
+    }
+    
     final data = await _supabase.from('stoklar').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? Stok.fromMap(data) : null;
   }
@@ -249,11 +482,17 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase
-          .from('stoklar')
-          .update(stok.toMap())
-          .eq('id', stok.id!)
-          .eq('user_id', userId);
+      
+      final map = stok.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'ı güncelle
+      await _stoksBox.put(stok.id.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle (id > 0 ise)
+      if (stok.id! > 0) {
+        await SyncManager.instance.enqueueOperation('update', 'stoklar', map);
+      }
       return stok.id!;
     } catch (e) {
       print('DEBUG: updateStok hatası: $e');
@@ -265,7 +504,13 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase.from('stoklar').delete().eq('id', id).eq('user_id', userId);
+      
+      // 3. Stoku Hive'dan sil
+      await _stoksBox.delete(id.toString());
+      
+      if (id > 0) {
+         await SyncManager.instance.enqueueOperation('delete', 'stoklar', {'id': id});
+      }
       return id;
     } catch (e) {
       print('DEBUG: deleteStok hatası: $id : $e');
@@ -288,15 +533,25 @@ class DatabaseHelper {
   Future<int> insertGelirGider(GelirGider gelirGider) async {
     try {
       final userId = currentUserId;
-      final map = gelirGider.toMap()..remove('id');
-      if (userId != null) map['user_id'] = userId;
+      if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
+      
+      final int tempId = -DateTime.now().millisecondsSinceEpoch;
+      final newGelirGider = gelirGider.copyWith(id: tempId);
 
-      final response = await _supabase
-          .from('gelir_giderler')
-          .insert(map)
-          .select()
-          .single();
-      return response['id'] as int;
+      final map = newGelirGider.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'a kaydet
+      await _gelirGiderBox.put(tempId.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle
+      final syncMap = Map<String, dynamic>.from(map);
+      syncMap['temp_id'] = tempId;
+      syncMap.remove('id');
+      
+      await SyncManager.instance.enqueueOperation('insert', 'gelir_giderler', syncMap);
+
+      return tempId;
     } catch (e) {
       print('DEBUG: insertGelirGider hatası: $e');
       rethrow;
@@ -306,40 +561,79 @@ class DatabaseHelper {
   Future<List<GelirGider>> getAllGelirGider({DateTime? baslangic, DateTime? bitis}) async {
     final userId = currentUserId;
     if (userId == null) return [];
-    var query = _supabase.from('gelir_giderler').select().eq('user_id', userId);
-    if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
-    if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
+    
+    // 1. Önce Hive'dan oku
+    List<GelirGider> localData = [];
+    for (var value in _gelirGiderBox.values) {
+      try {
+        final Map<String, dynamic> map = jsonDecode(value);
+        if (map['user_id'] == userId) {
+            final item = GelirGider.fromMap(map);
+            bool match = true;
+            if (baslangic != null && item.tarih.isBefore(DateTime(baslangic.year, baslangic.month, baslangic.day))) match = false;
+            if (bitis != null && item.tarih.isAfter(DateTime(bitis.year, bitis.month, bitis.day, 23, 59, 59))) match = false;
+            
+            if (match) localData.add(item);
+        }
+      } catch (e) {
+        print('DEBUG: Error parsing localized gelirgider JSON: $e');
+      }
+    }
 
-    final List<dynamic> data = await query;
-    return data.map((map) => GelirGider.fromMap(map)).toList()
-      ..sort((a, b) => b.tarih.compareTo(a.tarih));
+    // 2. Online isek senkronize et
+    if (SyncManager.instance.isOnline) {
+      _syncGelirGiderFromServer(userId, localData, baslangic, bitis);
+    }
+    
+    localData.sort((a, b) => b.tarih.compareTo(a.tarih));
+    return localData;
+  }
+  
+  Future<void> _syncGelirGiderFromServer(String userId, List<GelirGider> initialList, DateTime? baslangic, DateTime? bitis) async {
+      try {
+        var query = _supabase.from('gelir_giderler').select().eq('user_id', userId);
+        if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
+        if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
+
+        final List<dynamic> data = await query;
+        List<GelirGider> serverData = data.map((m) => GelirGider.fromMap(m)).toList();
+        
+        // SADECE silme sırasına alınmamış olanları ekle
+        serverData = serverData.where((g) => !SyncManager.instance.isPendingDeletion('gelir_giderler', g.id)).toList();
+        
+        List<GelirGider> tempList = initialList.where((item) => item.id! < 0).toList();
+        
+        final allUpdatedData = [...serverData, ...tempList];
+        
+        for (var item in allUpdatedData) {
+           final map = item.toMap();
+           map['user_id'] = userId;
+           await _gelirGiderBox.put(item.id.toString(), jsonEncode(map));
+        }
+      } catch (e) {
+         print('DEBUG: Background sync failed for GelirGider: $e');
+      }
   }
 
   Future<List<GelirGider>> getGelirGiderByTipi(GelirGiderTipi tipi) async {
-    final userId = currentUserId;
-    if (userId == null) return [];
-    final List<dynamic> data = await _supabase
-        .from('gelir_giderler')
-        .select()
-        .eq('user_id', userId)
-        .eq('tipi', tipi.name);
-    return data.map((map) => GelirGider.fromMap(map)).toList();
+    final all = await getAllGelirGider();
+    return all.where((g) => g.tipi == tipi).toList();
   }
 
   Future<List<GelirGider>> getGelirGiderByProjectId(int projectId) async {
-    final userId = currentUserId;
-    if (userId == null) return [];
-    final List<dynamic> data = await _supabase
-        .from('gelir_giderler')
-        .select()
-        .eq('user_id', userId)
-        .eq('project_id', projectId);
-    return data.map((map) => GelirGider.fromMap(map)).toList();
+    final all = await getAllGelirGider();
+    return all.where((g) => g.projectId == projectId).toList();
   }
 
   Future<GelirGider?> getGelirGider(int id) async {
     final userId = currentUserId;
     if (userId == null) return null;
+    
+    final val = _gelirGiderBox.get(id.toString());
+    if (val != null) {
+      return GelirGider.fromMap(jsonDecode(val));
+    }
+    
     final data = await _supabase.from('gelir_giderler').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? GelirGider.fromMap(data) : null;
   }
@@ -348,11 +642,17 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase
-          .from('gelir_giderler')
-          .update(gelirGider.toMap())
-          .eq('id', gelirGider.id!)
-          .eq('user_id', userId);
+      
+      final map = gelirGider.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'ı güncelle
+      await _gelirGiderBox.put(gelirGider.id.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle (id > 0 ise)
+      if (gelirGider.id! > 0) {
+        await SyncManager.instance.enqueueOperation('update', 'gelir_giderler', map);
+      }
       return gelirGider.id!;
     } catch (e) {
       print('DEBUG: updateGelirGider hatası: $e');
@@ -364,7 +664,13 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase.from('gelir_giderler').delete().eq('id', id).eq('user_id', userId);
+      
+      // 3. GelirGider'i Hive'dan sil
+      await _gelirGiderBox.delete(id.toString());
+      
+      if (id > 0) {
+         await SyncManager.instance.enqueueOperation('delete', 'gelir_giderler', {'id': id});
+      }
       return id;
     } catch (e) {
       print('DEBUG: deleteGelirGider hatası: $id : $e');
@@ -499,16 +805,60 @@ class DatabaseHelper {
   Future<List<Puantaj>> getAllPuantajlar({DateTime? baslangic, DateTime? bitis}) async {
     final userId = currentUserId;
     if (userId == null) return [];
-    var query = _supabase.from('puantajlar').select().eq('user_id', userId);
 
-    if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(_normalizeDate(baslangic)));
-    if (bitis != null) {
-      final endNormalized = _normalizeDate(bitis).add(const Duration(hours: 23, minutes: 59, seconds: 59));
-      query = query.lte('tarih', _stripTimePrecision(endNormalized));
+    // 1. Önce Hive'dan oku
+    List<Puantaj> localData = [];
+    for (var value in _puantajBox.values) {
+      try {
+        final Map<String, dynamic> map = jsonDecode(value);
+        if (map['user_id'] == userId) {
+          final item = Puantaj.fromMap(map);
+          bool match = true;
+          if (baslangic != null && item.tarih.isBefore(_normalizeDate(baslangic))) match = false;
+          if (bitis != null && item.tarih.isAfter(_normalizeDate(bitis).add(const Duration(hours: 23, minutes: 59, seconds: 59)))) match = false;
+          if (match) localData.add(item);
+        }
+      } catch (e) {
+        print('DEBUG: Error parsing localized puantaj JSON: $e');
+      }
     }
 
-    final List<dynamic> data = await query;
-    return data.map((map) => Puantaj.fromMap(map)).toList();
+    // 2. Online isek senkronize et
+    if (SyncManager.instance.isOnline) {
+      _syncPuantajlarFromServer(userId, localData, baslangic, bitis);
+    }
+
+    localData.sort((a, b) => b.tarih.compareTo(a.tarih));
+    return localData;
+  }
+
+  Future<void> _syncPuantajlarFromServer(String userId, List<Puantaj> initialList, DateTime? baslangic, DateTime? bitis) async {
+    try {
+      var query = _supabase.from('puantajlar').select().eq('user_id', userId);
+      if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(_normalizeDate(baslangic)));
+      if (bitis != null) {
+        final endNormalized = _normalizeDate(bitis).add(const Duration(hours: 23, minutes: 59, seconds: 59));
+        query = query.lte('tarih', _stripTimePrecision(endNormalized));
+      }
+
+      final List<dynamic> data = await query;
+      List<Puantaj> serverData = data.map((m) => Puantaj.fromMap(m)).toList();
+      
+      // SADECE silme sırasına alınmamış olanları ekle
+      serverData = serverData.where((p) => !SyncManager.instance.isPendingDeletion('puantajlar', p.id)).toList();
+      
+      List<Puantaj> tempList = initialList.where((item) => item.id! < 0).toList();
+
+      final allUpdatedData = [...serverData, ...tempList];
+
+      for (var item in allUpdatedData) {
+        final map = item.toMap();
+        map['user_id'] = userId;
+        await _puantajBox.put(item.id.toString(), jsonEncode(map));
+      }
+    } catch (e) {
+      print('DEBUG: Background sync failed for Puantajlar: $e');
+    }
   }
 
   Future<List<CariIslem>> getUnifiedLedger({int? cariId, int? projectId}) async {
@@ -1058,24 +1408,32 @@ class DatabaseHelper {
   Future<int> insertCariIslem(CariIslem islem) async {
     try {
       final userId = currentUserId;
-      final map = islem.toMap()..remove('id');
-      if (userId != null) map['user_id'] = userId;
+      if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
 
-      final response = await _supabase
-          .from('cari_islemler')
-          .insert(map)
-          .select()
-          .single();
-      final id = response['id'] as int;
+      final int tempId = -DateTime.now().millisecondsSinceEpoch;
+      final newIslem = islem.copyWith(id: tempId);
 
-      // Cari hesap bakiyesini güncelle
+      final map = newIslem.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'a kaydet
+      await _cariIslemlerBox.put(tempId.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle
+      final syncMap = Map<String, dynamic>.from(map);
+      syncMap['temp_id'] = tempId;
+      syncMap.remove('id');
+      
+      await SyncManager.instance.enqueueOperation('insert', 'cari_islemler', syncMap);
+
+      // 3. Cari hesap bakiyesini güncelle (Offline-first updateCariHesap kullanır)
       final cari = await getCariHesap(islem.cariHesapId);
       if (cari != null) {
         final yeniBakiye = (cari.bakiye ?? 0.0) + islem.bakiye;
         await updateCariHesap(cari.copyWith(bakiye: yeniBakiye));
       }
 
-      return id;
+      return tempId;
     } catch (e) {
       print('DEBUG: insertCariIslem hatası: $e');
       rethrow;
@@ -1085,50 +1443,88 @@ class DatabaseHelper {
   Future<List<CariIslem>> getAllCariIslemler({DateTime? baslangic, DateTime? bitis}) async {
     final userId = currentUserId;
     if (userId == null) return [];
-    var query = _supabase.from('cari_islemler').select().eq('user_id', userId);
-    if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
-    if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
 
-    final List<dynamic> data = await query;
-    return data.map((map) => CariIslem.fromMap(map)).toList()
-      ..sort((a, b) {
-        final vadeCompare = (a.vade ?? DateTime(2099)).compareTo(b.vade ?? DateTime(2099));
-        if (vadeCompare != 0) return vadeCompare;
-        return a.id!.compareTo(b.id!);
-      });
+    // 1. Önce Hive'dan oku
+    List<CariIslem> localData = [];
+    for (var value in _cariIslemlerBox.values) {
+      try {
+        final Map<String, dynamic> map = jsonDecode(value);
+        if (map['user_id'] == userId) {
+          final item = CariIslem.fromMap(map);
+          bool match = true;
+          if (baslangic != null && item.tarih.isBefore(DateTime(baslangic.year, baslangic.month, baslangic.day))) match = false;
+          if (bitis != null && item.tarih.isAfter(DateTime(bitis.year, bitis.month, bitis.day, 23, 59, 59))) match = false;
+          if (match) localData.add(item);
+        }
+      } catch (e) {
+        print('DEBUG: Error parsing localized cariislem JSON: $e');
+      }
+    }
+
+    // 2. Online isek senkronize et
+    if (SyncManager.instance.isOnline) {
+      _syncCariIslemlerFromServer(userId, localData, baslangic, bitis);
+    }
+
+    localData.sort((a, b) {
+      final vadeCompare = (a.vade ?? DateTime(2099)).compareTo(b.vade ?? DateTime(2099));
+      if (vadeCompare != 0) return vadeCompare;
+      return a.id!.compareTo(b.id!);
+    });
+    return localData;
+  }
+
+  Future<void> _syncCariIslemlerFromServer(String userId, List<CariIslem> initialList, DateTime? baslangic, DateTime? bitis) async {
+    try {
+      var query = _supabase.from('cari_islemler').select().eq('user_id', userId);
+      if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
+      if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
+
+      final List<dynamic> data = await query;
+      List<CariIslem> serverData = data.map((m) => CariIslem.fromMap(m)).toList();
+      
+      // SADECE silme sırasına alınmamış olanları ekle
+      serverData = serverData.where((i) => !SyncManager.instance.isPendingDeletion('cari_islemler', i.id)).toList();
+      
+      List<CariIslem> tempList = initialList.where((item) => item.id! < 0).toList();
+
+      final allUpdatedData = [...serverData, ...tempList];
+
+      for (var item in allUpdatedData) {
+        final map = item.toMap();
+        map['user_id'] = userId;
+        await _cariIslemlerBox.put(item.id.toString(), jsonEncode(map));
+      }
+    } catch (e) {
+      print('DEBUG: Background sync failed for CariIslemler: $e');
+    }
   }
 
   Future<List<CariIslem>> getCariIslemlerByCariId(int cariId) async {
-    final userId = currentUserId;
-    if (userId == null) return [];
-    final List<dynamic> data = await _supabase
-        .from('cari_islemler')
-        .select()
-        .eq('user_id', userId)
-        .eq('cari_hesap_id', cariId);
-    return data.map((map) => CariIslem.fromMap(map)).toList();
+    final all = await getAllCariIslemler();
+    return all.where((islem) => islem.cariHesapId == cariId).toList();
   }
 
   Future<List<CariIslem>> getCariIslemlerByProjectId(int projectId) async {
-    final userId = currentUserId;
-    if (userId == null) return [];
-    final List<dynamic> data = await _supabase
-        .from('cari_islemler')
-        .select()
-        .eq('user_id', userId)
-        .eq('project_id', projectId);
-    return data.map((map) => CariIslem.fromMap(map)).toList();
+    final all = await getAllCariIslemler();
+    return all.where((islem) => islem.projectId == projectId).toList();
   }
 
   Future<CariIslem?> getCariIslem(int id) async {
     final userId = currentUserId;
     if (userId == null) return null;
+
+    final val = _cariIslemlerBox.get(id.toString());
+    if (val != null) {
+      return CariIslem.fromMap(jsonDecode(val));
+    }
+
     final data = await _supabase.from('cari_islemler').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? CariIslem.fromMap(data) : null;
   }
 
   Future<int> updateCariIslem(CariIslem islem) async {
-    // Eski işlemi al ve bakiyeyi geri al
+    // 1. Eski işlemi al ve bakiyeyi geri al (Offline-first)
     final eskiIslem = await getCariIslem(islem.id!);
     if (eskiIslem != null) {
       final cari = await getCariHesap(eskiIslem.cariHesapId);
@@ -1140,13 +1536,19 @@ class DatabaseHelper {
 
     final userId = currentUserId;
     if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-    await _supabase
-        .from('cari_islemler')
-        .update(islem.toMap())
-        .eq('id', islem.id!)
-        .eq('user_id', userId);
+    
+    final map = islem.toMap();
+    map['user_id'] = userId;
 
-    // Yeni bakiyeyi ekle
+    // 2. Hive'ı güncelle
+    await _cariIslemlerBox.put(islem.id.toString(), jsonEncode(map));
+
+    // 3. SyncManager'a ekle (id > 0 ise)
+    if (islem.id! > 0) {
+      await SyncManager.instance.enqueueOperation('update', 'cari_islemler', map);
+    }
+
+    // 4. Yeni bakiyeyi ekle
     final cari = await getCariHesap(islem.cariHesapId);
     if (cari != null) {
       final yeniBakiye = (cari.bakiye ?? 0.0) + islem.bakiye;
@@ -1162,13 +1564,14 @@ class DatabaseHelper {
 
     final islem = await getCariIslem(id);
     if (islem != null) {
+      // 1. Bakiyeyi geri al
       final cari = await getCariHesap(islem.cariHesapId);
       if (cari != null) {
         final yeniBakiye = (cari.bakiye ?? 0.0) - islem.bakiye;
         await updateCariHesap(cari.copyWith(bakiye: yeniBakiye));
       }
 
-      // Hakediş Geri Alım Mantığı
+      // 2. Hakediş Geri Alım Mantığı (TODO: Offline safety for hakedisler update)
       if (islem.aciklama.contains('#H:[')) {
         try {
           final start = islem.aciklama.indexOf('#H:[');
@@ -1177,20 +1580,30 @@ class DatabaseHelper {
             final idsStr = islem.aciklama.substring(start + 4, end);
             if (idsStr.isNotEmpty) {
               final ids = idsStr.split(',').map((s) => int.parse(s.trim())).toList();
-              await _supabase
-                  .from('hakedisler')
-                  .update({'durum': HakedisDurum.bekliyor.name})
-                  .filter('id', 'in', ids)
-                  .eq('user_id', userId);
+              // Bu kısım şimdilik online kalabilir veya hakedisler offline olduktan sonra düzeltilir
+              if (SyncManager.instance.isOnline) {
+                await _supabase
+                    .from('hakedisler')
+                    .update({'durum': HakedisDurum.bekliyor.name})
+                    .filter('id', 'in', ids)
+                    .eq('user_id', userId);
+              }
             }
           }
         } catch (e) {
           print('DEBUG: Hakedis geri alım hatası: $e');
         }
       }
+      
+      // 3. Hive'dan sil
+      await _cariIslemlerBox.delete(id.toString());
+      
+      // 4. SyncManager'a ekle
+      if (id > 0) {
+        await SyncManager.instance.enqueueOperation('delete', 'cari_islemler', {'id': id});
+      }
     }
 
-    await _supabase.from('cari_islemler').delete().eq('id', id).eq('user_id', userId);
     return id;
   }
 
@@ -1222,17 +1635,27 @@ class DatabaseHelper {
   Future<int> insertProject(Project project) async {
     try {
       final userId = currentUserId;
-      final map = project.toMap()..remove('id');
-      if (userId != null) map['user_id'] = userId;
+      if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
+      
+      final int tempId = -DateTime.now().millisecondsSinceEpoch;
+      final newProject = project.copyWith(id: tempId);
+      
+      final map = newProject.toMap();
+      map['user_id'] = userId;
 
-      print('DEBUG: Proje kaydediliyor, map: $map');
+      print('DEBUG: Proje Hive\'a kaydediliyor, map: $map');
 
-      final response = await _supabase
-          .from('projects')
-          .insert(map)
-          .select()
-          .single();
-      return response['id'] as int;
+      // 1. Hive'a kaydet
+      await _projectsBox.put(tempId.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle
+      final syncMap = Map<String, dynamic>.from(map);
+      syncMap['temp_id'] = tempId;
+      syncMap.remove('id');
+      
+      await SyncManager.instance.enqueueOperation('insert', 'projects', syncMap);
+
+      return tempId;
     } catch (e) {
       print('DEBUG: insertProject hatası: $e');
       rethrow;
@@ -1242,9 +1665,52 @@ class DatabaseHelper {
   Future<List<Project>> getAllProjects() async {
     final userId = currentUserId;
     if (userId == null) return [];
-    final List<dynamic> data = await _supabase.from('projects').select().eq('user_id', userId);
-    return data.map((map) => Project.fromMap(map)).toList()
-      ..sort((a, b) => a.ad.compareTo(b.ad));
+    
+    // 1. Önce Hive'dan oku
+    List<Project> localProjects = [];
+    for (var value in _projectsBox.values) {
+      try {
+        final Map<String, dynamic> map = jsonDecode(value);
+        if (map['user_id'] == userId) {
+            localProjects.add(Project.fromMap(map));
+        }
+      } catch (e) {
+        print('DEBUG: Error parsing localized project JSON: $e');
+      }
+    }
+
+    // 2. Online isek senkronize et
+    if (SyncManager.instance.isOnline) {
+      _syncProjectsFromServer(userId, localProjects);
+    }
+    
+    localProjects.sort((a, b) => a.ad.compareTo(b.ad));
+    return localProjects;
+  }
+  
+  Future<void> _syncProjectsFromServer(String userId, List<Project> initialList) async {
+      try {
+        final List<dynamic> data = await _supabase.from('projects').select().eq('user_id', userId);
+        
+        List<Project> serverProjects = data.map((m) => Project.fromMap(m)).toList();
+        
+        // SADECE silme sırasına alınmamış olanları ekle
+        serverProjects = serverProjects.where((p) => !SyncManager.instance.isPendingDeletion('projects', p.id)).toList();
+        
+        List<Project> tempList = initialList.where((p) => p.id! < 0).toList();
+        
+        final allUpdatedProjects = [...serverProjects, ...tempList];
+        
+        await _projectsBox.clear();
+        for (var p in allUpdatedProjects) {
+           final map = p.toMap();
+           map['user_id'] = userId;
+           await _projectsBox.put(p.id.toString(), jsonEncode(map));
+        }
+        
+      } catch (e) {
+         print('DEBUG: Background sync failed for projects: $e');
+      }
   }
 
   Future<Project?> getProject(int id) async {
@@ -1258,11 +1724,18 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase
-          .from('projects')
-          .update(project.toMap())
-          .eq('id', project.id!)
-          .eq('user_id', userId);
+      
+      final map = project.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'ı güncelle
+      await _projectsBox.put(project.id.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle (id > 0 ise)
+      if (project.id! > 0) {
+        await SyncManager.instance.enqueueOperation('update', 'projects', map);
+      }
+      
       return project.id!;
     } catch (e) {
       print('DEBUG: updateProject hatası: $e');
@@ -1285,16 +1758,29 @@ class DatabaseHelper {
         }
       }
 
-      // 2. İlişkili kayıtları sil (Cascade)
-      // Çocuk kayıtlardan user_id filtresini kaldırıyoruz çünkü projenin sahibi bizsek çocuklarını temizleyebilmeliyiz.
-      // RLS zaten yetkimiz olmayan satırları silemememizi sağlayacaktır.
-      await _supabase.from('hakedisler').delete().eq('project_id', id);
-      await _supabase.from('puantajlar').delete().eq('project_id', id);
-      await _supabase.from('gelir_giderler').delete().eq('project_id', id);
-      await _supabase.from('cari_islemler').delete().eq('project_id', id);
-
-      // 3. Projeyi sil - Burada user_id kontrolü şart! Sadece kendi projemizi silebiliriz.
-      await _supabase.from('projects').delete().eq('id', id).eq('user_id', userId);
+      // 3. Projeyi lokal'den sil
+      await _projectsBox.delete(id.toString());
+      
+      // 4. Supabase veya Sync Queue'ya gönder
+      if (id > 0) {
+         // Silme işlemlerinde cascade için supabase tarafında da silme komutunu SyncManager'a gönderebiliriz.
+         // Veya direkt supabase çağrıları yapabiliriz (Çünkü çocukları da silmek gerekiyor).
+         // Çocuk kayıtları silebilmek için çevrimiçi olduğumuz bir an işlem yapılması gerektiğinden 
+         // Bu kısımdaki diğer tabloları da offline silmek/queue'ya eklemek gerekebilir.
+         // Şimdilik ana objeyi sadece: 
+         await SyncManager.instance.enqueueOperation('delete', 'projects', {'id': id});
+         
+         // TODO: İleride diğer tablolar da tam hive-first olduğunda buralar değiştirilecek.
+         // Şu an internet varken alt tablolar silinir, yoksa havada kalır ve hata verebilir. (Kapsamlı offline support)
+         try {
+             await _supabase.from('hakedisler').delete().eq('project_id', id);
+             await _supabase.from('puantajlar').delete().eq('project_id', id);
+             await _supabase.from('gelir_giderler').delete().eq('project_id', id);
+             await _supabase.from('cari_islemler').delete().eq('project_id', id);
+         } catch(e) {
+             print("Child cascade deletion failed offline. Wait for SyncManager to fix relations: $e");
+         }
+      }
       return id;
     } catch (e) {
       print('DEBUG: deleteProject hatası: $id : $e');
@@ -1374,15 +1860,26 @@ class DatabaseHelper {
   Future<int> insertWorker(Worker worker) async {
     try {
       final userId = currentUserId;
-      final map = worker.toMap()..remove('id');
-      if (userId != null) map['user_id'] = userId;
+      if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
+      
+      // Offline-first: Geçici negatif ID oluştur
+      final int tempId = -DateTime.now().millisecondsSinceEpoch;
+      final newWorker = worker.copyWith(id: tempId);
+      
+      final map = newWorker.toMap();
+      map['user_id'] = userId;
 
-      final response = await _supabase
-          .from('workers')
-          .insert(map)
-          .select()
-          .single();
-      return response['id'] as int;
+      // 1. Hive'a kaydet
+      await _workersBox.put(tempId.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a "insert" işlemi olarak ekle
+      final syncMap = Map<String, dynamic>.from(map);
+      syncMap['temp_id'] = tempId; // Senkronizasyon sonrası düzeltme için
+      syncMap.remove('id'); // Supabase kendi üretecek
+      
+      await SyncManager.instance.enqueueOperation('insert', 'workers', syncMap);
+
+      return tempId;
     } catch (e) {
       print('DEBUG: insertWorker hatası: $e');
       rethrow;
@@ -1393,11 +1890,19 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase
-          .from('workers')
-          .update(worker.toMap())
-          .eq('id', worker.id!)
-          .eq('user_id', userId);
+      
+      final map = worker.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'ı güncelle
+      await _workersBox.put(worker.id.toString(), jsonEncode(map));
+
+      // Geçici bir ID ise sadece local'de güncelliyoruz, zaten insert kuyruğunda
+      if (worker.id! > 0) {
+        // 2. SyncManager'a ekle
+        await SyncManager.instance.enqueueOperation('update', 'workers', map);
+      }
+
       return worker.id!;
     } catch (e) {
       print('DEBUG: updateWorker hatası: $e');
@@ -1432,8 +1937,18 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
+      
       await deletePuantajByWorkerId(id);
-      await _supabase.from('workers').delete().eq('id', id).eq('user_id', userId);
+      
+      // 1. Hive'dan sil
+      await _workersBox.delete(id.toString());
+      
+      // Geçici ID ise Supabase'e göndermeye gerek yok
+      if (id > 0) {
+        // 2. SyncManager'a gönder
+        await SyncManager.instance.enqueueOperation('delete', 'workers', {'id': id});
+      }
+
       return id;
     } catch (e) {
       print('DEBUG: deleteWorker hatası: $id : $e');
@@ -1455,8 +1970,58 @@ class DatabaseHelper {
   Future<List<Worker>> getAllWorkers() async {
     final userId = currentUserId;
     if (userId == null) return [];
-    final List<dynamic> data = await _supabase.from('workers').select().eq('user_id', userId);
-    return data.map((map) => Worker.fromMap(map)).toList();
+    
+    // 1. Önce Hive'dan lokal verileri oku
+    List<Worker> localWorkers = [];
+    for (var value in _workersBox.values) {
+      try {
+        final Map<String, dynamic> map = jsonDecode(value);
+        if (map['user_id'] == userId) {
+            localWorkers.add(Worker.fromMap(map));
+        }
+      } catch (e) {
+        print('DEBUG: Error parsing localized worker JSON: $e');
+      }
+    }
+
+    // 2. Eğer online isek, Supabase'den güncel veriyi çek ve Hive'ı eşle
+    if (SyncManager.instance.isOnline) {
+      _syncWorkersFromServer(userId, localWorkers);
+    }
+    
+    return localWorkers;
+  }
+
+  Future<void> _syncWorkersFromServer(String userId, List<Worker> initialList) async {
+      try {
+        final List<dynamic> data = await _supabase.from('workers').select().eq('user_id', userId);
+        
+        // Sadece server'dan gelen verileri veya geçici (id < 0) olanları saklıyoruz.
+        // Server'dan silinmiş ama lokalde ID'si > 0 olanlar kaldırılacak.
+        
+        // Yeni listeyi oluştur
+        List<Worker> serverWorkers = data.map((m) => Worker.fromMap(m)).toList();
+        
+        // SADECE silme sırasına alınmamış olanları ekle
+        serverWorkers = serverWorkers.where((w) => !SyncManager.instance.isPendingDeletion('workers', w.id)).toList();
+        
+        // Geçiçi id'ye sahip (henüz senkronize edilmemiş) kayıtları ekle
+        List<Worker> tempList = initialList.where((w) => w.id! < 0).toList();
+        
+        // Birleştir ve kutuya yaz
+        final allUpdatedWorkers = [...serverWorkers, ...tempList];
+        
+        // Kutuyu tamamen tazelemek için temizle ve tekrar ekle
+        await _workersBox.clear();
+        for (var w in allUpdatedWorkers) {
+           final map = w.toMap();
+           map['user_id'] = userId;
+           await _workersBox.put(w.id.toString(), jsonEncode(map));
+        }
+        
+      } catch (e) {
+         print('DEBUG: Background sync failed for workers: $e');
+      }
   }
 
   Future<Worker?> getWorker(int id) async {
@@ -1480,60 +2045,44 @@ class DatabaseHelper {
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
 
       final normalizedDate = _normalizeDate(puantaj.tarih);
-      final map = puantaj.toMap();
-      map['user_id'] = userId;
-      map['tarih'] = normalizedDate.toIso8601String();
-
-      // 1. Eğer ID zaten varsa direkt update yap
-      if (puantaj.id != null) {
-        await _supabase
-            .from('puantajlar')
-            .update(map)
-            .eq('id', puantaj.id!)
-            .eq('user_id', userId);
-        return puantaj.id!;
-      }
-
-      // 2. ID yoksa, aynı gün ve işçi için kayıt var mı kontrol et (Mükerrer önleme)
-      // Tarih aralığı kullanarak (o günün başı ve sonu) daha güvenli arama yapıyoruz
+      
+      // 1. Mükerrer önleme kontrolü (Aynı gün ve işçi için kayıt var mı?)
       final dayStart = normalizedDate;
       final dayEnd = dayStart.add(const Duration(hours: 23, minutes: 59, seconds: 59));
-
-      final existing = await _supabase
-          .from('puantajlar')
-          .select('id')
-          .eq('worker_id', puantaj.workerId)
-          .gte('tarih', dayStart.toIso8601String())
-          .lte('tarih', dayEnd.toIso8601String())
-          .eq('user_id', userId);
-
-      if (existing != null && (existing as List).isNotEmpty) {
-        final List existingList = existing;
-        final existingId = existingList.first['id'] as int;
-
-        // Eğer birden fazla varsa (mükerrer), ilkini güncelle diğerlerini sil
-        await _supabase
-            .from('puantajlar')
-            .update(map)
-            .eq('id', existingId)
-            .eq('user_id', userId);
-
-        if (existingList.length > 1) {
-          for (int i = 1; i < existingList.length; i++) {
-            await _supabase.from('puantajlar').delete().eq('id', existingList[i]['id']).eq('user_id', userId);
-          }
-        }
-        return existingId;
+      
+      // Lokalden kontrol et
+      int? existingId;
+      for (var value in _puantajBox.values) {
+         final m = jsonDecode(value);
+         if (m['user_id'] == userId && m['worker_id'] == puantaj.workerId) {
+            final t = DateTime.parse(m['tarih']);
+            if (t.isAtSameMomentAs(dayStart) || (t.isAfter(dayStart) && t.isBefore(dayEnd))) {
+               existingId = int.tryParse(m['id'].toString());
+               break;
+            }
+         }
       }
 
-      // 3. Hiç kayıt yoksa yeni ekle
-      map.remove('id');
-      final response = await _supabase
-          .from('puantajlar')
-          .insert(map)
-          .select()
-          .single();
-      return response['id'] as int;
+      final idToUse = puantaj.id ?? existingId ?? (-DateTime.now().millisecondsSinceEpoch);
+      final newPuantaj = puantaj.copyWith(id: idToUse, tarih: normalizedDate);
+      
+      final map = newPuantaj.toMap();
+      map['user_id'] = userId;
+
+      // 2. Hive'a kaydet
+      await _puantajBox.put(idToUse.toString(), jsonEncode(map));
+
+      // 3. SyncManager'a ekle
+      final syncMap = Map<String, dynamic>.from(map);
+      if (idToUse < 0) {
+        syncMap['temp_id'] = idToUse;
+        syncMap.remove('id');
+        await SyncManager.instance.enqueueOperation('insert', 'puantajlar', syncMap);
+      } else {
+        await SyncManager.instance.enqueueOperation('update', 'puantajlar', syncMap);
+      }
+
+      return idToUse;
     } catch (e) {
       print('DEBUG: insertPuantaj hatası: $e');
       rethrow;
@@ -1541,35 +2090,27 @@ class DatabaseHelper {
   }
 
   Future<List<Puantaj>> getPuantajByWorkerId(int workerId, DateTime? baslangic, DateTime? bitis) async {
-    final userId = currentUserId;
-    if (userId == null) return [];
-    var query = _supabase.from('puantajlar').select().eq('user_id', userId).eq('worker_id', workerId);
-    if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(_normalizeDate(baslangic)));
-    if (bitis != null) {
-      final endNormalized = _normalizeDate(bitis).add(const Duration(hours: 23, minutes: 59, seconds: 59));
-      query = query.lte('tarih', _stripTimePrecision(endNormalized));
-    }
-
-    final List<dynamic> data = await query;
-    return data.map((map) => Puantaj.fromMap(map)).toList();
+    final all = await getAllPuantajlar(baslangic: baslangic, bitis: bitis);
+    return all.where((p) => p.workerId == workerId).toList();
   }
 
   Future<List<Puantaj>> getPuantajByProjectId(int projectId) async {
-    final userId = currentUserId;
-    if (userId == null) return [];
-    final List<dynamic> data = await _supabase
-        .from('puantajlar')
-        .select()
-        .eq('user_id', userId)
-        .eq('project_id', projectId);
-    return data.map((map) => Puantaj.fromMap(map)).toList();
+    final all = await getAllPuantajlar();
+    return all.where((p) => p.projectId == projectId).toList();
   }
 
   Future<int> deletePuantaj(int id) async {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase.from('puantajlar').delete().eq('id', id).eq('user_id', userId);
+
+      // 1. Hive'dan sil
+      await _puantajBox.delete(id.toString());
+
+      // 2. SyncManager'a ekle
+      if (id > 0) {
+        await SyncManager.instance.enqueueOperation('delete', 'puantajlar', {'id': id});
+      }
       return id;
     } catch (e) {
       print('DEBUG: deletePuantaj hatası: $id : $e');

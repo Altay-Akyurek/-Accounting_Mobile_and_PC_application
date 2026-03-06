@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/premium_manager.dart';
 import '../l10n/app_localizations.dart';
+import '../services/iap_service.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 class PremiumPage extends StatefulWidget {
   const PremiumPage({super.key});
@@ -10,7 +12,18 @@ class PremiumPage extends StatefulWidget {
 }
 
 class _PremiumPageState extends State<PremiumPage> {
-  String? _selectedPackage;
+  ProductDetails? _selectedProduct;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ürünlerin yüklendiğinden emin olmak için kısa bir süre sonra listeyi yenileyebiliriz
+    if (IAPService.instance.products.isEmpty) {
+      Future.delayed(const Duration(seconds: 1), () {
+         if (mounted) setState(() {});
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,31 +55,33 @@ class _PremiumPageState extends State<PremiumPage> {
             _buildFeatureRow(context, Icons.cloud_done, AppLocalizations.of(context)!.featureCloudBackup),
             _buildFeatureRow(context, Icons.business, AppLocalizations.of(context)!.featureB2B),
             const SizedBox(height: 40),
-            _buildSubscriptionCard(
-              context,
-              id: 'monthly',
-              title: AppLocalizations.of(context)!.monthlyPackage,
-              price: AppLocalizations.of(context)!.monthlyPrice,
-              description: AppLocalizations.of(context)!.cancelAnytime,
-              onTap: () {
-                setState(() => _selectedPackage = 'monthly');
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildSubscriptionCard(
-              context,
-              id: 'yearly',
-              title: AppLocalizations.of(context)!.yearlyPackage,
-              price: AppLocalizations.of(context)!.yearlyPrice,
-              description: AppLocalizations.of(context)!.save25,
-              isPopular: true,
-              onTap: () {
-                setState(() => _selectedPackage = 'yearly');
-              },
-            ),
+            if (IAPService.instance.products.isEmpty)
+              const Center(child: CircularProgressIndicator())
+            else
+              ...IAPService.instance.products.map((product) {
+                final isYearly = product.id.contains('yearly');
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildSubscriptionCard(
+                    context,
+                    product: product,
+                    title: isYearly 
+                        ? AppLocalizations.of(context)!.yearlyPackage 
+                        : AppLocalizations.of(context)!.monthlyPackage,
+                    price: product.price,
+                    description: isYearly 
+                        ? AppLocalizations.of(context)!.save25 
+                        : AppLocalizations.of(context)!.cancelAnytime,
+                    isPopular: isYearly,
+                    onTap: () {
+                      setState(() => _selectedProduct = product);
+                    },
+                  ),
+                );
+              }).toList(),
             const SizedBox(height: 40),
             ElevatedButton(
-              onPressed: _selectedPackage == null ? null : _handleContinue,
+              onPressed: _selectedProduct == null ? null : _handleContinue,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2EC4B6),
                 padding: const EdgeInsets.symmetric(vertical: 18),
@@ -85,42 +100,14 @@ class _PremiumPageState extends State<PremiumPage> {
   }
 
   void _handleContinue() {
-    // Simüle edilmiş satın alma işlemi
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Color(0xFF2EC4B6)),
-            const SizedBox(width: 10),
-            Text(AppLocalizations.of(context)!.congratulations),
-          ],
-        ),
-        content: Text(
-          _selectedPackage == 'monthly' 
-            ? AppLocalizations.of(context)!.premiumActivatedMonthly 
-            : AppLocalizations.of(context)!.premiumActivatedYearly,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              PremiumManager.instance.setPremium(true);
-              Navigator.pop(context); // Dialogu kapat
-              Navigator.pop(context); // Premium sayfasından çık
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(AppLocalizations.of(context)!.premiumSuccessSnackBar),
-                  backgroundColor: const Color(0xFF2EC4B6),
-                ),
-              );
-            },
-            child: Text(AppLocalizations.of(context)!.great, style: const TextStyle(color: Color(0xFF2EC4B6), fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+    if (_selectedProduct != null) {
+      IAPService.instance.buyProduct(_selectedProduct!);
+      // Not: Satın alma sonucu iap_service içindeki stream listener'dan yönetiliyor.
+      // Kullanıcıya işlemin başladığına dair bilgi verebiliriz.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.processingPayment ?? "İşlem başlatıldı...")),
+      );
+    }
   }
 
   Widget _buildFeatureRow(BuildContext context, IconData icon, String text) {
@@ -143,14 +130,14 @@ class _PremiumPageState extends State<PremiumPage> {
 
   Widget _buildSubscriptionCard(
     BuildContext context, {
-    required String id,
+    required ProductDetails product,
     required String title,
     required String price,
     required String description,
     required VoidCallback onTap,
     bool isPopular = false,
   }) {
-    final isSelected = _selectedPackage == id;
+    final isSelected = _selectedProduct == product;
 
     return InkWell(
       onTap: onTap,

@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../models/stok.dart';
 import '../services/database_helper.dart';
+import '../services/sync_manager.dart';
+import 'dart:async';
 import 'stok_ekle_page.dart';
 
 class StokListePage extends StatefulWidget {
@@ -17,12 +19,43 @@ class _StokListePageState extends State<StokListePage> {
   List<Stok> _filtrelenmisStoklar = [];
   bool _isLoading = true;
   final TextEditingController _searchController = TextEditingController();
+  StreamSubscription? _syncSubscription;
+  Timer? _debounce;
+  final ScrollController _scrollController = ScrollController();
+  final int _perPage = 20;
+  List<Stok> _displayedStoklar = [];
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
     _yukleStoklar();
+
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((_) {
+      if (mounted) {
+        _yukleStoklar();
+      }
+    });
+
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreData();
+    }
+  }
+
+  void _loadMoreData() {
+    if (_displayedStoklar.length < _filtrelenmisStoklar.length) {
+      setState(() {
+        int nextCount = _displayedStoklar.length + _perPage;
+        if (nextCount > _filtrelenmisStoklar.length) {
+          nextCount = _filtrelenmisStoklar.length;
+        }
+        _displayedStoklar = _filtrelenmisStoklar.sublist(0, nextCount);
+      });
+    }
   }
 
   void _onSearchChanged() {
@@ -33,6 +66,9 @@ class _StokListePageState extends State<StokListePage> {
   void dispose() {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _syncSubscription?.cancel();
+    _debounce?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -46,6 +82,10 @@ class _StokListePageState extends State<StokListePage> {
       setState(() {
         _stoklar = stoklar;
         _filtrelenmisStoklar = stoklar;
+        _displayedStoklar = _filtrelenmisStoklar.sublist(
+          0, 
+          _filtrelenmisStoklar.length > _perPage ? _perPage : _filtrelenmisStoklar.length
+        );
         _isLoading = false;
       });
     } catch (e) {
@@ -56,17 +96,25 @@ class _StokListePageState extends State<StokListePage> {
   }
 
   void _aramaYap(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filtrelenmisStoklar = _stoklar;
-      } else {
-        final lowerQuery = query.toLowerCase();
-        _filtrelenmisStoklar = _stoklar.where((stok) {
-          return stok.ad.toLowerCase().contains(lowerQuery) ||
-              stok.kod.toLowerCase().contains(lowerQuery) ||
-              (stok.kategori != null && stok.kategori!.toLowerCase().contains(lowerQuery));
-        }).toList();
-      }
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      setState(() {
+        if (query.isEmpty) {
+          _filtrelenmisStoklar = _stoklar;
+        } else {
+          final lowerQuery = query.toLowerCase();
+          _filtrelenmisStoklar = _stoklar.where((stok) {
+            return stok.ad.toLowerCase().contains(lowerQuery) ||
+                stok.kod.toLowerCase().contains(lowerQuery) ||
+                (stok.kategori != null && stok.kategori!.toLowerCase().contains(lowerQuery));
+          }).toList();
+        }
+        _displayedStoklar = _filtrelenmisStoklar.sublist(
+          0, 
+          _filtrelenmisStoklar.length > _perPage ? _perPage : _filtrelenmisStoklar.length
+        );
+      });
     });
   }
 
@@ -172,9 +220,14 @@ class _StokListePageState extends State<StokListePage> {
                     : RefreshIndicator(
                         onRefresh: _yukleStoklar,
                         child: ListView.builder(
-                          itemCount: _filtrelenmisStoklar.length,
+                          controller: _scrollController,
+                          itemCount: _displayedStoklar.length + (_displayedStoklar.length < _filtrelenmisStoklar.length ? 1 : 0),
                           itemBuilder: (context, index) {
-                            final stok = _filtrelenmisStoklar[index];
+                            if (index == _displayedStoklar.length) {
+                              return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
+                            }
+
+                            final stok = _displayedStoklar[index];
                             final kritikSeviye = stok.kritikStokSeviyesi != null &&
                                 stok.stokMiktari != null &&
                                 stok.stokMiktari! <= stok.kritikStokSeviyesi!;

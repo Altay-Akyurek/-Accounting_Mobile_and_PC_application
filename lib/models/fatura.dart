@@ -74,6 +74,38 @@ class Fatura {
           : DateTime.now(),
     );
   }
+
+  Fatura copyWith({
+    int? id,
+    String? faturaNo,
+    FaturaTipi? tipi,
+    int? cariHesapId,
+    String? cariHesapUnvan,
+    DateTime? tarih,
+    DateTime? vadeTarihi,
+    double? toplamTutar,
+    double? kdvTutari,
+    double? genelToplam,
+    String? aciklama,
+    List<FaturaKalemi>? kalemler,
+    DateTime? olusturmaTarihi,
+  }) {
+    return Fatura(
+      id: id ?? this.id,
+      faturaNo: faturaNo ?? this.faturaNo,
+      tipi: tipi ?? this.tipi,
+      cariHesapId: cariHesapId ?? this.cariHesapId,
+      cariHesapUnvan: cariHesapUnvan ?? this.cariHesapUnvan,
+      tarih: tarih ?? this.tarih,
+      vadeTarihi: vadeTarihi ?? this.vadeTarihi,
+      toplamTutar: toplamTutar ?? this.toplamTutar,
+      kdvTutari: kdvTutari ?? this.kdvTutari,
+      genelToplam: genelToplam ?? this.genelToplam,
+      aciklama: aciklama ?? this.aciklama,
+      kalemler: kalemler ?? this.kalemler,
+      olusturmaTarihi: olusturmaTarihi ?? this.olusturmaTarihi,
+    );
+  }
 }
 
 enum FaturaTipi { satis, alis }

@@ -9,6 +9,24 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get deleteAccount => 'Delete My Account';
+
+  @override
+  String get deleteAccountConfirm =>
+      'Are you sure you want to delete your account and all data? This action cannot be undone.';
+
+  @override
+  String get deleteAccountSuccess =>
+      'Deletion request received. You are being logged out.';
+
+  @override
+  String get demoDataLoaded =>
+      'Demo data successfully loaded. App is ready for screenshots!';
+
+  @override
+  String get processingPayment => 'Processing payment...';
+
+  @override
   String get appTitle => 'Accounting Pro';
 
   @override
