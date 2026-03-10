@@ -57,32 +57,37 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (PremiumManager.instance.isPremium) {
-      return const SizedBox.shrink();
-    }
+    return ValueListenableBuilder<bool>(
+      valueListenable: PremiumManager.instance.premiumStatusNotifier,
+      builder: (context, isPremium, child) {
+        if (isPremium) {
+          return const SizedBox.shrink();
+        }
 
-    if (!(Platform.isAndroid || Platform.isIOS)) {
-      return Container(
-        height: 50,
-        width: double.infinity,
-        color: Colors.white,
-        alignment: Alignment.center,
-        child: Text(
-          'Reklam Alanı (Demo)',
-          style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-        ),
-      );
-    }
+        if (!(Platform.isAndroid || Platform.isIOS)) {
+          return Container(
+            height: 50,
+            width: double.infinity,
+            color: Colors.white,
+            alignment: Alignment.center,
+            child: Text(
+              'Reklam Alanı (Demo)',
+              style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+            ),
+          );
+        }
 
-    if (_isLoaded && _bannerAd != null) {
-      return Container(
-        alignment: Alignment.center,
-        width: _bannerAd!.size.width.toDouble(),
-        height: _bannerAd!.size.height.toDouble(),
-        child: AdWidget(ad: _bannerAd!),
-      );
-    }
+        if (_isLoaded && _bannerAd != null) {
+          return Container(
+            alignment: Alignment.center,
+            width: _bannerAd!.size.width.toDouble(),
+            height: _bannerAd!.size.height.toDouble(),
+            child: AdWidget(ad: _bannerAd!),
+          );
+        }
 
-    return const SizedBox(height: 50); // Yüklenirken veya hata aldığında boşluk bırak
+        return const SizedBox(height: 50); // Yüklenirken veya hata aldığında boşluk bırak
+      },
+    );
   }
 }

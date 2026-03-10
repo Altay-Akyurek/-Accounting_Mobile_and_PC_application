@@ -3,17 +3,28 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'ad_helper.dart';
 
 class PremiumManager {
-  static final PremiumManager instance = PremiumManager._();
-  PremiumManager._();
+  PremiumManager._privateConstructor();
+  static final PremiumManager instance = PremiumManager._privateConstructor();
 
   bool _isPremium = false;
+  
+  // UI değişiklikleri için bildirim mekanizması
+  final ValueNotifier<bool> premiumStatusNotifier = ValueNotifier<bool>(false);
+
+  // Reklam tetikleyicisi için timer
+  Timer? _adIntervalTimer;
+  
+  // Geçici premium için anahtar ve timer
+  static const String _tempPremiumKey = 'rewarded_premium_expiry';
+  Timer? _tempPremiumTimer;
+
   bool get isPremium => _isPremium;
   
   DateTime? _lastAdShownTime;
-  Timer? _adIntervalTimer;
   static const int adIntervalMinutes = 10;
 
   Future<void> init() async {
@@ -25,13 +36,10 @@ class PremiumManager {
       }
     });
 
+    // Önce kalıcı abonelik durumunu kontrol et
     await checkSubscriptionStatus();
-    
-    /* // Geliştirme aşamasında (Debug mode) reklamları devre dışı bırakıyoruz
-    if (kDebugMode) {
-      // debugPrint('Debug modunda reklamlar devre dışı bırakıldı.');
-      return;
-    } */
+    // Sonra geçici premium (ödüllü reklam) kontrolü yap
+    await _checkTemporaryPremium();
 
     // Reklamlar sadece Android ve iOS'ta çalışır
     if (!_isPremium && (Platform.isAndroid || Platform.isIOS)) {
@@ -45,6 +53,50 @@ class PremiumManager {
         // debugPrint('MobileAds initialization error: $e');
       }
     }
+  }
+
+  Future<void> _checkTemporaryPremium() async {
+    final prefs = await SharedPreferences.getInstance();
+    final expiryString = prefs.getString(_tempPremiumKey);
+
+    if (expiryString != null) {
+       final expiryDate = DateTime.tryParse(expiryString);
+       if (expiryDate != null && DateTime.now().isBefore(expiryDate)) {
+         _isPremium = true;
+         premiumStatusNotifier.value = true;
+         
+         final durationLeft = expiryDate.difference(DateTime.now());
+         _tempPremiumTimer?.cancel();
+         _tempPremiumTimer = Timer(durationLeft, () {
+            _revokeTemporaryPremium();
+         });
+       } else {
+         prefs.remove(_tempPremiumKey);
+       }
+    }
+  }
+
+  void startTemporaryPremium() async {
+     final prefs = await SharedPreferences.getInstance();
+     final expiryDate = DateTime.now().add(const Duration(minutes: 10));
+     await prefs.setString(_tempPremiumKey, expiryDate.toIso8601String());
+
+     setPremium(true);
+     
+     _tempPremiumTimer?.cancel();
+     _tempPremiumTimer = Timer(const Duration(minutes: 10), () {
+       _revokeTemporaryPremium();
+     });
+  }
+
+  Future<void> _revokeTemporaryPremium() async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_tempPremiumKey);
+      
+      await checkSubscriptionStatus(); // Bu _isPremium değerini güncelleyecek
+      if (!_isPremium) {
+         setPremium(false);
+      }
   }
 
   void _showInitialAdWithDelay() {
@@ -123,8 +175,12 @@ class PremiumManager {
 
   Future<void> setPremium(bool status) async {
     _isPremium = status;
+    premiumStatusNotifier.value = status;
+    
     if (status) {
       _adIntervalTimer?.cancel();
+    } else {
+      _startAdTimer();
     }
     
     // Supabase tarafında da (opsiyonel) güncelleme yapılabilir

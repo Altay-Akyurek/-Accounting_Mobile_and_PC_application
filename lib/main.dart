@@ -24,6 +24,7 @@ import 'package:provider/provider.dart';
 import 'providers/worker_provider.dart';
 import 'services/sync_manager.dart';
 import 'services/iap_service.dart';
+import 'services/ad_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -146,6 +147,7 @@ class MyApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
+          navigatorObservers: [AdHelper.routeObserver],
           home: const AuthWrapper(),
           builder: (context, child) {
             return MediaQuery(

@@ -15,6 +15,7 @@ import 'hesap_kesim_rapor_page.dart';
 import 'worker_analysis_page.dart';
 import 'portfolio_page.dart';
 import '../widgets/banner_ad_widget.dart';
+import '../services/ad_helper.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -190,6 +191,15 @@ class _DashboardPageState extends State<DashboardPage> {
                     },
                   ),
                   _buildDrawerItem(
+                    icon: Icons.ondemand_video_rounded,
+                    label: "10 Dk Ücretsiz Premium",
+                    color: Colors.orange,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showRewardedAdFromDashboard();
+                    },
+                  ),
+                  _buildDrawerItem(
                     icon: Icons.language_rounded,
                     label: AppLocalizations.of(context)!.language,
                     onTap: () {
@@ -323,9 +333,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildPremiumCharts() {
-    final isPremium = PremiumManager.instance.isPremium;
-
-    return Stack(
+    return ValueListenableBuilder<bool>(
+      valueListenable: PremiumManager.instance.premiumStatusNotifier,
+      builder: (context, isPremium, child) {
+        return Stack(
       children: [
         Column(
           children: [
@@ -378,6 +389,15 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           child: Text(AppLocalizations.of(context)!.unlock),
                         ),
+                        const SizedBox(height: 12),
+                        TextButton.icon(
+                          onPressed: () => _showRewardedAdFromDashboard(),
+                          icon: const Icon(Icons.play_circle_fill, color: Colors.orange),
+                          label: const Text(
+                            "Reklam İzle & 10 Dk Aç",
+                            style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -386,6 +406,27 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
       ],
+    );
+    },
+   );
+  }
+
+  void _showRewardedAdFromDashboard() {
+    ScaffoldMessenger.of(context).showSnackBar(
+       const SnackBar(content: Text("Reklam yükleniyor, lütfen bekleyin..."), duration: Duration(seconds: 2)),
+    );
+    AdHelper.showRewardedAd(
+      onUserEarnedReward: (reward) {
+         PremiumManager.instance.startTemporaryPremium();
+         ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("10 Dakikalık Premium aktif edildi!"), backgroundColor: Color(0xFF2EC4B6)),
+         );
+      },
+      onAdFailed: () {
+         ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Reklam yüklenemedi. Lütfen daha sonra tekrar deneyin.")),
+         );
+      }
     );
   }
   int _touchedPieIndex = -1;

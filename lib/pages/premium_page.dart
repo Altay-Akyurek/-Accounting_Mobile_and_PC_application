@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/premium_manager.dart';
 import '../l10n/app_localizations.dart';
 import '../services/iap_service.dart';
+import '../services/ad_helper.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 class PremiumPage extends StatefulWidget {
@@ -13,6 +14,7 @@ class PremiumPage extends StatefulWidget {
 
 class _PremiumPageState extends State<PremiumPage> {
   ProductDetails? _selectedProduct;
+  bool _isLoadingAd = false;
 
   @override
   void initState() {
@@ -54,7 +56,12 @@ class _PremiumPageState extends State<PremiumPage> {
             _buildFeatureRow(context, Icons.picture_as_pdf, AppLocalizations.of(context)!.featureUnlimitedPDF),
             _buildFeatureRow(context, Icons.cloud_done, AppLocalizations.of(context)!.featureCloudBackup),
             _buildFeatureRow(context, Icons.business, AppLocalizations.of(context)!.featureB2B),
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
+            
+            // Reklam İzle - 10 Dk Premium
+            _buildRewardedAdCard(),
+            
+            const SizedBox(height: 30),
             if (IAPService.instance.products.isEmpty)
               const Center(child: CircularProgressIndicator())
             else
@@ -126,6 +133,83 @@ class _PremiumPageState extends State<PremiumPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildRewardedAdCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF9E6),
+        border: Border.all(color: Colors.orange.shade300, width: 2),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.ondemand_video_rounded, color: Colors.orange, size: 30),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Ücretsiz Deneyin",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "Kısa bir reklam izleyerek 10 dakika boyunca tüm Premium özelliklere (Reklamsız deneyim dahil) ücretsiz erişim sağlayın.",
+            style: TextStyle(color: Colors.black87),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isLoadingAd ? null : _showRewardedPremiumAd,
+              icon: _isLoadingAd 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
+                  : const Icon(Icons.play_circle_filled),
+              label: Text(_isLoadingAd ? "Yükleniyor..." : "Reklam İzle - 10dk Aç"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showRewardedPremiumAd() {
+     setState(() {
+       _isLoadingAd = true;
+     });
+     
+     AdHelper.showRewardedAd(
+       onUserEarnedReward: (reward) {
+          PremiumManager.instance.startTemporaryPremium();
+          ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text("Tebrikler! 10 Dakika boyunca Premium özellikleriniz aktif edildi."), backgroundColor: Color(0xFF2EC4B6)),
+          );
+          Navigator.pop(context);
+       },
+       onAdDismissed: () {
+          setState(() {
+             _isLoadingAd = false;
+          });
+       },
+       onAdFailed: () {
+          setState(() {
+             _isLoadingAd = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text("Reklam yüklenirken bir sorun oluştu, lütfen daha sonra tekrar deneyin.")),
+          );
+       }
+     );
   }
 
   Widget _buildSubscriptionCard(
