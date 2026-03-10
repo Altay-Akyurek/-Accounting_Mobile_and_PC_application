@@ -35,6 +35,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
 
   // Charts data
   List<FlSpot> _lineSpots = [];
+  double _maxHoursInPeriod = 0;
   List<Map<String, dynamic>> _projectDistribution = [];
   Map<String, PuantajStatus> _heatmapData = {}; // "yyyy-MM-dd" : Status
 
@@ -200,6 +201,12 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
       }
     }
 
+    if (_lineSpots.isNotEmpty) {
+      _maxHoursInPeriod = 8.0; // Standart Beklenen Günlük Mesai (Örn: 8 Saat)
+    } else {
+      _maxHoursInPeriod = 0;
+    }
+
     // 3. Heatmap Data (Last 6 Months up to Today)
     _heatmapData = {};
     for (var p in workerAllPuantajs) {
@@ -335,7 +342,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    '${DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(_endDate)}',
+                    '${DateFormat('dd MMMM yyyy', 'tr_TR').format(_startDate)} - ${DateFormat('dd MMMM yyyy', 'tr_TR').format(_endDate)}',
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF011627)),
                   ),
                 ),
@@ -541,7 +548,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
         
         if (!isEmpty) {
             cell = Tooltip(
-               message: "${DateFormat('dd MMM yyyy').format(current)}\n$statusText",
+               message: "${DateFormat('dd MMM yyyy', 'tr_TR').format(current)}\n$statusText",
                textStyle: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
                decoration: BoxDecoration(color: const Color(0xFF011627), borderRadius: BorderRadius.circular(8)),
                child: MouseRegion(
@@ -677,7 +684,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
               children: [
                 const Text("Zaman İçinde Performans", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
                  Text(
-                   '${DateFormat('dd MMM').format(_startDate)} - ${DateFormat('dd MMM').format(_endDate)}',
+                   '${DateFormat('dd MMM', 'tr_TR').format(_startDate)} - ${DateFormat('dd MMM', 'tr_TR').format(_endDate)}',
                    style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold),
                  ),
               ],
@@ -698,7 +705,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                          if (touchedSpot.barIndex == 0) return null; // Ignore baseline
                          final date = _startDate.add(Duration(days: touchedSpot.x.toInt()));
                          return LineTooltipItem(
-                            '${DateFormat('dd MMM').format(date)}\n',
+                            '${DateFormat('dd MMM', 'tr_TR').format(date)}\n',
                             const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                             children: [
                                TextSpan(
@@ -724,14 +731,21 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: 22,
                       getTitlesWidget: (value, meta) {
                         int idx = value.toInt();
-                        if (idx == 0 || idx == _lineSpots.length - 1) {
-                           if (idx >= 0 && idx < _lineSpots.length) {
+                        int maxIdx = _lineSpots.length - 1;
+                        
+                        // Sadece ilk, tam orta ve son noktayı göster ki yazılar üst üste binmesin.
+                        if (idx == 0 || idx == maxIdx || (idx == maxIdx ~/ 2 && maxIdx > 5)) {
+                           if (idx >= 0 && idx <= maxIdx) {
                              final date = _startDate.add(Duration(days: idx));
                              return Padding(
                                padding: const EdgeInsets.only(top: 8.0),
-                               child: Text(DateFormat('dd.MM').format(date), style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold)),
+                               child: Text(
+                                 DateFormat('dd.MM', 'tr_TR').format(date), 
+                                 style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)
+                               ),
                              );
                            }
                         }
@@ -789,8 +803,23 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                   ),
                 ],
                 extraLinesData: ExtraLinesData(
+                  extraLinesOnTop: false,
                   horizontalLines: [
                     HorizontalLine(y: 0, color: Colors.black12, strokeWidth: 1.5),
+                    if (_maxHoursInPeriod > 0)
+                      HorizontalLine(
+                        y: _maxHoursInPeriod, 
+                        color: Colors.purpleAccent.withOpacity(0.6), 
+                        strokeWidth: 1.5, 
+                        dashArray: [4, 4],
+                        label: HorizontalLineLabel(
+                           show: true,
+                           alignment: Alignment.topRight,
+                           padding: const EdgeInsets.only(right: 8, bottom: -4),
+                           style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.purple),
+                           labelResolver: (line) => "Beklenen Hedef: 8 sa",
+                        )
+                      ),
                   ],
                 ),
               ),
@@ -810,90 +839,88 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
         const SizedBox(height: 16),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 48),
+          padding: const EdgeInsets.only(top: 48, bottom: 48),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(32),
             border: Border.all(color: Colors.grey.shade100),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 8)),
             ],
           ),
-           child: StatefulBuilder(
-             builder: (context, setChartState) {
-               return Stack(
-                 alignment: Alignment.center,
+           child: Stack(
+             alignment: Alignment.center,
+             clipBehavior: Clip.none,
+             children: [
+               // Background & Progress Ring Animated
+               SizedBox(
+                 width: 260,
+                 height: 260,
+                 child: TweenAnimationBuilder<double>(
+                   tween: Tween<double>(begin: 0, end: _productivityScore / 100),
+                   duration: const Duration(milliseconds: 1200),
+                   curve: Curves.easeOutCubic,
+                   builder: (context, val, _) {
+                     return CircularProgressIndicator(
+                       value: val,
+                       strokeWidth: 36,
+                       backgroundColor: const Color(0xFF2EC4B6).withOpacity(0.12),
+                       color: const Color(0xFF2EC4B6),
+                       strokeCap: StrokeCap.round,
+                     );
+                   }
+                 )
+               ),
+               // Inside Text Animated
+               Column(
+                 mainAxisSize: MainAxisSize.min,
                  children: [
-                   SizedBox(
-                     width: 250,
-                     height: 250,
-                     child: PieChart(
-                       PieChartData(
-                         pieTouchData: PieTouchData(
-                           touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                             setChartState(() {
-                               if (!event.isInterestedForInteractions ||
-                                   pieTouchResponse == null ||
-                                   pieTouchResponse.touchedSection == null) {
-                                 _touchedPieIndex = -1;
-                                 return;
-                               }
-                               _touchedPieIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                             });
-                           },
-                         ),
-                         startDegreeOffset: -90,
-                         borderData: FlBorderData(show: false),
-                         sectionsSpace: 0,
-                         centerSpaceRadius: 90,
-                         sections: [
-                           PieChartSectionData(
-                             color: const Color(0xFF2EC4B6),
-                             value: _productivityScore,
-                             title: '',
-                             radius: _touchedPieIndex == 0 ? 35 : 26,
-                           ),
-                           PieChartSectionData(
-                             color: Colors.grey.shade100,
-                             value: 100 - _productivityScore,
-                             title: '',
-                             radius: _touchedPieIndex == 1 ? 30 : 26,
-                           ),
-                         ],
-                       ),
-                       swapAnimationDuration: const Duration(milliseconds: 150),
-                       swapAnimationCurve: Curves.easeInOut,
-                     ),
-                   ),
-                   Column(
-                     mainAxisSize: MainAxisSize.min,
-                     children: [
-                        Text(
-                           "%${_productivityScore.toStringAsFixed(1)}",
-                           style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF011627), letterSpacing: -1),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                           "VERİMLİLİK",
-                           style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.5),
-                        ),
-                     ],
-                   ),
-                   Positioned(
-                      bottom: 0,
-                      child: Container(
-                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                         decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: const Offset(0, 4))]
-                         ),
-                         child: const Icon(Icons.check_circle_rounded, color: Color(0xFF2EC4B6), size: 18),
-                      )
-                   )
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0, end: _productivityScore),
+                      duration: const Duration(milliseconds: 1200),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, val, child) {
+                        return Text(
+                           "%${val.toStringAsFixed(1)}",
+                           style: const TextStyle(fontSize: 46, fontWeight: FontWeight.w900, color: Color(0xFF011627), letterSpacing: -1.5),
+                        );
+                      }
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                       "VERİMLİLİK",
+                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 2.5),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2EC4B6).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        "$_selectedWorkerWorkedDays Gün Çalıştı",
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2EC4B6)),
+                      ),
+                    ),
                  ],
-               );
-             }
+               ),
+               // Bottom Floating Checkmark Badge
+               Positioned(
+                  bottom: -15,
+                  child: Container(
+                     padding: const EdgeInsets.all(5),
+                     decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                           BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                        ]
+                     ),
+                     child: const Icon(Icons.check_circle_rounded, color: Color(0xFF2EC4B6), size: 28),
+                  )
+               )
+             ],
            ),
         ),
       ],
