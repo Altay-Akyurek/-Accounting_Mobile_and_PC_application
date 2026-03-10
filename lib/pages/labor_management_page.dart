@@ -339,7 +339,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                         final updatedWorker = worker.copyWith(
                           adSoyad: nameController.text,
                           pozisyon: posController.text,
-                          maasTutari: double.tryParse(salaryController.text) ?? 0.0,
+                          maasTutari: double.tryParse(salaryController.text.replaceAll(',', '.')) ?? 0.0,
                           maasTuru: selectedType,
                         );
                         await context.read<WorkerProvider>().updateWorker(updatedWorker);
@@ -436,7 +436,7 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
                         final w = Worker(
                           adSoyad: nameController.text,
                           pozisyon: posController.text,
-                          maasTutari: double.tryParse(salaryController.text) ?? 0.0,
+                          maasTutari: double.tryParse(salaryController.text.replaceAll(',', '.')) ?? 0.0,
                           maasTuru: selectedType,
                           baslangicTarihi: DateTime.now(),
                           cariHesapId: linkedCariId,

@@ -141,6 +141,16 @@ class DatabaseHelper {
         // SADECE silme sırasına alınmamış olanları ekle
         serverCaris = serverCaris.where((c) => !SyncManager.instance.isPendingDeletion('cari_hesaplar', c.id)).toList();
         
+        // Eğer güncellenme sırasındaysa, sunucudan gelen eski veri yerine lokaldeki veriyi koru
+        for (int i = 0; i < serverCaris.length; i++) {
+          if (SyncManager.instance.isPendingUpdate('cari_hesaplar', serverCaris[i].id)) {
+            final localMatch = initialList.where((l) => l.id == serverCaris[i].id);
+            if (localMatch.isNotEmpty) {
+               serverCaris[i] = localMatch.first;
+            }
+          }
+        }
+        
         List<CariHesap> tempList = initialList.where((c) => c.id! < 0).toList();
         
         final allUpdatedCaris = [...serverCaris, ...tempList];
@@ -177,6 +187,8 @@ class DatabaseHelper {
       // 2. SyncManager'a ekle (id > 0 ise)
       if (cariHesap.id! > 0) {
         await SyncManager.instance.enqueueOperation('update', 'cari_hesaplar', map);
+      } else {
+        await SyncManager.instance.updatePendingInsert('cari_hesaplar', cariHesap.id!, map);
       }
       return cariHesap.id!;
     } catch (e) {
@@ -309,6 +321,16 @@ class DatabaseHelper {
         // SADECE silme sırasına alınmamış olanları ekle
         serverFaturas = serverFaturas.where((f) => !SyncManager.instance.isPendingDeletion('faturalar', f.id)).toList();
         
+        // Eğer güncellenme sırasındaysa, sunucudan gelen eski veri yerine lokaldeki veriyi koru
+        for (int i = 0; i < serverFaturas.length; i++) {
+          if (SyncManager.instance.isPendingUpdate('faturalar', serverFaturas[i].id)) {
+            final localMatch = initialList.where((l) => l.id == serverFaturas[i].id);
+            if (localMatch.isNotEmpty) {
+               serverFaturas[i] = localMatch.first;
+            }
+          }
+        }
+        
         List<Fatura> tempList = initialList.where((f) => f.id! < 0).toList();
         
         final allUpdatedFaturas = [...serverFaturas, ...tempList];
@@ -360,6 +382,8 @@ class DatabaseHelper {
       // 2. SyncManager'a ekle (id > 0 ise)
       if (fatura.id! > 0) {
         await SyncManager.instance.enqueueOperation('update', 'faturalar', map);
+      } else {
+        await SyncManager.instance.updatePendingInsert('faturalar', fatura.id!, map);
       }
       return fatura.id!;
     } catch (e) {
@@ -448,7 +472,17 @@ class DatabaseHelper {
         List<Stok> serverStoks = data.map((m) => Stok.fromMap(m)).toList();
         
         // SADECE silme sırasına alınmamış olanları ekle
-        serverStoks = serverStoks.where((s) => !SyncManager.instance.isPendingDeletion('stoks', s.id)).toList();
+        serverStoks = serverStoks.where((s) => !SyncManager.instance.isPendingDeletion('stoks', s.id)).toList(); // Tablo adı stoklar mı dsoks mu? Orijinalinde 'stoks' olarak geçmiş. Ama db tablosu 'stoklar'.
+        
+        // Eğer güncellenme sırasındaysa, sunucudan gelen eski veri yerine lokaldeki veriyi koru
+        for (int i = 0; i < serverStoks.length; i++) {
+          if (SyncManager.instance.isPendingUpdate('stoklar', serverStoks[i].id) || SyncManager.instance.isPendingUpdate('stoks', serverStoks[i].id)) {
+            final localMatch = initialList.where((l) => l.id == serverStoks[i].id);
+            if (localMatch.isNotEmpty) {
+               serverStoks[i] = localMatch.first;
+            }
+          }
+        }
         
         List<Stok> tempList = initialList.where((s) => s.id! < 0).toList();
         
@@ -492,6 +526,8 @@ class DatabaseHelper {
       // 2. SyncManager'a ekle (id > 0 ise)
       if (stok.id! > 0) {
         await SyncManager.instance.enqueueOperation('update', 'stoklar', map);
+      } else {
+        await SyncManager.instance.updatePendingInsert('stoklar', stok.id!, map);
       }
       return stok.id!;
     } catch (e) {
@@ -601,6 +637,16 @@ class DatabaseHelper {
         // SADECE silme sırasına alınmamış olanları ekle
         serverData = serverData.where((g) => !SyncManager.instance.isPendingDeletion('gelir_giderler', g.id)).toList();
         
+        // Eğer güncellenme sırasındaysa, sunucudan gelen eski veri yerine lokaldeki veriyi koru
+        for (int i = 0; i < serverData.length; i++) {
+          if (SyncManager.instance.isPendingUpdate('gelir_giderler', serverData[i].id)) {
+            final localMatch = initialList.where((l) => l.id == serverData[i].id);
+            if (localMatch.isNotEmpty) {
+               serverData[i] = localMatch.first;
+            }
+          }
+        }
+        
         List<GelirGider> tempList = initialList.where((item) => item.id! < 0).toList();
         
         final allUpdatedData = [...serverData, ...tempList];
@@ -652,6 +698,8 @@ class DatabaseHelper {
       // 2. SyncManager'a ekle (id > 0 ise)
       if (gelirGider.id! > 0) {
         await SyncManager.instance.enqueueOperation('update', 'gelir_giderler', map);
+      } else {
+        await SyncManager.instance.updatePendingInsert('gelir_giderler', gelirGider.id!, map);
       }
       return gelirGider.id!;
     } catch (e) {
@@ -846,6 +894,16 @@ class DatabaseHelper {
       
       // SADECE silme sırasına alınmamış olanları ekle
       serverData = serverData.where((p) => !SyncManager.instance.isPendingDeletion('puantajlar', p.id)).toList();
+      
+      // Eğer güncellenme sırasındaysa, sunucudan gelen eski veri yerine lokaldeki veriyi koru
+      for (int i = 0; i < serverData.length; i++) {
+        if (SyncManager.instance.isPendingUpdate('puantajlar', serverData[i].id)) {
+          final localMatch = initialList.where((l) => l.id == serverData[i].id);
+          if (localMatch.isNotEmpty) {
+             serverData[i] = localMatch.first;
+          }
+        }
+      }
       
       List<Puantaj> tempList = initialList.where((item) => item.id! < 0).toList();
 
@@ -1486,6 +1544,16 @@ class DatabaseHelper {
       // SADECE silme sırasına alınmamış olanları ekle
       serverData = serverData.where((i) => !SyncManager.instance.isPendingDeletion('cari_islemler', i.id)).toList();
       
+      // Eğer güncellenme sırasındaysa, sunucudan gelen eski veri yerine lokaldeki veriyi koru
+      for (int i = 0; i < serverData.length; i++) {
+        if (SyncManager.instance.isPendingUpdate('cari_islemler', serverData[i].id)) {
+          final localMatch = initialList.where((l) => l.id == serverData[i].id);
+          if (localMatch.isNotEmpty) {
+             serverData[i] = localMatch.first;
+          }
+        }
+      }
+      
       List<CariIslem> tempList = initialList.where((item) => item.id! < 0).toList();
 
       final allUpdatedData = [...serverData, ...tempList];
@@ -1546,6 +1614,8 @@ class DatabaseHelper {
     // 3. SyncManager'a ekle (id > 0 ise)
     if (islem.id! > 0) {
       await SyncManager.instance.enqueueOperation('update', 'cari_islemler', map);
+    } else {
+      await SyncManager.instance.updatePendingInsert('cari_islemler', islem.id!, map);
     }
 
     // 4. Yeni bakiyeyi ekle
@@ -1697,6 +1767,16 @@ class DatabaseHelper {
         // SADECE silme sırasına alınmamış olanları ekle
         serverProjects = serverProjects.where((p) => !SyncManager.instance.isPendingDeletion('projects', p.id)).toList();
         
+        // Eğer güncellenme sırasındaysa, sunucudan gelen eski veri yerine lokaldeki veriyi koru
+        for (int i = 0; i < serverProjects.length; i++) {
+          if (SyncManager.instance.isPendingUpdate('projects', serverProjects[i].id)) {
+            final localMatch = initialList.where((l) => l.id == serverProjects[i].id);
+            if (localMatch.isNotEmpty) {
+               serverProjects[i] = localMatch.first;
+            }
+          }
+        }
+        
         List<Project> tempList = initialList.where((p) => p.id! < 0).toList();
         
         final allUpdatedProjects = [...serverProjects, ...tempList];
@@ -1734,6 +1814,8 @@ class DatabaseHelper {
       // 2. SyncManager'a ekle (id > 0 ise)
       if (project.id! > 0) {
         await SyncManager.instance.enqueueOperation('update', 'projects', map);
+      } else {
+        await SyncManager.instance.updatePendingInsert('projects', project.id!, map);
       }
       
       return project.id!;
@@ -1901,6 +1983,8 @@ class DatabaseHelper {
       if (worker.id! > 0) {
         // 2. SyncManager'a ekle
         await SyncManager.instance.enqueueOperation('update', 'workers', map);
+      } else {
+        await SyncManager.instance.updatePendingInsert('workers', worker.id!, map);
       }
 
       return worker.id!;
@@ -2005,6 +2089,16 @@ class DatabaseHelper {
         // SADECE silme sırasına alınmamış olanları ekle
         serverWorkers = serverWorkers.where((w) => !SyncManager.instance.isPendingDeletion('workers', w.id)).toList();
         
+        // Eğer güncelleme sırasındaysa, sunucudan gelen eski veriyi değil, lokaldeki güncel veriyi kullan
+        for (int i = 0; i < serverWorkers.length; i++) {
+           if (SyncManager.instance.isPendingUpdate('workers', serverWorkers[i].id)) {
+              final localMatch = initialList.where((l) => l.id == serverWorkers[i].id);
+              if (localMatch.isNotEmpty) {
+                 serverWorkers[i] = localMatch.first;
+              }
+           }
+        }
+        
         // Geçiçi id'ye sahip (henüz senkronize edilmemiş) kayıtları ekle
         List<Worker> tempList = initialList.where((w) => w.id! < 0).toList();
         
@@ -2074,10 +2168,15 @@ class DatabaseHelper {
 
       // 3. SyncManager'a ekle
       final syncMap = Map<String, dynamic>.from(map);
+      bool isNewOffline = (puantaj.id == null && existingId == null);
       if (idToUse < 0) {
-        syncMap['temp_id'] = idToUse;
-        syncMap.remove('id');
-        await SyncManager.instance.enqueueOperation('insert', 'puantajlar', syncMap);
+        if (isNewOffline) {
+          syncMap['temp_id'] = idToUse;
+          syncMap.remove('id');
+          await SyncManager.instance.enqueueOperation('insert', 'puantajlar', syncMap);
+        } else {
+          await SyncManager.instance.updatePendingInsert('puantajlar', idToUse, map);
+        }
       } else {
         await SyncManager.instance.enqueueOperation('update', 'puantajlar', syncMap);
       }

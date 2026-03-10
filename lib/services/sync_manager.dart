@@ -74,6 +74,44 @@ class SyncManager {
     return false;
   }
 
+  /// Belirli bir kaydın güncellenme sırasına alınıp alınmadığını kontrol eder
+  bool isPendingUpdate(String table, dynamic id) {
+    if (_syncQueueBox.isEmpty) return false;
+    
+    for (var operation in _syncQueueBox.values) {
+      if (operation is Map) {
+        final action = operation['action'];
+        final opTable = operation['table'];
+        final opData = operation['data'];
+        
+        if (action == 'update' && opTable == table && opData['id'] == id) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /// Belirli bir işlemin kuyruktaki verisini günceller (özellikle offline iken eklenen kaydın offline iken güncellenmesi için)
+  Future<void> updatePendingInsert(String table, int tempId, Map<String, dynamic> newData) async {
+    final Map<dynamic, dynamic> operations = _syncQueueBox.toMap();
+    for (var entry in operations.entries) {
+      final key = entry.key;
+      final op = entry.value as Map;
+      if (op['action'] == 'insert' && op['table'] == table) {
+         final opData = op['data'];
+         if (opData != null && opData['temp_id'] == tempId) {
+            final syncMap = Map<String, dynamic>.from(newData);
+            syncMap['temp_id'] = tempId;
+            syncMap.remove('id');
+            op['data'] = syncMap;
+            await _syncQueueBox.put(key, op);
+            return;
+         }
+      }
+    }
+  }
+
   /// Kuyruktaki işlemleri sırayla Supabase'e gönderir
   Future<void> _syncData() async {
     if (_syncQueueBox.isEmpty) return;
@@ -115,9 +153,15 @@ class SyncManager {
                idMapping[tempId] = realId;
             }
         } else if (action == 'update') {
-            final id = data['id'];
+            final id = data.remove('id');
+            data.remove('temp_id'); // Just in case temp_id is inside
             if (id != null) {
-                await _supabase.from(table).update(data).eq('id', id);
+                // select() is appended to check if the row was actually updated
+                final response = await _supabase.from(table).update(data).eq('id', id).select();
+                if (response.isEmpty) {
+                   // If empty, it means no rows were updated (e.g., ID mismatch or RLS issue)
+                   throw Exception('Update failed: No rows matched or RLS blocked the update.');
+                }
             }
         } else if (action == 'delete') {
             final id = data['id'];
