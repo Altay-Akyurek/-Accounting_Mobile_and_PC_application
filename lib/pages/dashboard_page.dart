@@ -16,6 +16,9 @@ import 'worker_analysis_page.dart';
 import 'portfolio_page.dart';
 import '../widgets/banner_ad_widget.dart';
 import '../services/ad_helper.dart';
+import 'privacy_policy_page.dart';
+import 'terms_of_use_page.dart';
+import 'support_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -210,12 +213,65 @@ class _DashboardPageState extends State<DashboardPage> {
                   _buildDrawerItem(
                     icon: Icons.privacy_tip_rounded,
                     label: AppLocalizations.of(context)!.privacyPolicy,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.gavel_rounded,
+                    label: "Kullanım Şartları",
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TermsOfUsePage()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.star_rate_rounded,
+                    label: "Bizi Değerlendirin",
+                    color: Colors.amber,
                     onTap: () async {
                       Navigator.pop(context);
-                      final url = Uri.parse('https://altay-akyurek.github.io/-Accounting_Mobile_and_PC_application/privacy_policy.html');
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url);
+                      final Uri marketUri = Uri.parse('market://details?id=com.muhasebepro.app');
+                      final Uri playStoreUri = Uri.parse('https://play.google.com/store/apps/details?id=com.muhasebepro.app');
+                      
+                      try {
+                        if (await canLaunchUrl(marketUri)) {
+                          await launchUrl(marketUri, mode: LaunchMode.externalApplication);
+                        } else if (await canLaunchUrl(playStoreUri)) {
+                          await launchUrl(playStoreUri, mode: LaunchMode.externalApplication);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Uygulama mağazası açılamadı.')),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Uygulama mağazası açılamadı.')),
+                          );
+                        }
                       }
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.support_agent_rounded,
+                    label: "Bize Ulaşın / Destek",
+                    color: Colors.blue,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SupportPage()),
+                      );
                     },
                   ),
                    _buildDrawerItem(

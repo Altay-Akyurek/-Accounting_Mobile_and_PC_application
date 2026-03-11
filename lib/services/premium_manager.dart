@@ -161,15 +161,21 @@ class PremiumManager {
         if (response['is_premium'] == true) {
            if (expiresAt == null || expiresAt.isAfter(DateTime.now())) {
              _isPremium = true;
+             premiumStatusNotifier.value = true;
+             _adIntervalTimer?.cancel();
              return;
            }
         }
       }
       
       _isPremium = false; 
+      premiumStatusNotifier.value = false;
+      _startAdTimer();
     } catch (e) {
       debugPrint('Abonelik kontrolü hatası: $e');
       _isPremium = false;
+      premiumStatusNotifier.value = false;
+      _startAdTimer();
     }
   }
 

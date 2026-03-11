@@ -1487,7 +1487,8 @@ class DatabaseHelper {
       // 3. Cari hesap bakiyesini güncelle (Offline-first updateCariHesap kullanır)
       final cari = await getCariHesap(islem.cariHesapId);
       if (cari != null) {
-        final yeniBakiye = (cari.bakiye ?? 0.0) + islem.bakiye;
+        final toplamlar = await getCariToplamlar(islem.cariHesapId);
+        final yeniBakiye = toplamlar['bakiye'] ?? 0.0;
         await updateCariHesap(cari.copyWith(bakiye: yeniBakiye));
       }
 
@@ -1592,36 +1593,27 @@ class DatabaseHelper {
   }
 
   Future<int> updateCariIslem(CariIslem islem) async {
-    // 1. Eski işlemi al ve bakiyeyi geri al (Offline-first)
-    final eskiIslem = await getCariIslem(islem.id!);
-    if (eskiIslem != null) {
-      final cari = await getCariHesap(eskiIslem.cariHesapId);
-      if (cari != null) {
-        final yeniBakiye = (cari.bakiye ?? 0.0) - eskiIslem.bakiye;
-        await updateCariHesap(cari.copyWith(bakiye: yeniBakiye));
-      }
-    }
-
     final userId = currentUserId;
     if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
     
     final map = islem.toMap();
     map['user_id'] = userId;
 
-    // 2. Hive'ı güncelle
+    // 1. Hive'ı güncelle
     await _cariIslemlerBox.put(islem.id.toString(), jsonEncode(map));
 
-    // 3. SyncManager'a ekle (id > 0 ise)
+    // 2. SyncManager'a ekle (id > 0 ise)
     if (islem.id! > 0) {
       await SyncManager.instance.enqueueOperation('update', 'cari_islemler', map);
     } else {
       await SyncManager.instance.updatePendingInsert('cari_islemler', islem.id!, map);
     }
 
-    // 4. Yeni bakiyeyi ekle
+    // 3. Bakiye yeniden hesapla ve güncelle
     final cari = await getCariHesap(islem.cariHesapId);
     if (cari != null) {
-      final yeniBakiye = (cari.bakiye ?? 0.0) + islem.bakiye;
+      final toplamlar = await getCariToplamlar(islem.cariHesapId);
+      final yeniBakiye = toplamlar['bakiye'] ?? 0.0;
       await updateCariHesap(cari.copyWith(bakiye: yeniBakiye));
     }
 
@@ -1634,14 +1626,7 @@ class DatabaseHelper {
 
     final islem = await getCariIslem(id);
     if (islem != null) {
-      // 1. Bakiyeyi geri al
-      final cari = await getCariHesap(islem.cariHesapId);
-      if (cari != null) {
-        final yeniBakiye = (cari.bakiye ?? 0.0) - islem.bakiye;
-        await updateCariHesap(cari.copyWith(bakiye: yeniBakiye));
-      }
-
-      // 2. Hakediş Geri Alım Mantığı (TODO: Offline safety for hakedisler update)
+      // 1. Hakediş Geri Alım Mantığı (TODO: Offline safety for hakedisler update)
       if (islem.aciklama.contains('#H:[')) {
         try {
           final start = islem.aciklama.indexOf('#H:[');
@@ -1665,9 +1650,17 @@ class DatabaseHelper {
         }
       }
       
-      // 3. Hive'dan sil
+      // 2. Hive'dan sil
       await _cariIslemlerBox.delete(id.toString());
       
+      // 3. Bakiyeyi yeniden hesapla ve güncelle
+      final cari = await getCariHesap(islem.cariHesapId);
+      if (cari != null) {
+        final toplamlar = await getCariToplamlar(islem.cariHesapId);
+        final yeniBakiye = toplamlar['bakiye'] ?? 0.0;
+        await updateCariHesap(cari.copyWith(bakiye: yeniBakiye));
+      }
+
       // 4. SyncManager'a ekle
       if (id > 0) {
         await SyncManager.instance.enqueueOperation('delete', 'cari_islemler', {'id': id});
