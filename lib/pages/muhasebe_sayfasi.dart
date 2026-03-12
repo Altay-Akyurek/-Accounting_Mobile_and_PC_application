@@ -7,6 +7,7 @@ import '../models/project.dart';
 import '../services/database_helper.dart';
 import 'cari_detay_sayfasi.dart';
 import '../widgets/cari_ekle_dialog.dart';
+import '../utils/error_handler.dart';
 
 class MuhasebeSayfasi extends StatefulWidget {
   const MuhasebeSayfasi({super.key});
@@ -22,7 +23,9 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
   List<Project> _projeler = [];
   CariHesap? _seciliCari;
   Project? _seciliProje;
+  bool _seciliProjeLoading = false; // dummy or existing
   bool _isLoading = true;
+  bool _isSaving = false;
 
   // Form controllers
   final _aciklamaController = TextEditingController();
@@ -139,6 +142,8 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
   }
 
   Future<void> _kaydet() async {
+    if (_isSaving) return;
+    
     if (_seciliCari == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectCari)),
@@ -156,17 +161,22 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
     final borc = double.tryParse(_borcController.text.replaceAll(',', '.')) ?? 0.0;
     final alacak = double.tryParse(_alacakController.text.replaceAll(',', '.')) ?? 0.0;
 
+    // 0 TL kayda izin vermek için bu kontrolü kaldırdık
+    /*
     if (borc == 0.0 && alacak == 0.0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.amountRequired)),
       );
       return;
     }
+    */
 
     DateTime? islemVade = _vade;
     if (_isDonemsel && _donemBitis != null) {
       islemVade = _donemBitis;
     }
+
+    setState(() => _isSaving = true);
 
     try {
       final islem = CariIslem(
@@ -194,11 +204,9 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
         _yukleVeriler();
         _cariFiltrele(_seciliCari);
       }
-    } catch (e) {
+    } finally {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')),
-        );
+        setState(() => _isSaving = false);
       }
     }
   }
@@ -292,7 +300,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')),
+            SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
           );
         }
       }
@@ -652,7 +660,9 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                     _kaydet();
                     Navigator.pop(context);
                   },
-                  child: Text(AppLocalizations.of(context)!.saveTransaction),
+                  child: _isSaving 
+                    ? const Center(child: CircularProgressIndicator()) 
+                    : Text(AppLocalizations.of(context)!.saveTransaction),
                 ),
               ),
             ],

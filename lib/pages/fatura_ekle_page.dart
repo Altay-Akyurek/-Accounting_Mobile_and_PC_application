@@ -5,6 +5,7 @@ import '../models/fatura.dart';
 import '../models/cari_hesap.dart';
 import '../services/database_helper.dart';
 import 'cari_hesap_liste_page.dart';
+import '../utils/error_handler.dart';
 
 class FaturaEklePage extends StatefulWidget {
   final Fatura? fatura;
@@ -190,7 +191,7 @@ class _FaturaEklePageState extends State<FaturaEklePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
+          SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
         );
       }
     } finally {

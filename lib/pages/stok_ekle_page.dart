@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/stok.dart';
 import '../services/database_helper.dart';
+import '../utils/error_handler.dart';
 
 class StokEklePage extends StatefulWidget {
   final Stok? stok;
@@ -112,7 +113,7 @@ class _StokEklePageState extends State<StokEklePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
+          SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
         );
       }
     } finally {

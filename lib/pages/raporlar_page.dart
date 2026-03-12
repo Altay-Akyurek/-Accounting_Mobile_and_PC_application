@@ -6,6 +6,7 @@ import '../models/gelir_gider.dart';
 import '../models/hakedis.dart';
 import '../models/project.dart';
 import '../widgets/banner_ad_widget.dart';
+import '../utils/error_handler.dart';
 
 class RaporlarPage extends StatefulWidget {
   const RaporlarPage({super.key});
@@ -103,7 +104,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
       if (mounted)
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')));
+        ).showSnackBar(SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
       setState(() => _isLoading = false);
     }
   }

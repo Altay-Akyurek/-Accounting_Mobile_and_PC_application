@@ -17,6 +17,9 @@ class SyncManager {
   final StreamController<void> _syncCompletedController = StreamController<void>.broadcast();
   Stream<void> get onSyncCompleted => _syncCompletedController.stream;
 
+  /// Callback to resolve temporary IDs in the local database
+  Future<void> Function(String table, int tempId, int realId)? onTempIdResolved;
+
   SyncManager._init();
 
   Future<void> init() async {
@@ -92,6 +95,20 @@ class SyncManager {
     return false;
   }
 
+  /// Geçici bir ID'nin hala kuyrukta bekleyip beklemediğini kontrol eder
+  bool isTempIdPending(String table, int tempId) {
+    if (_syncQueueBox.isEmpty) return false;
+    for (var operation in _syncQueueBox.values) {
+      if (operation is Map && operation['action'] == 'insert' && operation['table'] == table) {
+        final opData = operation['data'];
+        if (opData != null && opData['temp_id'] == tempId) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /// Belirli bir işlemin kuyruktaki verisini günceller (özellikle offline iken eklenen kaydın offline iken güncellenmesi için)
   Future<void> updatePendingInsert(String table, int tempId, Map<String, dynamic> newData) async {
     final Map<dynamic, dynamic> operations = _syncQueueBox.toMap();
@@ -112,20 +129,26 @@ class SyncManager {
     }
   }
 
+  bool _isSyncing = false;
+
   /// Kuyruktaki işlemleri sırayla Supabase'e gönderir
   Future<void> _syncData() async {
-    if (_syncQueueBox.isEmpty) return;
-
-    final operations = _syncQueueBox.toMap();
-    final keysToDelete = [];
+    if (_isSyncing || _syncQueueBox.isEmpty) return;
     
-    // Geçici ID'lerin yeni veritabanı ID'leriyle eşleşmesi
-    // temp_id -> real_id
-    Map<int, int> idMapping = {};
+    _isSyncing = true;
 
-    for (var entry in operations.entries) {
-      final key = entry.key;
-      final op = entry.value as Map;
+    try {
+      while (_syncQueueBox.isNotEmpty && _isOnline) {
+        final operations = _syncQueueBox.toMap();
+        final keysToDelete = [];
+        
+        // Geçici ID'lerin yeni veritabanı ID'leriyle eşleşmesi
+        // temp_id -> real_id
+        Map<int, int> idMapping = {};
+
+        for (var entry in operations.entries) {
+          final key = entry.key;
+          final op = entry.value as Map;
 
       final action = op['action'] as String;
       final table = op['table'] as String;
@@ -151,6 +174,15 @@ class SyncManager {
             if (tempId != null && tempId is int && tempId < 0) {
                final realId = response['id'] as int;
                idMapping[tempId] = realId;
+               
+               // Lokal Hive cache'i de güncelle (Mükerrer kaydı önlemek için kritik)
+               if (onTempIdResolved != null) {
+                 try {
+                   await onTempIdResolved!(table, tempId, realId);
+                 } catch (e) {
+                   debugPrint('SyncManager: resolveTempId callback failed: $e');
+                 }
+               }
             }
         } else if (action == 'update') {
             final id = data.remove('id');
@@ -180,11 +212,18 @@ class SyncManager {
       }
     }
 
-    // Başarılı olanları kuyruktan sil
-    if (keysToDelete.isNotEmpty) {
-      await _syncQueueBox.deleteAll(keysToDelete);
-      // Dışarıya sync tamamlandı olayı gönder ki Provider'lar refresh yapsın (Örn: temp_id -> real_id dönüşümü için)
-      _syncCompletedController.add(null);
+        // Başarılı olanları kuyruktan sil
+        if (keysToDelete.isNotEmpty) {
+          await _syncQueueBox.deleteAll(keysToDelete);
+          // Dışarıya sync tamamlandı olayı gönder ki Provider'lar refresh yapsın (Örn: temp_id -> real_id dönüşümü için)
+          _syncCompletedController.add(null);
+        }
+        
+        // Eğer hiçbir şey silinmediyse (hata oldu ve break dendi), döngüden çık
+        if (keysToDelete.isEmpty) break;
+      }
+    } finally {
+      _isSyncing = false;
     }
   }
 }

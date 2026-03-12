@@ -7,6 +7,7 @@ import '../services/sync_manager.dart';
 import 'dart:async';
 import 'cari_hesap_ekle_page.dart';
 import '../widgets/banner_ad_widget.dart';
+import '../utils/error_handler.dart';
 
 class CariHesapListePage extends StatefulWidget {
   const CariHesapListePage({super.key});
@@ -79,7 +80,7 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
     }
   }
 

@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../services/iap_service.dart';
 import '../services/ad_helper.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:intl/intl.dart';
 
 class PremiumPage extends StatefulWidget {
   const PremiumPage({super.key});
@@ -56,48 +57,106 @@ class _PremiumPageState extends State<PremiumPage> {
             _buildFeatureRow(context, Icons.picture_as_pdf, AppLocalizations.of(context)!.featureUnlimitedPDF),
             _buildFeatureRow(context, Icons.cloud_done, AppLocalizations.of(context)!.featureCloudBackup),
             _buildFeatureRow(context, Icons.business, AppLocalizations.of(context)!.featureB2B),
-            const SizedBox(height: 30),
-            
-            // Reklam İzle - 10 Dk Premium
-            _buildRewardedAdCard(),
-            
-            const SizedBox(height: 30),
-            if (IAPService.instance.products.isEmpty)
-              const Center(child: CircularProgressIndicator())
-            else
-              ...IAPService.instance.products.map((product) {
-                final isYearly = product.id.contains('yearly');
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _buildSubscriptionCard(
-                    context,
-                    product: product,
-                    title: isYearly 
-                        ? AppLocalizations.of(context)!.yearlyPackage 
-                        : AppLocalizations.of(context)!.monthlyPackage,
-                    price: product.price,
-                    description: isYearly 
-                        ? AppLocalizations.of(context)!.save25 
-                        : AppLocalizations.of(context)!.cancelAnytime,
-                    isPopular: isYearly,
-                    onTap: () {
-                      setState(() => _selectedProduct = product);
-                    },
-                  ),
+            ValueListenableBuilder<bool>(
+              valueListenable: PremiumManager.instance.premiumStatusNotifier,
+              builder: (context, isPremium, child) {
+                if (isPremium) {
+                  return Container(
+                    margin: const EdgeInsets.only(top: 20),
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2EC4B6).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFF2EC4B6), width: 2),
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.verified_rounded, color: Color(0xFF2EC4B6), size: 64),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Tebrikler!",
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: const Color(0xFF011627)),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Aktif bir Premium üyeliğiniz bulunuyor. Tüm özelliklerin keyfini çıkarın!",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16, color: Color(0xFF011627)),
+                        ),
+                        if (PremiumManager.instance.expiryDate != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: Text(
+                              "Bitiş: ${DateFormat('dd MMMM yyyy', 'tr_TR').format(PremiumManager.instance.expiryDate!)}",
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2EC4B6)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 30),
+                    // Reklam İzle - 10 Dk Premium
+                    _buildRewardedAdCard(),
+                    
+                    const SizedBox(height: 30),
+                    if (IAPService.instance.products.isEmpty)
+                      const Center(child: CircularProgressIndicator())
+                    else
+                      ...IAPService.instance.products.map((product) {
+                        final isYearly = product.id.contains('yearly');
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildSubscriptionCard(
+                            context,
+                            product: product,
+                            title: isYearly 
+                                ? AppLocalizations.of(context)!.yearlyPackage 
+                                : AppLocalizations.of(context)!.monthlyPackage,
+                            price: product.price,
+                            description: isYearly 
+                                ? AppLocalizations.of(context)!.save25 
+                                : AppLocalizations.of(context)!.cancelAnytime,
+                            isPopular: isYearly,
+                            onTap: () {
+                              setState(() => _selectedProduct = product);
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    const SizedBox(height: 40),
+                    ElevatedButton(
+                      onPressed: _selectedProduct == null ? null : _handleContinue,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2EC4B6),
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.continueButton,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () async {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Satın almalar geri yükleniyor...")),
+                        );
+                        await IAPService.instance.restorePurchases();
+                      },
+                      child: const Text(
+                        "Satın Almaları Geri Yükle",
+                        style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 );
-              }).toList(),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: _selectedProduct == null ? null : _handleContinue,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2EC4B6),
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              ),
-              child: Text(
-                AppLocalizations.of(context)!.continueButton,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              },
             ),
             const SizedBox(height: 20),
           ],

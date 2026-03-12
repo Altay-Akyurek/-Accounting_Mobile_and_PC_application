@@ -6,6 +6,7 @@ import '../services/database_helper.dart';
 import '../services/sync_manager.dart';
 import 'dart:async';
 import 'gelir_gider_ekle_page.dart';
+import '../utils/error_handler.dart';
 
 class GelirGiderListePage extends StatefulWidget {
   const GelirGiderListePage({super.key});
@@ -313,7 +314,7 @@ class _GelirGiderListePageState extends State<GelirGiderListePage> with SingleTi
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
+            SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
           );
         }
       }

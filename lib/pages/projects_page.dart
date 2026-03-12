@@ -9,6 +9,7 @@ import 'project_detail_page.dart';
 import '../models/cari_hesap.dart';
 import '../widgets/cari_ekle_dialog.dart';
 import '../widgets/banner_ad_widget.dart';
+import '../utils/error_handler.dart';
 
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
@@ -368,7 +369,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString())),
+                                content: Text(ErrorHandler.getErrorMessage(e)),
                                 backgroundColor: Colors.red,
                                 duration: const Duration(seconds: 5),
                               ),

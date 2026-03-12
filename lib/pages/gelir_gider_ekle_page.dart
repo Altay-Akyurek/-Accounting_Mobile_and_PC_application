@@ -5,6 +5,7 @@ import '../models/gelir_gider.dart';
 import '../models/cari_hesap.dart';
 import '../models/project.dart';
 import '../services/database_helper.dart';
+import '../utils/error_handler.dart';
 
 class GelirGiderEklePage extends StatefulWidget {
   final GelirGider? gelirGider;
@@ -145,7 +146,7 @@ class _GelirGiderEklePageState extends State<GelirGiderEklePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')),
+          SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
         );
       }
     } finally {

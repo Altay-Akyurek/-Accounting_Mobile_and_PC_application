@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../services/database_helper.dart';
 import '../models/cari_islem.dart';
+import '../utils/error_handler.dart';
 import '../models/hakedis.dart';
 import '../models/cari_hesap.dart';
 import '../models/project.dart';
@@ -52,7 +53,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
+          SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
         );
       }
     }
@@ -367,7 +368,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.hakedisCollectionsProcessed)));
     } catch (e) {
       setState(() => _isLoading = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
     }
   }
 
@@ -414,7 +415,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppLocalizations.of(context)!.errorPrefix}: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
     }
   }
 

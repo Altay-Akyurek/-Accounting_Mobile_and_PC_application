@@ -58,6 +58,9 @@ class DatabaseHelper {
     _gelirGiderBox = await Hive.openBox<String>('gelir_gider_box');
     _cariIslemlerBox = await Hive.openBox<String>('cari_islemler_box');
     _puantajBox = await Hive.openBox<String>('puantaj_box');
+
+    // Register sync callback
+    SyncManager.instance.onTempIdResolved = resolveTempId;
   }
 
   Future<void> clearAllData() async {
@@ -74,6 +77,40 @@ class DatabaseHelper {
       ]);
     } catch (e) {
       print('DatabaseHelper.clearAllData error: $e');
+    }
+  }
+
+  Box<String>? _getBoxForTable(String table) {
+    switch (table) {
+      case 'cari_hesaplar': return _carisBox;
+      case 'faturalar': return _faturasBox;
+      case 'stoklar': return _stoksBox;
+      case 'gelir_giderler': return _gelirGiderBox;
+      case 'cari_islemler': return _cariIslemlerBox;
+      case 'workers': return _workersBox;
+      case 'projects': return _projectsBox;
+      case 'puantaj': return _puantajBox;
+      default: return null;
+    }
+  }
+
+  /// Geçici ID ile kaydedilmiş yerel kaydı, sunucudan gelen gerçek ID ile günceller ve eskiyi siler.
+  Future<void> resolveTempId(String table, int tempId, int realId) async {
+    try {
+      final box = _getBoxForTable(table);
+      if (box == null) return;
+      
+      final val = box.get(tempId.toString());
+      if (val != null) {
+        final Map<String, dynamic> map = jsonDecode(val);
+        map['id'] = realId;
+        // Yeni ID ile ekle, eski geçici ID'liyi sil
+        await box.put(realId.toString(), jsonEncode(map));
+        await box.delete(tempId.toString());
+        print('DEBUG: Resolved tempId $tempId to realId $realId in $table');
+      }
+    } catch (e) {
+      print('DEBUG: Error in resolveTempId for $table ($tempId -> $realId): $e');
     }
   }
 
@@ -112,15 +149,31 @@ class DatabaseHelper {
     
     // 1. Önce Hive'dan oku
     List<CariHesap> localCaris = [];
+    List<String> ghostKeys = [];
+    
     for (var value in _carisBox.values) {
       try {
         final Map<String, dynamic> map = jsonDecode(value);
         if (map['user_id'] == userId) {
-            localCaris.add(CariHesap.fromMap(map));
+            final item = CariHesap.fromMap(map);
+            // Ghost detection: id < 0 but not in sync queue
+            if (item.id! < 0 && !SyncManager.instance.isTempIdPending('cari_hesaplar', item.id!)) {
+              ghostKeys.add(item.id.toString());
+              continue;
+            }
+            localCaris.add(item);
         }
       } catch (e) {
         print('DEBUG: Error parsing localized cari JSON: $e');
       }
+    }
+
+    // Clean up ghosts from Hive
+    if (ghostKeys.isNotEmpty) {
+      for (var key in ghostKeys) {
+        await _carisBox.delete(key);
+      }
+      print('DEBUG: Purged ${ghostKeys.length} ghost CariHesap entries');
     }
 
     // 2. Online isek senkronize et
@@ -151,7 +204,7 @@ class DatabaseHelper {
           }
         }
         
-        List<CariHesap> tempList = initialList.where((c) => c.id! < 0).toList();
+        List<CariHesap> tempList = initialList.where((c) => c.id! < 0 && SyncManager.instance.isTempIdPending('cari_hesaplar', c.id!)).toList();
         
         final allUpdatedCaris = [...serverCaris, ...tempList];
         
@@ -169,6 +222,13 @@ class DatabaseHelper {
   Future<CariHesap?> getCariHesap(int id) async {
     final userId = currentUserId;
     if (userId == null) return null;
+    
+    // Hive'dan hızlı cevap (Offline-first)
+    final val = _carisBox.get(id.toString());
+    if (val != null) {
+      return CariHesap.fromMap(jsonDecode(val));
+    }
+    
     final data = await _supabase.from('cari_hesaplar').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? CariHesap.fromMap(data) : null;
   }
@@ -284,11 +344,20 @@ class DatabaseHelper {
     
     // 1. Önce Hive'dan oku
     List<Fatura> localFaturas = [];
+    List<String> ghostKeys = [];
+    
     for (var value in _faturasBox.values) {
       try {
         final Map<String, dynamic> map = jsonDecode(value);
         if (map['user_id'] == userId) {
             final f = Fatura.fromMap(map);
+            
+            // Ghost detection
+            if (f.id! < 0 && !SyncManager.instance.isTempIdPending('faturalar', f.id!)) {
+              ghostKeys.add(f.id.toString());
+              continue;
+            }
+            
             bool match = true;
             if (baslangic != null && f.tarih.isBefore(DateTime(baslangic.year, baslangic.month, baslangic.day))) match = false;
             // The bitis filter in Supabase uses lte logic on stripped precision, so we include the whole day usually
@@ -298,6 +367,14 @@ class DatabaseHelper {
       } catch (e) {
         print('DEBUG: Error parsing localized fatura JSON: $e');
       }
+    }
+
+    // Clean up ghosts
+    if (ghostKeys.isNotEmpty) {
+      for (var key in ghostKeys) {
+        await _faturasBox.delete(key);
+      }
+      print('DEBUG: Purged ${ghostKeys.length} ghost Fatura entries');
     }
 
     // 2. Online isek senkronize et
@@ -331,7 +408,7 @@ class DatabaseHelper {
           }
         }
         
-        List<Fatura> tempList = initialList.where((f) => f.id! < 0).toList();
+        List<Fatura> tempList = initialList.where((f) => f.id! < 0 && SyncManager.instance.isTempIdPending('faturalar', f.id!)).toList();
         
         final allUpdatedFaturas = [...serverFaturas, ...tempList];
         
@@ -445,15 +522,32 @@ class DatabaseHelper {
     
     // 1. Önce Hive'dan oku
     List<Stok> localStoks = [];
+    List<String> ghostKeys = [];
+    
     for (var value in _stoksBox.values) {
       try {
         final Map<String, dynamic> map = jsonDecode(value);
         if (map['user_id'] == userId) {
-            localStoks.add(Stok.fromMap(map));
+            final item = Stok.fromMap(map);
+            
+            // Ghost detection
+            if (item.id! < 0 && !SyncManager.instance.isTempIdPending('stoklar', item.id!)) {
+              ghostKeys.add(item.id.toString());
+              continue;
+            }
+            localStoks.add(item);
         }
       } catch (e) {
         print('DEBUG: Error parsing localized stok JSON: $e');
       }
+    }
+
+    // Clean up ghosts
+    if (ghostKeys.isNotEmpty) {
+      for (var key in ghostKeys) {
+        await _stoksBox.delete(key);
+      }
+      print('DEBUG: Purged ${ghostKeys.length} ghost Stok entries');
     }
 
     // 2. Online isek senkronize et
@@ -484,7 +578,7 @@ class DatabaseHelper {
           }
         }
         
-        List<Stok> tempList = initialList.where((s) => s.id! < 0).toList();
+        List<Stok> tempList = initialList.where((s) => s.id! < 0 && SyncManager.instance.isTempIdPending('stoklar', s.id!)).toList();
         
         final allUpdatedStoks = [...serverStoks, ...tempList];
         
@@ -600,15 +694,23 @@ class DatabaseHelper {
     
     // 1. Önce Hive'dan oku
     List<GelirGider> localData = [];
+    List<String> ghostKeys = [];
+    
     for (var value in _gelirGiderBox.values) {
       try {
         final Map<String, dynamic> map = jsonDecode(value);
         if (map['user_id'] == userId) {
             final item = GelirGider.fromMap(map);
+            
+            // Ghost detection
+            if (item.id! < 0 && !SyncManager.instance.isTempIdPending('gelir_giderler', item.id!)) {
+              ghostKeys.add(item.id.toString());
+              continue;
+            }
+            
             bool match = true;
             if (baslangic != null && item.tarih.isBefore(DateTime(baslangic.year, baslangic.month, baslangic.day))) match = false;
             if (bitis != null && item.tarih.isAfter(DateTime(bitis.year, bitis.month, bitis.day, 23, 59, 59))) match = false;
-            
             if (match) localData.add(item);
         }
       } catch (e) {
@@ -647,7 +749,7 @@ class DatabaseHelper {
           }
         }
         
-        List<GelirGider> tempList = initialList.where((item) => item.id! < 0).toList();
+        List<GelirGider> tempList = initialList.where((item) => item.id! < 0 && SyncManager.instance.isTempIdPending('gelir_giderler', item.id!)).toList();
         
         final allUpdatedData = [...serverData, ...tempList];
         
@@ -1505,11 +1607,20 @@ class DatabaseHelper {
 
     // 1. Önce Hive'dan oku
     List<CariIslem> localData = [];
+    List<String> ghostKeys = [];
+    
     for (var value in _cariIslemlerBox.values) {
       try {
         final Map<String, dynamic> map = jsonDecode(value);
         if (map['user_id'] == userId) {
           final item = CariIslem.fromMap(map);
+          
+          // Ghost detection
+          if (item.id! < 0 && !SyncManager.instance.isTempIdPending('cari_islemler', item.id!)) {
+            ghostKeys.add(item.id.toString());
+            continue;
+          }
+          
           bool match = true;
           if (baslangic != null && item.tarih.isBefore(DateTime(baslangic.year, baslangic.month, baslangic.day))) match = false;
           if (bitis != null && item.tarih.isAfter(DateTime(bitis.year, bitis.month, bitis.day, 23, 59, 59))) match = false;
@@ -1518,6 +1629,14 @@ class DatabaseHelper {
       } catch (e) {
         print('DEBUG: Error parsing localized cariislem JSON: $e');
       }
+    }
+
+    // Clean up ghosts
+    if (ghostKeys.isNotEmpty) {
+      for (var key in ghostKeys) {
+        await _cariIslemlerBox.delete(key);
+      }
+      print('DEBUG: Purged ${ghostKeys.length} ghost CariIslem entries');
     }
 
     // 2. Online isek senkronize et
@@ -1555,7 +1674,7 @@ class DatabaseHelper {
         }
       }
       
-      List<CariIslem> tempList = initialList.where((item) => item.id! < 0).toList();
+      List<CariIslem> tempList = initialList.where((item) => item.id! < 0 && SyncManager.instance.isTempIdPending('cari_islemler', item.id!)).toList();
 
       final allUpdatedData = [...serverData, ...tempList];
 
@@ -1731,15 +1850,32 @@ class DatabaseHelper {
     
     // 1. Önce Hive'dan oku
     List<Project> localProjects = [];
+    List<String> ghostKeys = [];
+    
     for (var value in _projectsBox.values) {
       try {
         final Map<String, dynamic> map = jsonDecode(value);
         if (map['user_id'] == userId) {
-            localProjects.add(Project.fromMap(map));
+            final item = Project.fromMap(map);
+            
+            // Ghost detection
+            if (item.id! < 0 && !SyncManager.instance.isTempIdPending('projects', item.id!)) {
+              ghostKeys.add(item.id.toString());
+              continue;
+            }
+            localProjects.add(item);
         }
       } catch (e) {
         print('DEBUG: Error parsing localized project JSON: $e');
       }
+    }
+
+    // Clean up ghosts
+    if (ghostKeys.isNotEmpty) {
+      for (var key in ghostKeys) {
+        await _projectsBox.delete(key);
+      }
+      print('DEBUG: Purged ${ghostKeys.length} ghost Project entries');
     }
 
     // 2. Online isek senkronize et
@@ -1789,6 +1925,12 @@ class DatabaseHelper {
   Future<Project?> getProject(int id) async {
     final userId = currentUserId;
     if (userId == null) return null;
+    
+    final val = _projectsBox.get(id.toString());
+    if (val != null) {
+      return Project.fromMap(jsonDecode(val));
+    }
+    
     final data = await _supabase.from('projects').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? Project.fromMap(data) : null;
   }
@@ -2050,15 +2192,32 @@ class DatabaseHelper {
     
     // 1. Önce Hive'dan lokal verileri oku
     List<Worker> localWorkers = [];
+    List<String> ghostKeys = [];
+    
     for (var value in _workersBox.values) {
       try {
         final Map<String, dynamic> map = jsonDecode(value);
         if (map['user_id'] == userId) {
-            localWorkers.add(Worker.fromMap(map));
+            final item = Worker.fromMap(map);
+            
+            // Ghost detection
+            if (item.id! < 0 && !SyncManager.instance.isTempIdPending('workers', item.id!)) {
+              ghostKeys.add(item.id.toString());
+              continue;
+            }
+            localWorkers.add(item);
         }
       } catch (e) {
         print('DEBUG: Error parsing localized worker JSON: $e');
       }
+    }
+
+    // Clean up ghosts
+    if (ghostKeys.isNotEmpty) {
+      for (var key in ghostKeys) {
+        await _workersBox.delete(key);
+      }
+      print('DEBUG: Purged ${ghostKeys.length} ghost Worker entries');
     }
 
     // 2. Eğer online isek, Supabase'den güncel veriyi çek ve Hive'ı eşle
@@ -2114,6 +2273,12 @@ class DatabaseHelper {
   Future<Worker?> getWorker(int id) async {
     final userId = currentUserId;
     if (userId == null) return null;
+    
+    final val = _workersBox.get(id.toString());
+    if (val != null) {
+      return Worker.fromMap(jsonDecode(val));
+    }
+    
     final data = await _supabase.from('workers').select().eq('id', id).eq('user_id', userId).maybeSingle();
     return data != null ? Worker.fromMap(data) : null;
   }

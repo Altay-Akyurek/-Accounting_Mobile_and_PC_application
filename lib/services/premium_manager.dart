@@ -12,8 +12,10 @@ class PremiumManager {
 
   bool _isPremium = false;
   
-  // UI değişiklikleri için bildirim mekanizması
+   // UI değişiklikleri için bildirim mekanizması
   final ValueNotifier<bool> premiumStatusNotifier = ValueNotifier<bool>(false);
+  DateTime? _expiryDate;
+  DateTime? get expiryDate => _expiryDate;
 
   // Reklam tetikleyicisi için timer
   Timer? _adIntervalTimer;
@@ -63,6 +65,7 @@ class PremiumManager {
        final expiryDate = DateTime.tryParse(expiryString);
        if (expiryDate != null && DateTime.now().isBefore(expiryDate)) {
          _isPremium = true;
+         _expiryDate = expiryDate;
          premiumStatusNotifier.value = true;
          
          final durationLeft = expiryDate.difference(DateTime.now());
@@ -161,6 +164,7 @@ class PremiumManager {
         if (response['is_premium'] == true) {
            if (expiresAt == null || expiresAt.isAfter(DateTime.now())) {
              _isPremium = true;
+             _expiryDate = expiresAt;
              premiumStatusNotifier.value = true;
              _adIntervalTimer?.cancel();
              return;
@@ -179,6 +183,7 @@ class PremiumManager {
     }
   }
 
+  // Sadece lokal durumu günceller (Reklam izleme vs için)
   Future<void> setPremium(bool status) async {
     _isPremium = status;
     premiumStatusNotifier.value = status;
@@ -188,21 +193,35 @@ class PremiumManager {
     } else {
       _startAdTimer();
     }
-    
-    // Supabase tarafında da (opsiyonel) güncelleme yapılabilir
+  }
+
+  Future<void> setPremiumFromIAP(String productId) async {
+    await setPremium(true);
+
     final user = Supabase.instance.client.auth.currentUser;
-    if (user != null && status) {
-       try {
-         await Supabase.instance.client
+    if (user != null) {
+      final now = DateTime.now();
+      DateTime expiry;
+      if (productId == 'premium_monthly') {
+        expiry = now.add(const Duration(days: 31));
+      } else {
+        expiry = now.add(const Duration(days: 366));
+      }
+      _expiryDate = expiry;
+
+      try {
+        await Supabase.instance.client
             .from('user_subscriptions')
             .upsert({
               'user_id': user.id,
               'is_premium': true,
-              'expires_at': DateTime.now().add(const Duration(days: 365)).toIso8601String(), // Örnek olarak 1 yıl
+              'expires_at': expiry.toIso8601String(),
+              'product_id': productId,
+              'updated_at': now.toIso8601String(),
             });
-       } catch (e) {
-         debugPrint('Premium status sync error: $e');
-       }
+      } catch (e) {
+        debugPrint('Premium status sync error: $e');
+      }
     }
   }
 

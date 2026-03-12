@@ -6,6 +6,7 @@ import '../services/database_helper.dart';
 import '../services/sync_manager.dart';
 import 'dart:async';
 import 'stok_ekle_page.dart';
+import '../utils/error_handler.dart';
 
 class StokListePage extends StatefulWidget {
   const StokListePage({super.key});
@@ -150,7 +151,7 @@ class _StokListePageState extends State<StokListePage> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))),
+            SnackBar(content: Text(ErrorHandler.getErrorMessage(e))),
           );
         }
       }

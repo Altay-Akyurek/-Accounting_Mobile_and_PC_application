@@ -184,22 +184,32 @@ class _DashboardPageState extends State<DashboardPage> {
                       Navigator.pushNamed(context, '/labor_summary');
                     },
                   ),
-                  _buildDrawerItem(
-                    icon: Icons.stars_rounded,
-                    label: AppLocalizations.of(context)!.premiumPackages,
-                    color: const Color(0xFF2EC4B6),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, '/premium');
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.ondemand_video_rounded,
-                    label: "10 Dk Ücretsiz Premium",
-                    color: Colors.orange,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showRewardedAdFromDashboard();
+                  ValueListenableBuilder<bool>(
+                    valueListenable: PremiumManager.instance.premiumStatusNotifier,
+                    builder: (context, isPremium, child) {
+                      if (isPremium) return const SizedBox.shrink();
+                      return Column(
+                        children: [
+                          _buildDrawerItem(
+                            icon: Icons.stars_rounded,
+                            label: AppLocalizations.of(context)!.premiumPackages,
+                            color: const Color(0xFF2EC4B6),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.pushNamed(context, '/premium');
+                            },
+                          ),
+                          _buildDrawerItem(
+                            icon: Icons.ondemand_video_rounded,
+                            label: "10 Dk Ücretsiz Premium",
+                            color: Colors.orange,
+                            onTap: () {
+                              Navigator.pop(context);
+                              _showRewardedAdFromDashboard();
+                            },
+                          ),
+                        ],
+                      );
                     },
                   ),
                   _buildDrawerItem(

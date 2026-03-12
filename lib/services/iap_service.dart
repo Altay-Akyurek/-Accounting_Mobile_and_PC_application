@@ -53,13 +53,20 @@ class IAPService {
   void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
     for (var purchase in purchaseDetailsList) {
       if (purchase.status == PurchaseStatus.pending) {
-        // Bekleyen işlem
+        // Bekleyen işlem - UI'da bir loading gösterilebilir
+        debugPrint('Purchase Pending...');
       } else if (purchase.status == PurchaseStatus.error) {
         // Hata
+        debugPrint('Purchase Error: ${purchase.error}');
       } else if (purchase.status == PurchaseStatus.purchased || 
                  purchase.status == PurchaseStatus.restored) {
         // Satın alma başarılı veya geri yüklendi
-        _verifyPurchase(purchase);
+        // İlgili productDetails'ı bulalım
+        final product = products.firstWhere(
+          (p) => p.id == purchase.productID,
+          orElse: () => products.first, // Fallback (riskli ama genelde liste doludur)
+        );
+        _verifyPurchase(purchase, product);
       }
       
       if (purchase.pendingCompletePurchase) {
@@ -68,16 +75,20 @@ class IAPService {
     }
   }
 
-  void _verifyPurchase(PurchaseDetails purchase) {
-    // Burada sunucu tarafı doğrulaması (Supabase verify) yapılabilir
-    // Şimdilik lokalde premium durumunu aktif ediyoruz
-    PremiumManager.instance.setPremium(true);
+  void _verifyPurchase(PurchaseDetails purchase, ProductDetails product) {
+    // Sunucu tarafı senkronizasyonu için ürün bilgisini de gönderiyoruz
+    PremiumManager.instance.setPremiumFromIAP(product.id);
   }
 
   void buyProduct(ProductDetails product) {
     if (_iap == null) return;
     final PurchaseParam purchaseParam = PurchaseParam(productDetails: product);
     _iap!.buyNonConsumable(purchaseParam: purchaseParam);
+  }
+
+  Future<void> restorePurchases() async {
+    if (_iap == null) return;
+    await _iap!.restorePurchases();
   }
 
   void dispose() {

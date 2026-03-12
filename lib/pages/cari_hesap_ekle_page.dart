@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/cari_hesap.dart';
 import '../services/database_helper.dart';
+import '../utils/error_handler.dart';
 
 class CariHesapEklePage extends StatefulWidget {
   final CariHesap? cariHesap;
@@ -79,7 +80,7 @@ class _CariHesapEklePageState extends State<CariHesapEklePage> {
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.errorPrefix(e.toString()))));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
