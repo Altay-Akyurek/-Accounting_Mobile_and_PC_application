@@ -222,7 +222,9 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
     _isDonemsel = false;
     _donemBaslangic = null;
     _donemBitis = null;
+    _donemBitis = null;
     _donemBekleyenAlacak = 0.0;
+    _tarih = DateTime.now();
   }
 
   Future<void> _getDonemBorcu() async {
@@ -599,7 +601,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                              Expanded(child: Text(
                                 _donemBaslangic == null 
                                   ? 'Tarih Aralığı Seçiniz' 
-                                  : '${DateFormat('dd MMM').format(_donemBaslangic!)} - ${DateFormat('dd MMM yyyy').format(_donemBitis!)}'
+                                  : '${DateFormat('dd MMM', 'tr').format(_donemBaslangic!)} - ${DateFormat('dd MMM yyyy', 'tr').format(_donemBitis!)}'
                              )),
                            ],
                         )
@@ -631,7 +633,65 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                 },
               ),
               const SizedBox(height: 16),
-              TextField(controller: _aciklamaController, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.descriptionNote)),
+              
+              // Ana İşlem Tarihi Seçici
+              GestureDetector(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _tarih,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                  );
+                  if (picked != null) {
+                    setState(() => _tarih = picked);
+                    setModalState(() {});
+                  }
+                },
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, color: Color(0xFF003399)),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text('İşlem Tarihi: ${DateFormat('dd MMMM yyyy', 'tr').format(_tarih)}')),
+                          const Icon(Icons.edit, size: 16, color: Colors.grey),
+                        ],
+                      ),
+                    ),
+                    if ((_tarih.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)) || 
+                        (_isDonemsel && _donemBitis != null && _donemBitis!.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)))) && 
+                        (_isDonemsel || _aciklamaController.text.toLowerCase().replaceAll('ı', 'i').contains('avans')))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8, left: 4),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.orange),
+                            const SizedBox(width: 4),
+                            const Expanded(
+                              child: Text(
+                                'Uyarı: Geçmiş bir döneme ait avans girişi yapıyorsunuz. İşlem tarihini kontrol etmeyi unutmayın.',
+                                style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _aciklamaController, 
+                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.descriptionNote),
+                onChanged: (_) => setModalState(() {}),
+              ),
               const SizedBox(height: 16),
               Row(
                 children: [

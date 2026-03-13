@@ -8,6 +8,8 @@ import '../models/hakedis.dart';
 import '../models/cari_hesap.dart';
 import '../models/project.dart';
 import '../models/worker.dart';
+import '../services/sync_manager.dart';
+import 'dart:async';
 
 class HesapKesimRaporPage extends StatefulWidget {
   const HesapKesimRaporPage({super.key});
@@ -26,11 +28,21 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
   List<CariHesap> _allCaris = [];
   CariHesap? _selectedOffsetCari;
   bool _isLaborExpanded = false;
+  StreamSubscription? _syncSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadReport();
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((_) {
+      if (mounted) _loadReport();
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadReport() async {

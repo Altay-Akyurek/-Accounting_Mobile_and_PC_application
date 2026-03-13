@@ -163,7 +163,15 @@ class SyncManager {
       if (data.containsKey('worker_id') && idMapping.containsKey(data['worker_id'])) {
          data['worker_id'] = idMapping[data['worker_id']];
       }
-      // TODO: Diğer tablolar için de foreign key düzeltmeleri eklenebilir
+      if (data.containsKey('project_id') && idMapping.containsKey(data['project_id'])) {
+         data['project_id'] = idMapping[data['project_id']];
+      }
+      if (data.containsKey('projectId') && idMapping.containsKey(data['projectId'])) {
+         data['projectId'] = idMapping[data['projectId']];
+      }
+      if (data.containsKey('cari_hesap_id') && idMapping.containsKey(data['cari_hesap_id'])) {
+         data['cari_hesap_id'] = idMapping[data['cari_hesap_id']];
+      }
 
       try {
         if (action == 'insert') {

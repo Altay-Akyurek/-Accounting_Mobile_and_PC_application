@@ -23,6 +23,7 @@ class DatabaseHelper {
   late Box<String> _gelirGiderBox;
   late Box<String> _cariIslemlerBox;
   late Box<String> _puantajBox;
+  late Box<String> _hakedisBox;
 
   String? _testUserId;
   void setTestUserId(String? id) => _testUserId = id;
@@ -39,6 +40,8 @@ class DatabaseHelper {
     bool isSettlement = 
         descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
         descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
+        descLower.contains('avans') || descLowerTr.contains('avans') ||
+        descLower.contains('işçi ödemesi') || descLowerTr.contains('işçi ödemesi') ||
         descStr.contains('#H:[') ||
         descStr == 'Hesap Kapatma';
 
@@ -58,6 +61,7 @@ class DatabaseHelper {
     _gelirGiderBox = await Hive.openBox<String>('gelir_gider_box');
     _cariIslemlerBox = await Hive.openBox<String>('cari_islemler_box');
     _puantajBox = await Hive.openBox<String>('puantaj_box');
+    _hakedisBox = await Hive.openBox<String>('hakedis_box');
 
     // Register sync callback
     SyncManager.instance.onTempIdResolved = resolveTempId;
@@ -74,6 +78,7 @@ class DatabaseHelper {
         _gelirGiderBox.clear(),
         _cariIslemlerBox.clear(),
         _puantajBox.clear(),
+        _hakedisBox.clear(),
       ]);
     } catch (e) {
       print('DatabaseHelper.clearAllData error: $e');
@@ -90,6 +95,7 @@ class DatabaseHelper {
       case 'workers': return _workersBox;
       case 'projects': return _projectsBox;
       case 'puantaj': return _puantajBox;
+      case 'hakedisler': return _hakedisBox;
       default: return null;
     }
   }
@@ -2009,15 +2015,25 @@ class DatabaseHelper {
   Future<int> insertHakedis(Hakedis hakedis) async {
     try {
       final userId = currentUserId;
-      final map = hakedis.toMap()..remove('id');
-      if (userId != null) map['user_id'] = userId;
+      if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
+      
+      final int tempId = -DateTime.now().millisecondsSinceEpoch;
+      final newHakedis = hakedis.copyWith(id: tempId);
 
-      final response = await _supabase
-          .from('hakedisler')
-          .insert(map)
-          .select()
-          .single();
-      return response['id'] as int;
+      final map = newHakedis.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'a kaydet
+      await _hakedisBox.put(tempId.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle
+      final syncMap = Map<String, dynamic>.from(map);
+      syncMap['temp_id'] = tempId;
+      syncMap.remove('id');
+      
+      await SyncManager.instance.enqueueOperation('insert', 'hakedisler', syncMap);
+
+      return tempId;
     } catch (e) {
       print('DEBUG: insertHakedis hatası: $e');
       rethrow;
@@ -2027,30 +2043,103 @@ class DatabaseHelper {
   Future<List<Hakedis>> getAllHakedisler({DateTime? baslangic, DateTime? bitis}) async {
     final userId = currentUserId;
     if (userId == null) return [];
-    var query = _supabase.from('hakedisler').select().eq('user_id', userId);
-    if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
-    if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
+    
+    // 1. Önce Hive'dan oku
+    List<Hakedis> localHakedisler = [];
+    List<String> ghostKeys = [];
+    
+    for (var value in _hakedisBox.values) {
+      try {
+        final Map<String, dynamic> map = jsonDecode(value);
+        if (map['user_id'] == userId) {
+            final h = Hakedis.fromMap(map);
+            
+            // Ghost detection
+            if (h.id! < 0 && !SyncManager.instance.isTempIdPending('hakedisler', h.id!)) {
+              ghostKeys.add(h.id.toString());
+              continue;
+            }
+            
+            bool match = true;
+            if (baslangic != null && h.tarih.isBefore(DateTime(baslangic.year, baslangic.month, baslangic.day))) match = false;
+            if (bitis != null && h.tarih.isAfter(DateTime(bitis.year, bitis.month, bitis.day, 23, 59, 59))) match = false;
+            if (match) localHakedisler.add(h);
+        }
+      } catch (e) {
+        print('DEBUG: Error parsing localized hakedis JSON: $e');
+      }
+    }
 
-    final List<dynamic> data = await query;
-    return data.map((map) => Hakedis.fromMap(map)).toList();
+    // Clean up ghosts
+    if (ghostKeys.isNotEmpty) {
+      for (var key in ghostKeys) {
+        await _hakedisBox.delete(key);
+      }
+      print('DEBUG: Purged ${ghostKeys.length} ghost Hakedis entries');
+    }
+
+    // 2. Online isek senkronize et
+    if (SyncManager.instance.isOnline) {
+      _syncHakedislerFromServer(userId, localHakedisler, baslangic, bitis);
+    }
+    
+    localHakedisler.sort((a, b) => b.tarih.compareTo(a.tarih));
+    return localHakedisler;
+  }
+  
+  Future<void> _syncHakedislerFromServer(String userId, List<Hakedis> initialList, DateTime? baslangic, DateTime? bitis) async {
+      try {
+        var query = _supabase.from('hakedisler').select().eq('user_id', userId);
+        if (baslangic != null) query = query.gte('tarih', _stripTimePrecision(baslangic));
+        if (bitis != null) query = query.lte('tarih', _stripTimePrecision(bitis));
+        
+        final List<dynamic> data = await query;
+        List<Hakedis> serverHakedisler = data.map((m) => Hakedis.fromMap(m)).toList();
+        
+        // SADECE silme sırasına alınmamış olanları ekle
+        serverHakedisler = serverHakedisler.where((h) => !SyncManager.instance.isPendingDeletion('hakedisler', h.id)).toList();
+        
+        // Eğer güncellenme sırasındaysa, sunucudan gelen eski veri yerine lokaldeki veriyi koru
+        for (int i = 0; i < serverHakedisler.length; i++) {
+          if (SyncManager.instance.isPendingUpdate('hakedisler', serverHakedisler[i].id)) {
+            final localMatch = initialList.where((l) => l.id == serverHakedisler[i].id);
+            if (localMatch.isNotEmpty) {
+               serverHakedisler[i] = localMatch.first;
+            }
+          }
+        }
+        
+        List<Hakedis> tempList = initialList.where((h) => h.id! < 0 && SyncManager.instance.isTempIdPending('hakedisler', h.id!)).toList();
+        
+        final allUpdatedHakedisler = [...serverHakedisler, ...tempList];
+        
+        for (var h in allUpdatedHakedisler) {
+           final map = h.toMap();
+           map['user_id'] = userId;
+           await _hakedisBox.put(h.id.toString(), jsonEncode(map));
+        }
+      } catch (e) {
+         print('DEBUG: Background sync failed for hakedisler: $e');
+      }
   }
 
   Future<List<Hakedis>> getHakedisByProjectId(int projectId) async {
-    final userId = currentUserId;
-    if (userId == null) return [];
-    final List<dynamic> data = await _supabase
-        .from('hakedisler')
-        .select()
-        .eq('user_id', userId)
-        .eq('project_id', projectId);
-    return data.map((map) => Hakedis.fromMap(map)).toList();
+    final all = await getAllHakedisler();
+    return all.where((h) => h.projectId == projectId).toList();
   }
 
   Future<int> deleteHakedis(int id) async {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase.from('hakedisler').delete().eq('id', id).eq('user_id', userId);
+      
+      // 1. Hive'dan sil
+      await _hakedisBox.delete(id.toString());
+      
+      // 2. SyncManager'a ekle
+      if (id > 0) {
+         await SyncManager.instance.enqueueOperation('delete', 'hakedisler', {'id': id});
+      }
       return id;
     } catch (e) {
       print('DEBUG: deleteHakedis hatası: $id : $e');
@@ -2062,11 +2151,19 @@ class DatabaseHelper {
     try {
       final userId = currentUserId;
       if (userId == null) throw Exception('Kullanıcı girişi yapılmamış');
-      await _supabase
-          .from('hakedisler')
-          .update(hakedis.toMap())
-          .eq('id', hakedis.id!)
-          .eq('user_id', userId);
+      
+      final map = hakedis.toMap();
+      map['user_id'] = userId;
+
+      // 1. Hive'ı güncelle
+      await _hakedisBox.put(hakedis.id.toString(), jsonEncode(map));
+
+      // 2. SyncManager'a ekle
+      if (hakedis.id! > 0) {
+        await SyncManager.instance.enqueueOperation('update', 'hakedisler', map);
+      } else {
+        await SyncManager.instance.updatePendingInsert('hakedisler', hakedis.id!, map);
+      }
     } catch (e) {
       print('DEBUG: updateHakedis hatası: $e');
       rethrow;
@@ -2526,25 +2623,23 @@ class DatabaseHelper {
     }
 
     bool belongsToPeriod(CariIslem islem) {
-    // Only use 'vade' to override the period for settlement transactions.
-    // For normal transactions, 'vade' means 'due date' and shouldn't affect which period's report it appears in.
-    final String descStr = islem.aciklama;
-    final String descLower = descStr.toLowerCase();
-    final String descLowerTr = descStr.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
-    
-    bool isSettlement = 
-        descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
-        descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
-        descLower.contains('avans') || descLower.contains('işçi ödemesi') ||
-        descLowerTr.contains('işçi ödemesi') ||
-        descStr.contains('#H:[') ||
-        descStr == 'Hesap Kapatma';
+      final String descStr = islem.aciklama;
+      final String descLower = descStr.toLowerCase();
+      final String descLowerTr = descStr.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
+      
+      bool isSettlement = 
+          descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
+          descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
+          descLower.contains('avans') || descLowerTr.contains('avans') ||
+          descLower.contains('işçi ödemesi') || descLowerTr.contains('işçi ödemesi') ||
+          descStr.contains('#H:[') ||
+          descStr == 'Hesap Kapatma';
 
-    if (isSettlement && islem.vade != null) {
-      return inRange(islem.vade!);
-    }
-    return inRange(islem.tarih);
-  }  
+      if (isSettlement && islem.vade != null) {
+        return inRange(islem.vade!);
+      }
+      return inRange(islem.tarih);
+    }  
 
     // 1. Personel / Maaş Hesaplama
     double toplamIscilikHakedis = 0;
@@ -2879,6 +2974,31 @@ class DatabaseHelper {
       final rangeStart = DateTime(start.year, start.month, start.day);
       final rangeEnd = DateTime(end.year, end.month, end.day, 23, 59, 59);
 
+      // 1. Hive'da yerel olarak güncelle (Arayüzün anında güncellenmesi için kritik)
+      final List<String> updatedKeys = [];
+      for (var key in _hakedisBox.keys) {
+        try {
+          final value = _hakedisBox.get(key);
+          if (value == null) continue;
+          
+          final Map<String, dynamic> map = jsonDecode(value);
+          if (map['user_id'] == userId && projectIds.contains(map['project_id'])) {
+            final hDate = DateTime.parse(map['tarih']);
+            if (hDate.isAfter(rangeStart.subtract(const Duration(seconds: 1))) && 
+                hDate.isBefore(rangeEnd.add(const Duration(seconds: 1))) &&
+                map['durum'] == HakedisDurum.bekliyor.name) {
+              
+              map['durum'] = newStatus.name;
+              await _hakedisBox.put(key, jsonEncode(map));
+              updatedKeys.add(key);
+            }
+          }
+        } catch (e) {
+          print('DEBUG: bulkUpdateHakedis Hive error for key $key: $e');
+        }
+      }
+
+      // 2. Supabase'i güncelle
       await _supabase
           .from('hakedisler')
           .update({'durum': newStatus.name})
@@ -2887,6 +3007,8 @@ class DatabaseHelper {
           .eq('user_id', userId)
           .gte('tarih', rangeStart.toIso8601String())
           .lte('tarih', rangeEnd.toIso8601String());
+          
+      print('DEBUG: bulkUpdateHakedis completed. Locally updated ${updatedKeys.length} entries.');
     } catch (e) {
       print('DEBUG: bulkUpdateHakedisStatusByProject hatası: $e');
       rethrow;

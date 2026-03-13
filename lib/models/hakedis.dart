@@ -29,6 +29,36 @@ class Hakedis {
     DateTime? olusturmaTarihi,
   }) : olusturmaTarihi = olusturmaTarihi ?? DateTime.now();
 
+  Hakedis copyWith({
+    int? id,
+    int? projectId,
+    String? projectAd,
+    String? baslik,
+    double? tutar,
+    double? kdvOrani,
+    double? stopajOrani,
+    double? teminatOrani,
+    HakedisDurum? durum,
+    DateTime? tarih,
+    String? aciklama,
+    DateTime? olusturmaTarihi,
+  }) {
+    return Hakedis(
+      id: id ?? this.id,
+      projectId: projectId ?? this.projectId,
+      projectAd: projectAd ?? this.projectAd,
+      baslik: baslik ?? this.baslik,
+      tutar: tutar ?? this.tutar,
+      kdvOrani: kdvOrani ?? this.kdvOrani,
+      stopajOrani: stopajOrani ?? this.stopajOrani,
+      teminatOrani: teminatOrani ?? this.teminatOrani,
+      durum: durum ?? this.durum,
+      tarih: tarih ?? this.tarih,
+      aciklama: aciklama ?? this.aciklama,
+      olusturmaTarihi: olusturmaTarihi ?? this.olusturmaTarihi,
+    );
+  }
+
   double get kdvTutari => tutar * (kdvOrani / 100);
   double get stopajTutari => tutar * (stopajOrani / 100);
   double get teminatTutari => tutar * (teminatOrani / 100);
