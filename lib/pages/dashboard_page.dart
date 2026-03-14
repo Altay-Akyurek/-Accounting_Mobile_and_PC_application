@@ -970,7 +970,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: (proj['durum'] == ProjectStatus.tamamlandi.name
+                    color: (proj['durum'] == ProjectStatus.bitti.name
                             ? Colors.green
                             : proj['durum'] == ProjectStatus.aktif.name
                                 ? Colors.blue
@@ -980,7 +980,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   child: FittedBox(
                     child: Text(
-                      (proj['durum'] == ProjectStatus.tamamlandi.name
+                      (proj['durum'] == ProjectStatus.bitti.name
                               ? AppLocalizations.of(context)!.completed
                               : proj['durum'] == ProjectStatus.aktif.name
                                   ? AppLocalizations.of(context)!.active
@@ -989,7 +989,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       style: TextStyle(
                         fontSize: 8,
                         fontWeight: FontWeight.bold,
-                        color: (proj['durum'] == ProjectStatus.tamamlandi.name
+                        color: (proj['durum'] == ProjectStatus.bitti.name
                             ? Colors.green
                             : proj['durum'] == ProjectStatus.aktif.name
                                 ? Colors.blue

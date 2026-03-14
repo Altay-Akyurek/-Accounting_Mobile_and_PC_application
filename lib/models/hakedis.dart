@@ -9,7 +9,7 @@ class Hakedis {
   final double kdvOrani; // %20 vb.
   final double stopajOrani; // %5 vb.
   final double teminatOrani; // %5 vb.
-  final HakedisDurum durum;
+  HakedisDurum durum;
   final DateTime tarih;
   final String? aciklama;
   final DateTime olusturmaTarihi;

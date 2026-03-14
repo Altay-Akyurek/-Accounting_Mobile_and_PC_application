@@ -183,7 +183,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
         cariHesapId: _seciliCari!.id!,
         cariHesapUnvan: _seciliCari!.unvan,
         tarih: _tarih,
-        aciklama: _isDonemsel ? (_aciklamaController.text.trim().isEmpty ? 'Döneme Özel İşçi Ödemesi' : _aciklamaController.text.trim()) : _aciklamaController.text.trim(),
+        aciklama: _isDonemsel ? (_aciklamaController.text.trim().isEmpty ? AppLocalizations.of(context)!.periodicLaborDescription : _aciklamaController.text.trim()) : _aciklamaController.text.trim(),
         hesapTipi: _hesapTipi,
         evrakNo: _evrakNoController.text.trim().isEmpty ? null : _evrakNoController.text.trim(),
         vade: islemVade,
@@ -258,7 +258,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
         }
       } else {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Seçili cari bir işçi hesabı değildir.')));
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.notWorkerAccount)));
            setState(() => _donemSorgulaniyor = false);
         }
       }
@@ -558,8 +558,8 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                   
                   // Dönemsel Ödeme Seçeneği
                   SwitchListTile(
-                    title: const Text('Döneme Özel İşçi Ödemesi (Avans)'),
-                    subtitle: const Text('Aşağıdan seçeceğiniz dönemin borcundan düşer.'),
+                    title: Text(AppLocalizations.of(context)!.periodicLaborPayment),
+                    subtitle: Text(AppLocalizations.of(context)!.periodicPaymentSubtitle),
                     value: _isDonemsel,
                     activeColor: const Color(0xFF003399),
                     contentPadding: EdgeInsets.zero,
@@ -600,8 +600,8 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                              const SizedBox(width: 8),
                              Expanded(child: Text(
                                 _donemBaslangic == null 
-                                  ? 'Tarih Aralığı Seçiniz' 
-                                  : '${DateFormat('dd MMM', 'tr').format(_donemBaslangic!)} - ${DateFormat('dd MMM yyyy', 'tr').format(_donemBitis!)}'
+                                  ? AppLocalizations.of(context)!.selectDateRange 
+                                  : '${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_donemBaslangic!)} - ${DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(_donemBitis!)}'
                              )),
                            ],
                         )
@@ -612,7 +612,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                        const CircularProgressIndicator()
                     else if (_donemBaslangic != null && _seciliCari != null)
                        Text(
-                         'Seçili Dönem Bekleyen İşçilik: ${_formatPara(_donemBekleyenAlacak)}',
+                         AppLocalizations.of(context)!.pendingLaborForPeriod(_formatPara(_donemBekleyenAlacak)),
                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
                        ),
                     const SizedBox(height: 16),
@@ -660,7 +660,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                         children: [
                           const Icon(Icons.calendar_today, color: Color(0xFF003399)),
                           const SizedBox(width: 8),
-                          Expanded(child: Text('İşlem Tarihi: ${DateFormat('dd MMMM yyyy', 'tr').format(_tarih)}')),
+                          Expanded(child: Text(AppLocalizations.of(context)!.transactionDateWithColon(DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(_tarih)))),
                           const Icon(Icons.edit, size: 16, color: Colors.grey),
                         ],
                       ),
@@ -674,10 +674,10 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                           children: [
                             const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.orange),
                             const SizedBox(width: 4),
-                            const Expanded(
+                             Expanded(
                               child: Text(
-                                'Uyarı: Geçmiş bir döneme ait avans girişi yapıyorsunuz. İşlem tarihini kontrol etmeyi unutmayın.',
-                                style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
+                                AppLocalizations.of(context)!.advanceWarning,
+                                style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],

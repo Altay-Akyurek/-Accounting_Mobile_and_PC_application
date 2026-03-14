@@ -1738,4 +1738,40 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pending_caps => 'BEKLİYOR';
+
+  @override
+  String get projectBudgetUsage => 'PROJE BÜTÇE KULLANIMI';
+
+  @override
+  String get profitabilityRatio => 'KARLILIK ORANI';
+
+  @override
+  String get periodicLaborPayment => 'Döneme Özel İşçi Ödemesi (Avans)';
+
+  @override
+  String get periodicPaymentSubtitle =>
+      'Aşağıdan seçeceğiniz dönemin borcundan düşer.';
+
+  @override
+  String get selectDateRange => 'Tarih Aralığı Seçiniz';
+
+  @override
+  String pendingLaborForPeriod(String amount) {
+    return 'Seçili Dönem Bekleyen İşçilik: $amount';
+  }
+
+  @override
+  String transactionDateWithColon(String date) {
+    return 'İşlem Tarihi: $date';
+  }
+
+  @override
+  String get advanceWarning =>
+      'Uyarı: Geçmiş bir döneme ait avans girişi yapıyorsunuz. İşlem tarihini kontrol etmeyi unutmayın.';
+
+  @override
+  String get notWorkerAccount => 'Seçili cari bir işçi hesabı değildir.';
+
+  @override
+  String get periodicLaborDescription => 'Döneme Özel İşçi Ödemesi';
 }

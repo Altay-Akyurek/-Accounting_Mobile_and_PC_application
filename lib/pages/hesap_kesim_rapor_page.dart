@@ -9,6 +9,7 @@ import '../models/cari_hesap.dart';
 import '../models/project.dart';
 import '../models/worker.dart';
 import '../services/sync_manager.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
 
 class HesapKesimRaporPage extends StatefulWidget {
@@ -28,6 +29,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
   List<CariHesap> _allCaris = [];
   CariHesap? _selectedOffsetCari;
   bool _isLaborExpanded = false;
+  int _touchedPieIndex = -1;
   StreamSubscription? _syncSubscription;
 
   @override
@@ -128,9 +130,12 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _reportData == null
-                    ? Center(child: Text(AppLocalizations.of(context)!.noDataFound))
-                    : _buildReportContent(),
+                : AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
+                    child: _reportData == null
+                        ? Center(key: const ValueKey('no_data'), child: Text(AppLocalizations.of(context)!.noDataFound))
+                        : _buildReportContent(),
+                  ),
           ),
         ],
       ),
@@ -140,11 +145,18 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
   Widget _buildDateHeader() {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Color(0xFF011627),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+      decoration: BoxDecoration(
+        color: const Color(0xFF011627),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF011627).withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
         ),
       ),
       child: Row(
@@ -157,41 +169,64 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
               children: [
                 Text(
                   AppLocalizations.of(context)!.settlementPeriod_caps,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
                   ),
                 ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(_endDate)}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.date_range_rounded, color: Color(0xFF2EC4B6), size: 18),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(_endDate)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: ElevatedButton.icon(
-              onPressed: _selectDate,
-              icon: const Icon(Icons.calendar_month_rounded, size: 16),
-              label: FittedBox(child: Text(AppLocalizations.of(context)!.selectDate_caps)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2EC4B6),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          const SizedBox(width: 16),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _selectDate,
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2EC4B6).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF2EC4B6).withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.edit_calendar_rounded, color: Color(0xFF2EC4B6), size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      AppLocalizations.of(context)!.selectDate_caps,
+                      style: const TextStyle(
+                        color: Color(0xFF2EC4B6),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -242,6 +277,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
 
   Widget _buildReportContent() {
     return SingleChildScrollView(
+      key: ValueKey('${_startDate.toIso8601String()}-${_endDate.toIso8601String()}-${_selectedProjectIds.join(',')}'),
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
@@ -350,6 +386,9 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       for (var item in items) {
         final double amount = item['amount'].toDouble();
         if (amount > 0) {
+          if (item['cariId'] == null) {
+             throw Exception('${item['name'] ?? 'Proje'} için Cari Hesap tanımlanmamış. Lütfen düzenlemeden bir Cari Hesap bağlayın.');
+          }
           transactions.add(CariIslem(
             cariHesapId: item['cariId'],
             cariHesapUnvan: item['name'] ?? 'Bilinmeyen',
@@ -389,7 +428,8 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     final items = List<Map<String, dynamic>>.from(labor['items']);
     final toSettle = items.where((i) => i['amount'] != 0).toList();
 
-    if (toSettle.isEmpty) {
+    // Kural kaldırıldı
+    if (false && toSettle.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noBalanceToReset)));
       return;
     }
@@ -407,6 +447,9 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       final islemTarihi = _getSettlementDate();
       for (var item in toSettle) {
         final double amount = item['amount'].toDouble();
+        if (item['cariId'] == null) {
+           throw Exception('${item['name']} için Cari Hesap tanımlanmamış. Lütfen Personel Düzenle kısmından bir Cari Hesap bağlayın.');
+        }
         transactions.add(CariIslem(
           cariHesapId: item['cariId'],
           cariHesapUnvan: item['name'],
@@ -455,6 +498,10 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       for (var item in toSettle) {
         final balance = item['balance'].toDouble();
         
+        if (item['cariId'] == null) {
+           throw Exception('${item['name']} için Cari Hesap bulunamadı.');
+        }
+
         // Cari Hesap Kaydı (Bakiyeyi kapatıyoruz)
         transactions.add(CariIslem(
           cariHesapId: item['cariId'],
@@ -475,7 +522,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getErrorMessage(e))));
     }
   }
 
@@ -514,48 +561,190 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
   }
 
   Widget _buildExecutiveSummary() {
-    final fin = _reportData!['financials'];
-    final bool isProfit = fin['net_profit'] >= 0;
+    final fin = _reportData!['financials'] ?? {};
+    final bool isProfit = (fin['net_profit'] ?? 0) >= 0;
+    final double revenue = (fin['total_revenue'] ?? 0).toDouble();
+    final double cost = (fin['total_cost'] ?? 0).toDouble();
+    final double total = revenue + cost;
+    final double ratio = total > 0 ? (revenue / total) : (isProfit ? 1.0 : 0.0);
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isProfit 
+            ? [const Color(0xFF1B2B48), const Color(0xFF011627)]
+            : [const Color(0xFF3D1D1D), const Color(0xFF1E1E1E)],
+        ),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: (isProfit ? const Color(0xFF2EC4B6) : const Color(0xFFE71D36)).withOpacity(0.15),
+            blurRadius: 30,
+            offset: const Offset(0, 15),
           ),
         ],
       ),
-      child: Column(
+      child: Stack(
         children: [
-          Text(
-            AppLocalizations.of(context)!.periodNetProfit_caps,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-              fontSize: 12,
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Icon(
+              isProfit ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+              size: 150,
+              color: Colors.white.withOpacity(0.05),
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.periodNetProfit_caps,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: (isProfit ? const Color(0xFF2EC4B6) : const Color(0xFFE71D36)).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: (isProfit ? const Color(0xFF2EC4B6) : const Color(0xFFE71D36)).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Text(
+                        isProfit ? 'KARDA' : 'ZARARDA',
+                        style: TextStyle(
+                          color: isProfit ? const Color(0xFF2EC4B6) : const Color(0xFFE71D36),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    _formatPara((fin['net_profit'] ?? 0).toDouble()),
+                    style: TextStyle(
+                      color: isProfit ? const Color(0xFF2EC4B6) : const Color(0xFFE71D36),
+                      fontSize: 38,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Modern Progress Indicator
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${AppLocalizations.of(context)!.incomeShare} %${(ratio * 100).toStringAsFixed(0)}',
+                          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '${AppLocalizations.of(context)!.expenseShare} %${((1 - ratio) * 100).toStringAsFixed(0)}',
+                          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Stack(
+                        children: [
+                          Container(height: 8, color: const Color(0xFFE71D36)), // Cost (Base)
+                          AnimatedContainer(
+                            duration: const Duration(seconds: 1),
+                            curve: Curves.fastOutSlowIn,
+                            height: 8,
+                            width: (MediaQuery.of(context).size.width - 88) * ratio,
+                            color: const Color(0xFF2EC4B6), // Revenue
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInteractiveStat(
+                        AppLocalizations.of(context)!.totalRevenue_caps,
+                        revenue,
+                        const Color(0xFF2EC4B6),
+                        Icons.arrow_downward_rounded,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildInteractiveStat(
+                        AppLocalizations.of(context)!.totalCost_caps,
+                        cost,
+                        const Color(0xFFE71D36),
+                        Icons.arrow_upward_rounded,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInteractiveStat(String label, double value, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 14),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 9, fontWeight: FontWeight.w900),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
-          Text(
-            _formatPara(fin['net_profit'].toDouble()),
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: isProfit ? const Color(0xFF2EC4B6) : Colors.red,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              _formatPara(value),
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.5),
             ),
-          ),
-          const Divider(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildMiniStat(AppLocalizations.of(context)!.totalRevenue_caps, fin['total_revenue'].toDouble(), Colors.green),
-              _buildMiniStat(AppLocalizations.of(context)!.totalCost_caps, fin['total_cost'].toDouble(), Colors.red),
-            ],
           ),
         ],
       ),

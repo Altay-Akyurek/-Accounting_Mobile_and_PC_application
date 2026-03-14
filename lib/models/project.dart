@@ -1,11 +1,11 @@
-enum ProjectStatus { aktif, tamamlandi, askida }
+enum ProjectStatus { aktif, bitti, askida }
 
 class Project {
   final int? id;
   final String ad;
   final int? cariHesapId;
   final String? cariHesapUnvan;
-  final ProjectStatus durum;
+  ProjectStatus durum;
   final DateTime baslangicTarihi;
   final DateTime? bitisTarihi;
   final double toplamButce;

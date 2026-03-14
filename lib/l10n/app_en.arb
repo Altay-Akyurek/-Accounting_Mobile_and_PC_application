@@ -623,8 +623,8 @@
   "invoiceUpdated": "invoiceUpdated",
   "sales": "sales",
   "purchase": "purchase",
-  "newInvoiceType": "newInvoiceType",
-  "editInvoiceType": "editInvoiceType",
+  "newInvoiceType": "New {arg} Invoice",
+  "editInvoiceType": "Edit {arg} Invoice",
   "invoiceNo": "invoiceNo",
   "invoiceNoRequired": "invoiceNoRequired",
   "pleaseSelectDate": "pleaseSelectDate",
@@ -633,8 +633,8 @@
   "invoiceItems": "invoiceItems",
   "addItem": "addItem",
   "noItemsYet": "noItemsYet",
-  "item": "item",
-  "amountLabel": "amountLabel",
+  "item": "Item",
+  "amountLabel": "Amount",
   "priceLabel": "priceLabel",
   "grandTotal": "grandTotal",
   "editItem": "editItem",
@@ -653,7 +653,6 @@
   "income": "income",
   "newItemType": "New {arg}",
   "editItemType": "Edit {arg}",
-  "newInvoiceType": "New {arg} Invoice",
   "@newInvoiceType": {
     "placeholders": {
       "arg": {
@@ -661,7 +660,6 @@
       }
     }
   },
-  "editInvoiceType": "Edit {arg} Invoice",
   "@editInvoiceType": {
     "placeholders": {
       "arg": {
@@ -669,7 +667,7 @@
       }
     }
   },
-  "titleLabel": "titleLabel",
+  "titleLabel": "Title",
   "pleaseEnterValidAmount": "pleaseEnterValidAmount",
   "selectCariAccountOptional": "selectCariAccountOptional",
   "selectProjectOptional": "selectProjectOptional",
@@ -819,11 +817,32 @@
   "hour": "Hour",
   "mesai": "Overtime",
   "personal": "Personnel",
-  "item": "Item",
   "rate": "Rate",
-  "amountLabel": "Amount",
   "stopaj": "Withholding",
   "teminat": "Guarantee",
   "pending_caps": "PENDING",
-  "titleLabel": "Title"
+  "projectBudgetUsage": "PROJECT BUDGET USAGE",
+  "profitabilityRatio": "PROFITABILITY RATIO",
+  "periodicLaborPayment": "Periodic Worker Payment (Advance)",
+  "periodicPaymentSubtitle": "It will be deducted from the debt of the period you select below.",
+  "selectDateRange": "Select Date Range",
+  "pendingLaborForPeriod": "Pending Labor for Selected Period: {amount}",
+  "@pendingLaborForPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionDateWithColon": "Transaction Date: {date}",
+  "@transactionDateWithColon": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "advanceWarning": "Warning: You are entering an advance payment for a past period. Do not forget to check the transaction date.",
+  "notWorkerAccount": "The selected account is not a worker account.",
+  "periodicLaborDescription": "Periodic Worker Payment"
 }

@@ -26,7 +26,11 @@ class PortfolioPage extends StatefulWidget {
   State<PortfolioPage> createState() => _PortfolioPageState();
 }
 
-class _PortfolioPageState extends State<PortfolioPage> {
+class _PortfolioPageState extends State<PortfolioPage> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
   final DatabaseHelper _db = DatabaseHelper.instance;
   bool _isLoading = true;
   
@@ -42,7 +46,28 @@ class _PortfolioPageState extends State<PortfolioPage> {
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutBack,
+    ));
     _loadPortfolioData();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPortfolioData() async {
@@ -71,7 +96,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
       _recentProjects = allProjects.reversed.take(4).toList();
       _activeProjectsCount = allProjects.where((p) => p.durum == ProjectStatus.aktif).length;
-      _completedProjectsCount = allProjects.where((p) => p.durum == ProjectStatus.tamamlandi).length;
+      _completedProjectsCount = allProjects.where((p) => p.durum == ProjectStatus.bitti).length;
       _suspendedProjectsCount = allProjects.where((p) => p.durum == ProjectStatus.askida).length;
       
       _activeWorkers = allWorkers.where((Worker w) => w.aktif).toList();
@@ -86,7 +111,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
           title: p.ad,
           type: _TimelineEventType.projectStart,
         ));
-        if (p.durum == ProjectStatus.tamamlandi) {
+        if (p.durum == ProjectStatus.bitti) {
           _timelineEvents.add(_TimelineEvent(
             date: p.olusturmaTarihi.add(const Duration(days: 30)),
             title: p.ad,
@@ -147,6 +172,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
       // debugPrint('Portföy veri yükleme hatası: $e');
     } finally {
       setState(() => _isLoading = false);
+      _animationController.forward(from: 0);
     }
   }
 
@@ -167,27 +193,33 @@ class _PortfolioPageState extends State<PortfolioPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              _buildHeader(),
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: _buildHeader(),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildProjectStats(),
+                    _buildAnimatedSection(0, _buildProjectStats()),
                     const SizedBox(height: 24),
-                    _buildSectionTitle(AppLocalizations.of(context)!.companySummary),
-                    _buildSummaryCard(),
+                    _buildAnimatedSection(1, _buildSectionTitle(AppLocalizations.of(context)!.companySummary)),
+                    _buildAnimatedSection(1, _buildSummaryCard()),
                     const SizedBox(height: 24),
-                    _buildSectionTitle(AppLocalizations.of(context)!.financialHealth),
-                    _buildFinancialHealth(),
+                    _buildAnimatedSection(2, _buildSectionTitle(AppLocalizations.of(context)!.financialHealth)),
+                    _buildAnimatedSection(2, _buildFinancialHealth()),
                     const SizedBox(height: 24),
-                    _buildSectionTitle(AppLocalizations.of(context)!.ourProjects),
-                    _buildProjectsGrid(),
+                    _buildAnimatedSection(3, _buildSectionTitle(AppLocalizations.of(context)!.ourProjects)),
+                    _buildAnimatedSection(3, _buildProjectsGrid()),
                     const SizedBox(height: 24),
-                    _buildSectionTitle(AppLocalizations.of(context)!.ourTeam),
+                    _buildAnimatedSection(4, _buildSectionTitle(AppLocalizations.of(context)!.ourTeam)),
                     _buildTeamList(),
                     const SizedBox(height: 24),
-                    _buildSectionTitle(AppLocalizations.of(context)!.milestones),
+                    _buildAnimatedSection(5, _buildSectionTitle(AppLocalizations.of(context)!.milestones)),
                     _buildMilestones(),
                     const SizedBox(height: 32),
                   ],
@@ -200,39 +232,97 @@ class _PortfolioPageState extends State<PortfolioPage> {
     );
   }
 
+  Widget _buildAnimatedSection(int index, Widget child, {bool useScale = false}) {
+    final Animation<double> animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Interval(
+        (0.1 + (index * 0.08)).clamp(0.0, 1.0),
+        (0.6 + (index * 0.08)).clamp(0.0, 1.0),
+        curve: Curves.easeOutBack,
+      ),
+    );
+
+    Widget animatedChild = FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.2),
+          end: Offset.zero,
+        ).animate(animation),
+        child: child,
+      ),
+    );
+
+    if (useScale) {
+      animatedChild = ScaleTransition(
+        scale: Tween<double>(begin: 0.8, end: 1.0).animate(animation),
+        child: animatedChild,
+      );
+    }
+
+    return animatedChild;
+  }
+
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF011627),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF011627), Color(0xFF012A4A)],
         ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF011627).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.engineering_rounded,
-            size: 80,
-            color: Color(0xFF2EC4B6),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2EC4B6).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.engineering_rounded,
+              size: 64,
+              color: Color(0xFF2EC4B6),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Text(
             AppLocalizations.of(context)!.visionarySolutions,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            AppLocalizations.of(context)!.buildingFutureWithXActiveProjects(_activeProjectsCount),
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 14,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              AppLocalizations.of(context)!.buildingFutureWithXActiveProjects(_activeProjectsCount),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -254,18 +344,42 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
   Widget _buildStatItem(String label, int value, Color color) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.2)),
-        ),
-        child: Column(
-          children: [
-            Text(value.toString(), style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 18)),
-            Text(label, style: TextStyle(color: color.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.bold)),
-          ],
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {}, // Interactive feedback
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withOpacity(0.15), width: 1.5),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  value.toString(),
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 22,
+                    letterSpacing: -1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label.toUpperCase(),
+                  style: TextStyle(
+                    color: color.withOpacity(0.7),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -278,11 +392,17 @@ class _PortfolioPageState extends State<PortfolioPage> {
     final double ratio = total > 0 ? (revenue / total) : 0;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,22 +410,76 @@ class _PortfolioPageState extends State<PortfolioPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(AppLocalizations.of(context)!.collectionDebtRatio, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              Text('%${(ratio * 100).toInt()}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF2EC4B6))),
+              Text(
+                AppLocalizations.of(context)!.collectionDebtRatio,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF011627)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2EC4B6).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '%${(ratio * 100).toInt()}',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF2EC4B6)),
+                ),
+              ),
             ],
           ),
+          const SizedBox(height: 16),
+          _animationController.isAnimating || _animationController.isCompleted
+              ? TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: ratio),
+                  duration: const Duration(milliseconds: 1500),
+                  curve: Curves.fastOutSlowIn,
+                  builder: (context, value, child) {
+                    return Stack(
+                      children: [
+                        Container(
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        FractionallySizedBox(
+                          widthFactor: value,
+                          child: Container(
+                            height: 12,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF2EC4B6), Color(0xFF2AB7AA)],
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF2EC4B6).withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                )
+              : const SizedBox(height: 12),
           const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: ratio,
-              minHeight: 10,
-              backgroundColor: Colors.red.withOpacity(0.1),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2EC4B6)),
-            ),
+          Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, size: 14, color: Colors.grey),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.greenCollectionsRedDebts,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(AppLocalizations.of(context)!.greenCollectionsRedDebts, style: const TextStyle(fontSize: 10, color: Colors.grey)),
         ],
       ),
     );
@@ -337,15 +511,27 @@ class _PortfolioPageState extends State<PortfolioPage> {
     final double debt = _financialSummary['gider'] ?? 0;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Text(
         AppLocalizations.of(context)!.companyOverviewText(currencyFormat.format(revenue), currencyFormat.format(debt)),
-        style: const TextStyle(fontSize: 14, height: 1.5, color: Colors.black87),
+        style: TextStyle(
+          fontSize: 15,
+          height: 1.7,
+          color: Colors.grey.shade800,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -371,26 +557,47 @@ class _PortfolioPageState extends State<PortfolioPage> {
       itemCount: _recentProjects.length,
       itemBuilder: (context, index) {
         final project = _recentProjects[index];
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withOpacity(0.05)),
-          ),
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.business_rounded, color: Color(0xFF2EC4B6)),
-              const SizedBox(height: 8),
-              Text(
-                project.ad,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {},
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: Border.all(color: Colors.grey.shade100),
               ),
-            ],
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2EC4B6).withOpacity(0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.business_rounded, color: Color(0xFF2EC4B6), size: 24),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    project.ad,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: -0.2),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -406,54 +613,93 @@ class _PortfolioPageState extends State<PortfolioPage> {
     final currencyFormat = NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 0);
 
     return Column(
-      children: _activeWorkers.map((member) {
+      children: List.generate(_activeWorkers.length, (index) {
+        final member = _activeWorkers[index];
         final double debt = _workerDebts[member.adSoyad]?['amount'] ?? 0;
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
+        return _buildAnimatedSection(4 + index, Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.black.withOpacity(0.05)),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(color: Colors.grey.shade50),
           ),
-          child: Row(
-            children: [
-              const CircleAvatar(
-                backgroundColor: Color(0xFFF0F2F5),
-                child: Icon(Icons.person, color: Color(0xFF011627)),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(member.adSoyad, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text(member.maasTuru == WorkerSalaryType.aylik ? AppLocalizations.of(context)!.monthlyPersonnel : AppLocalizations.of(context)!.dailyPersonnel, 
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {},
+              borderRadius: BorderRadius.circular(20),
+              child: Row(
                 children: [
-                  Text(
-                    currencyFormat.format(debt),
-                    style: TextStyle(
-                      color: debt > 0 ? const Color(0xFFE71D36) : const Color(0xFF2EC4B6),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
+                  _buildAnimatedSection(index + 5, Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF011627).withOpacity(0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.person_rounded, color: Color(0xFF011627), size: 24),
+                  ), useScale: true),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          member.adSoyad,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: -0.3),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          member.maasTuru == WorkerSalaryType.aylik ? AppLocalizations.of(context)!.monthlyPersonnel : AppLocalizations.of(context)!.dailyPersonnel, 
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    AppLocalizations.of(context)!.pendingSalary,
-                    style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: debt > 0 ? const Color(0xFFE71D36).withOpacity(0.08) : const Color(0xFF2EC4B6).withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          currencyFormat.format(debt),
+                          style: TextStyle(
+                            color: debt > 0 ? const Color(0xFFE71D36) : const Color(0xFF2EC4B6),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          AppLocalizations.of(context)!.pendingSalary.toUpperCase(),
+                          style: TextStyle(
+                            color: debt > 0 ? const Color(0xFFE71D36).withOpacity(0.6) : const Color(0xFF2EC4B6).withOpacity(0.6),
+                            fontSize: 9, 
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        );
+        ), useScale: true);
       }).toList(),
     );
   }
@@ -464,52 +710,114 @@ class _PortfolioPageState extends State<PortfolioPage> {
     }
 
     return Column(
-      children: _timelineEvents.map((event) {
-        return Row(
+      children: List.generate(_timelineEvents.length, (index) {
+        final event = _timelineEvents[index];
+        final color = _getEventColor(event.type);
+        return _buildAnimatedSection(6 + index, Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 80,
+              width: 70,
               child: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  DateFormat('dd MMM yy', Localizations.localeOf(context).toString()).format(event.date), 
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 11)
+                padding: const EdgeInsets.only(top: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(event.date), 
+                      style: TextStyle(fontWeight: FontWeight.w900, color: Colors.grey.shade800, fontSize: 12)
+                    ),
+                    Text(
+                      DateFormat('yyyy', Localizations.localeOf(context).toString()).format(event.date), 
+                      style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade400, fontSize: 10)
+                    ),
+                  ],
                 ),
               ),
             ),
+            const SizedBox(width: 16),
             Column(
               children: [
-                const SizedBox(height: 12),
-                Icon(_getEventIcon(event.type), size: 12, color: _getEventColor(event.type)),
+                const SizedBox(height: 14),
+                _buildAnimatedSection(index + 7, Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color, width: 2),
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                    ),
+                  ),
+                ), useScale: true),
                 Container(
-                  width: 1,
-                  height: 40,
-                  color: Colors.grey.withOpacity(0.2),
+                  width: 2,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [color.withOpacity(0.3), Colors.transparent],
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.05))),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${event.title} ${_getEventSubText(context, event)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              child: _buildAnimatedSection(index + 8, Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {},
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.02),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(color: Colors.grey.shade50),
                     ),
-                    const SizedBox.shrink(),
-                  ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(_getEventIcon(event.type), size: 16, color: color),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _getEventSubText(context, event),
+                                style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 0.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          event.title,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: -0.3),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              )),
             ),
           ],
-        );
+        ), useScale: true);
       }).toList(),
     );
   }

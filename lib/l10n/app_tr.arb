@@ -623,8 +623,8 @@
   "invoiceUpdated": "invoiceUpdated",
   "sales": "sales",
   "purchase": "purchase",
-  "newInvoiceType": "newInvoiceType",
-  "editInvoiceType": "editInvoiceType",
+  "newInvoiceType": "Yeni {arg} Faturası",
+  "editInvoiceType": "{arg} Faturası Düzenle",
   "invoiceNo": "invoiceNo",
   "invoiceNoRequired": "invoiceNoRequired",
   "pleaseSelectDate": "pleaseSelectDate",
@@ -633,8 +633,8 @@
   "invoiceItems": "invoiceItems",
   "addItem": "addItem",
   "noItemsYet": "noItemsYet",
-  "item": "item",
-  "amountLabel": "amountLabel",
+  "item": "Kalem",
+  "amountLabel": "Tutar",
   "priceLabel": "priceLabel",
   "grandTotal": "grandTotal",
   "editItem": "editItem",
@@ -653,7 +653,6 @@
   "income": "income",
   "newItemType": "Yeni {arg}",
   "editItemType": "{arg} Düzenle",
-  "newInvoiceType": "Yeni {arg} Faturası",
   "@newInvoiceType": {
     "placeholders": {
       "arg": {
@@ -661,7 +660,6 @@
       }
     }
   },
-  "editInvoiceType": "{arg} Faturası Düzenle",
   "@editInvoiceType": {
     "placeholders": {
       "arg": {
@@ -669,7 +667,7 @@
       }
     }
   },
-  "titleLabel": "titleLabel",
+  "titleLabel": "Başlık",
   "pleaseEnterValidAmount": "pleaseEnterValidAmount",
   "selectCariAccountOptional": "selectCariAccountOptional",
   "selectProjectOptional": "selectProjectOptional",
@@ -819,11 +817,32 @@
   "hour": "Saat",
   "mesai": "Mesai",
   "personal": "Personel",
-  "item": "Kalem",
   "rate": "Oran",
-  "amountLabel": "Tutar",
   "stopaj": "Stopaj",
   "teminat": "Teminat",
   "pending_caps": "BEKLİYOR",
-  "titleLabel": "Başlık"
+  "projectBudgetUsage": "PROJE BÜTÇE KULLANIMI",
+  "profitabilityRatio": "KARLILIK ORANI",
+  "periodicLaborPayment": "Döneme Özel İşçi Ödemesi (Avans)",
+  "periodicPaymentSubtitle": "Aşağıdan seçeceğiniz dönemin borcundan düşer.",
+  "selectDateRange": "Tarih Aralığı Seçiniz",
+  "pendingLaborForPeriod": "Seçili Dönem Bekleyen İşçilik: {amount}",
+  "@pendingLaborForPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionDateWithColon": "İşlem Tarihi: {date}",
+  "@transactionDateWithColon": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "advanceWarning": "Uyarı: Geçmiş bir döneme ait avans girişi yapıyorsunuz. İşlem tarihini kontrol etmeyi unutmayın.",
+  "notWorkerAccount": "Seçili cari bir işçi hesabı değildir.",
+  "periodicLaborDescription": "Döneme Özel İşçi Ödemesi"
 }

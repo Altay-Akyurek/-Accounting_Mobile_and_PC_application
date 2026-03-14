@@ -1054,6 +1054,7 @@ class DatabaseHelper {
   }
 
 
+
   Future<Map<String, dynamic>> getDetailedFinancialAnalysis(DateTime start, DateTime end, {int? projectId}) async {
     final results = await Future.wait([
       getAllGelirGider(baslangic: start, bitis: end),

@@ -28,6 +28,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
   final int _perPage = 20;
   List<Project> _displayedProjects = [];
   List<Project> _filteredProjects = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -65,6 +66,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
   void dispose() {
     _syncSubscription?.cancel();
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -81,53 +83,199 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 
   void _applyFilter() {
-    _filteredProjects = _filterStatus == null ? _projects : _projects.where((p) => p.durum == _filterStatus).toList();
+    final query = _searchController.text.toLowerCase();
+    _filteredProjects = _projects.where((p) {
+      bool matchesStatus = _filterStatus == null || p.durum == _filterStatus;
+      bool matchesSearch = p.ad.toLowerCase().contains(query) || 
+                          (p.cariHesapUnvan?.toLowerCase().contains(query) ?? false);
+      return matchesStatus && matchesSearch;
+    }).toList();
+    
     _displayedProjects = _filteredProjects.sublist(
       0, 
       _filteredProjects.length > _perPage ? _perPage : _filteredProjects.length
     );
   }
 
-  String _formatPara(double tutar) {
-    final locale = Localizations.localeOf(context).toString();
-    return NumberFormat.currency(
-      locale: locale,
-      symbol: locale == 'tr' ? '₺' : '\$',
-      decimalDigits: 2,
-    ).format(tutar);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.projects),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: _loadProjects,
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      backgroundColor: const Color(0xFFF8F9FA),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                _buildStatusFilter(),
-                Expanded(
-                  child: _projects.isEmpty ? _buildEmptyState() : _buildProjectGrid(),
-                ),
+          : CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                _buildSliverHeader(),
+                SliverToBoxAdapter(child: _buildStatusFilter()),
+                if (_filteredProjects.isEmpty)
+                  SliverFillRemaining(child: _buildEmptyState())
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (index == _displayedProjects.length) {
+                            return const Center(child: Padding(padding: EdgeInsets.all(32.0), child: CircularProgressIndicator()));
+                          }
+                          final project = _displayedProjects[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: _ProjectCard(
+                              project: project,
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => ProjectDetailPage(project: project)),
+                                );
+                                _loadProjects();
+                              },
+                              onDelete: () => _confirmDeleteProject(project),
+                            ),
+                          );
+                        },
+                        childCount: _displayedProjects.length + (_displayedProjects.length < _filteredProjects.length ? 1 : 0),
+                      ),
+                    ),
+                  ),
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddProjectDialog,
         icon: const Icon(Icons.add_business_rounded),
-        label: Text(AppLocalizations.of(context)!.newProjectCard),
-        backgroundColor: const Color(0xFF003399),
+        label: Text(AppLocalizations.of(context)!.newProjectCard.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0)),
+        backgroundColor: const Color(0xFF011627),
         foregroundColor: Colors.white,
       ),
       bottomNavigationBar: const BannerAdWidget(),
+    );
+  }
+
+  Widget _buildSliverHeader() {
+    return SliverAppBar(
+      expandedHeight: 280,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: const Color(0xFF011627),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Padding(
+          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 32, left: 24, right: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 32),
+                      child: Text(
+                        AppLocalizations.of(context)!.projects.toUpperCase(),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 2.0),
+                      ),
+                    ),
+                  IconButton(
+                    onPressed: _loadProjects,
+                    icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  _buildHeaderStat(AppLocalizations.of(context)!.all, _projects.length.toString(), Icons.layers_rounded),
+                  const SizedBox(width: 12),
+                  _buildHeaderStat(
+                    AppLocalizations.of(context)!.active, 
+                    _projects.where((p) => p.durum == ProjectStatus.aktif).length.toString(), 
+                    Icons.play_circle_filled_rounded,
+                    color: const Color(0xFF2EC4B6)
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: _searchController,
+                onChanged: (_) => setState(() => _applyFilter()),
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.searchCariHint,
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF2EC4B6)),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderStat(String label, String value, IconData icon, {Color color = Colors.white}) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color.withOpacity(0.5), size: 20),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 9, fontWeight: FontWeight.w900)),
+                Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusFilter() {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        children: [
+          _buildFilterChip(null, AppLocalizations.of(context)!.all),
+          _buildFilterChip(ProjectStatus.aktif, AppLocalizations.of(context)!.active),
+          _buildFilterChip(ProjectStatus.askida, AppLocalizations.of(context)!.suspended),
+          _buildFilterChip(ProjectStatus.bitti, AppLocalizations.of(context)!.completed),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(ProjectStatus? status, String label) {
+    bool isSelected = _filterStatus == status;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text(label, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w900 : FontWeight.normal, color: isSelected ? Colors.white : Colors.black87)),
+        selected: isSelected,
+        onSelected: (val) => setState(() {
+          _filterStatus = status;
+          _applyFilter();
+        }),
+        selectedColor: const Color(0xFF011627),
+        checkmarkColor: Colors.white,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        side: BorderSide(color: Colors.grey.withOpacity(0.1)),
+      ),
     );
   }
 
@@ -142,91 +290,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
             _filterStatus == null 
               ? AppLocalizations.of(context)!.noProjectsDefined 
               : AppLocalizations.of(context)!.noProjectsInStatus(_filterStatus!.name),
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 12),
-          if (_filterStatus == null)
-            ElevatedButton(
-              onPressed: _showAddProjectDialog,
-              child: Text(AppLocalizations.of(context)!.createFirstProject),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusFilter() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        children: [
-          FilterChip(
-            label: Text(AppLocalizations.of(context)!.all),
-            selected: _filterStatus == null,
-            onSelected: (val) => setState(() {
-              _filterStatus = null;
-              _applyFilter();
-            }),
-          ),
-          const SizedBox(width: 8),
-          FilterChip(
-            label: Text(AppLocalizations.of(context)!.active),
-            selected: _filterStatus == ProjectStatus.aktif,
-            onSelected: (val) => setState(() {
-              _filterStatus = ProjectStatus.aktif;
-              _applyFilter();
-            }),
-          ),
-          const SizedBox(width: 8),
-          FilterChip(
-            label: Text(AppLocalizations.of(context)!.suspended),
-            selected: _filterStatus == ProjectStatus.askida,
-            onSelected: (val) => setState(() {
-              _filterStatus = ProjectStatus.askida;
-              _applyFilter();
-            }),
-          ),
-          const SizedBox(width: 8),
-          FilterChip(
-            label: Text(AppLocalizations.of(context)!.completed),
-            selected: _filterStatus == ProjectStatus.tamamlandi,
-            onSelected: (val) => setState(() {
-              _filterStatus = ProjectStatus.tamamlandi;
-              _applyFilter();
-            }),
+            style: TextStyle(color: Colors.grey.shade400, fontSize: 16, fontWeight: FontWeight.w900),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildProjectGrid() { // Renamed internally for consistency if needed, but keeping name for now
-    if (_filteredProjects.isEmpty) return _buildEmptyState();
-
-    return ListView.separated(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(24),
-      itemCount: _displayedProjects.length + (_displayedProjects.length < _filteredProjects.length ? 1 : 0),
-      separatorBuilder: (context, index) => const SizedBox(height: 24),
-      itemBuilder: (context, index) {
-        if (index == _displayedProjects.length) {
-          return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
-        }
-
-        final project = _displayedProjects[index];
-        return _ProjectCard(
-          project: project,
-          onTap: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => ProjectDetailPage(project: project)),
-            );
-            _loadProjects();
-          },
-          onDelete: () => _confirmDeleteProject(project),
-        );
-      },
     );
   }
 
@@ -234,17 +301,18 @@ class _ProjectsPageState extends State<ProjectsPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.deleteProject),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(AppLocalizations.of(context)!.deleteProject, style: const TextStyle(fontWeight: FontWeight.w900)),
         content: Text(AppLocalizations.of(context)!.deleteProjectConfirm(project.ad)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(AppLocalizations.of(context)!.cancel),
+            child: Text(AppLocalizations.of(context)!.cancel_caps, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text(AppLocalizations.of(context)!.delete),
+            child: Text(AppLocalizations.of(context)!.delete_caps, style: const TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -255,7 +323,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
       _loadProjects();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.projectDeleted)),
+          SnackBar(content: Text(AppLocalizations.of(context)!.projectDeleted), backgroundColor: Colors.red),
         );
       }
     }
@@ -276,39 +344,42 @@ class _ProjectsPageState extends State<ProjectsPage> {
           padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: Container(
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: Color(0xFFF8F9FA),
               borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
             ),
             padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(AppLocalizations.of(context)!.newProjectCard, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.projectName, prefixIcon: const Icon(Icons.business_rounded)),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<CariHesap?>(
-                        value: selectedCari,
-                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.customerFirm, prefixIcon: const Icon(Icons.person_rounded)),
-                        items: _cariHesaplar.map((c) => DropdownMenuItem(value: c, child: Text(c.unvan))).toList(),
-                        onChanged: (val) => setModalState(() => selectedCari = val),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(AppLocalizations.of(context)!.newProjectCard, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                  const SizedBox(height: 32),
+                  _buildInputLabel(AppLocalizations.of(context)!.projectName),
+                  TextField(
+                    controller: nameController,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    decoration: _inputDecoration(Icons.business_rounded),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildInputLabel(AppLocalizations.of(context)!.customerFirm),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<CariHesap?>(
+                          value: selectedCari,
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                          decoration: _inputDecoration(Icons.person_rounded),
+                          items: _cariHesaplar.map((c) => DropdownMenuItem(value: c, child: Text(c.unvan))).toList(),
+                          onChanged: (val) => setModalState(() => selectedCari = val),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      height: 56,
-                      width: 56,
-                      decoration: BoxDecoration(color: const Color(0xFF003399).withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
-                      child: IconButton(
-                        icon: const Icon(Icons.add_rounded, color: Color(0xFF003399)),
+                      const SizedBox(width: 12),
+                      IconButton.filledTonal(
                         onPressed: () async {
                           final result = await showDialog<bool>(
                             context: context,
@@ -320,32 +391,35 @@ class _ProjectsPageState extends State<ProjectsPage> {
                             setModalState(() {});
                           }
                         },
+                        icon: const Icon(Icons.add_rounded),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _buildInputLabel(AppLocalizations.of(context)!.estimatedBudget),
+                  TextField(
+                    controller: budgetController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    decoration: _inputDecoration(Icons.payments_rounded, suffix: '₺'),
+                  ),
+                  const SizedBox(height: 32),
+                  _buildInputLabel(AppLocalizations.of(context)!.status),
+                  SegmentedButton<ProjectStatus>(
+                    segments: [
+                      ButtonSegment(value: ProjectStatus.aktif, label: Text(AppLocalizations.of(context)!.active), icon: const Icon(Icons.play_circle_outline)),
+                      ButtonSegment(value: ProjectStatus.askida, label: Text(AppLocalizations.of(context)!.suspended), icon: const Icon(Icons.pause_circle_outline)),
+                      ButtonSegment(value: ProjectStatus.bitti, label: Text(AppLocalizations.of(context)!.completed), icon: const Icon(Icons.check_circle_outline)),
+                    ],
+                    selected: {selectedStatus},
+                    onSelectionChanged: (val) => setModalState(() => selectedStatus = val.first),
+                    style: SegmentedButton.styleFrom(
+                      selectedBackgroundColor: const Color(0xFF011627),
+                      selectedForegroundColor: Colors.white,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: budgetController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.estimatedBudget, prefixIcon: const Icon(Icons.payments_rounded)),
-                ),
-                const SizedBox(height: 24),
-                Text(AppLocalizations.of(context)!.status, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                SegmentedButton<ProjectStatus>(
-                  segments: [
-                    ButtonSegment(value: ProjectStatus.aktif, label: Text(AppLocalizations.of(context)!.active), icon: const Icon(Icons.play_circle_outline)),
-                    ButtonSegment(value: ProjectStatus.askida, label: Text(AppLocalizations.of(context)!.suspended), icon: const Icon(Icons.pause_circle_outline)),
-                    ButtonSegment(value: ProjectStatus.tamamlandi, label: Text(AppLocalizations.of(context)!.completed), icon: const Icon(Icons.check_circle_outline)),
-                  ],
-                  selected: {selectedStatus},
-                  onSelectionChanged: (val) => setModalState(() => selectedStatus = val.first),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
+                  ),
+                  const SizedBox(height: 48),
+                  ElevatedButton(
                     onPressed: () async {
                       if (nameController.text.isNotEmpty) {
                         try {
@@ -358,7 +432,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                             cariHesapUnvan: selectedCari?.unvan,
                           );
                           await DatabaseHelper.instance.insertProject(newProject);
-                          if (context.mounted) {
+                          if (mounted) {
                             Navigator.pop(context);
                             _loadProjects();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -366,34 +440,49 @@ class _ProjectsPageState extends State<ProjectsPage> {
                             );
                           }
                         } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(ErrorHandler.getErrorMessage(e)),
-                                backgroundColor: Colors.red,
-                                duration: const Duration(seconds: 5),
-                              ),
-                            );
-                          }
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getErrorMessage(e)), backgroundColor: Colors.red));
                         }
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(AppLocalizations.of(context)!.enterProjectName)),
-                        );
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.enterProjectName)));
                       }
                     },
-                    child: Text(AppLocalizations.of(context)!.saveProject),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2EC4B6),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      elevation: 0,
+                    ),
+                    child: Text(AppLocalizations.of(context)!.saveProject.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
-}
 
+  Widget _buildInputLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(label.toUpperCase(), style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+    );
+  }
+
+  InputDecoration _inputDecoration(IconData icon, {String? suffix}) {
+    return InputDecoration(
+      prefixIcon: Icon(icon, color: const Color(0xFF2EC4B6), size: 18),
+      suffixText: suffix,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF2EC4B6))),
+    );
+  }
+}
 class _ProjectCard extends StatelessWidget {
   final Project project;
   final VoidCallback onTap;
@@ -408,110 +497,96 @@ class _ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = project.durum == ProjectStatus.aktif
-        ? Colors.blue.shade700
-        : project.durum == ProjectStatus.tamamlandi
-            ? Colors.green.shade700
-            : Colors.amber.shade700;
+        ? const Color(0xFF2EC4B6)
+        : project.durum == ProjectStatus.bitti
+            ? Colors.green
+            : Colors.orange;
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(28),
-        side: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 8)),
+        ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Text(
+                        (project.durum == ProjectStatus.aktif
+                                ? AppLocalizations.of(context)!.active
+                                : project.durum == ProjectStatus.bitti
+                                    ? AppLocalizations.of(context)!.completed
+                                    : AppLocalizations.of(context)!.suspended)
+                            .toUpperCase(),
+                        style: TextStyle(color: statusColor, fontWeight: FontWeight.w900, fontSize: 9, letterSpacing: 1.0),
+                      ),
                     ),
-                    child: Text(
-                      (project.durum == ProjectStatus.aktif
-                              ? AppLocalizations.of(context)!.active
-                              : project.durum == ProjectStatus.tamamlandi
-                                  ? AppLocalizations.of(context)!.completed
-                                  : AppLocalizations.of(context)!.suspended)
-                          .toUpperCase(),
-                      style: TextStyle(color: statusColor, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1),
+                    IconButton(
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.grey, size: 20),
                     ),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
-                    onSelected: (val) {
-                      if (val == 'delete') onDelete();
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
-                            const SizedBox(width: 8),
-                            Text(AppLocalizations.of(context)!.delete, style: const TextStyle(color: Colors.red)),
-                          ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  project.ad,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF011627), letterSpacing: -0.5),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  project.cariHesapUnvan ?? AppLocalizations.of(context)!.unknown,
+                  style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                const SizedBox(height: 24),
+                const Divider(height: 1),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppLocalizations.of(context)!.budgetLabel.toUpperCase(), style: TextStyle(color: Colors.grey.shade400, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                        const SizedBox(height: 4),
+                        Text(
+                          NumberFormat.currency(
+                            locale: Localizations.localeOf(context).toString(),
+                            symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : '\$',
+                            decimalDigits: 0,
+                          ).format(project.toplamButce),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF011627)),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                project.ad,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5, height: 1.2),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.calendar_today_rounded, size: 14, color: Colors.grey.shade400),
-                  const SizedBox(width: 6),
-                  Text(
-                    DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(project.baslangicTarihi),
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(AppLocalizations.of(context)!.budgetLabel, style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-                      Text(
-                        NumberFormat.currency(
-                          locale: Localizations.localeOf(context).toString(),
-                          symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : r'$',
-                          decimalDigits: 0,
-                        ).format(project.toplamButce),
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: const Color(0xFF003399).withOpacity(0.05), shape: BoxShape.circle),
-                    child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF003399), size: 18),
-                  ),
-                ],
-              ),
-            ],
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: const Color(0xFF011627).withOpacity(0.05), shape: BoxShape.circle),
+                      child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF011627), size: 18),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

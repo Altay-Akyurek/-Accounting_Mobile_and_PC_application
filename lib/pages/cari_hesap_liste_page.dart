@@ -26,6 +26,7 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
   final ScrollController _scrollController = ScrollController();
   final int _perPage = 20;
   List<CariHesap> _displayedCariHesaplar = [];
+  Set<int> _workerCariIds = {};
 
   @override
   void initState() {
@@ -72,7 +73,9 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
     setState(() => _isLoading = true);
     try {
       final cariHesaplar = await DatabaseHelper.instance.getAllCariHesaplar();
+      final workers = await DatabaseHelper.instance.getAllWorkers();
       setState(() {
+        _workerCariIds = workers.map((w) => w.cariHesapId).whereType<int>().toSet();
         _cariHesaplar = cariHesaplar;
         _filtrelenmisCariHesaplar = cariHesaplar;
         _displayedCariHesaplar = _filtrelenmisCariHesaplar.sublist(0, _filtrelenmisCariHesaplar.length > _perPage ? _perPage : _filtrelenmisCariHesaplar.length);
@@ -104,25 +107,19 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.cariAccounts),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: _yukleCariHesaplar,
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
       body: Column(
         children: [
-          _buildSearchHeader(),
+          _buildInteractiveHeader(),
+          _buildQuickFilters(),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _filtrelenmisCariHesaplar.isEmpty
-                    ? _buildEmptyState()
-                    : _buildCariGrid(),
+                : AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: _filtrelenmisCariHesaplar.isEmpty
+                        ? _buildEmptyState()
+                        : _buildCariGrid(),
+                  ),
           ),
         ],
       ),
@@ -136,32 +133,133 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
         },
         icon: const Icon(Icons.person_add_rounded),
         label: Text(AppLocalizations.of(context)!.addNewCari),
-        backgroundColor: const Color(0xFF003399),
+        backgroundColor: const Color(0xFF011627),
         foregroundColor: Colors.white,
       ),
       bottomNavigationBar: const BannerAdWidget(),
     );
   }
 
-  Widget _buildSearchHeader() {
+  Widget _buildInteractiveHeader() {
+
     return Container(
-      padding: const EdgeInsets.all(20),
-      color: const Color(0xFF003399),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _aramaYap,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: AppLocalizations.of(context)!.searchCariHint,
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-          prefixIcon: const Icon(Icons.search_rounded, color: Colors.white70),
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.1),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 10, left: 24, right: 24, bottom: 24),
+      decoration: const BoxDecoration(
+        color: Color(0xFF011627),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
         ),
       ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+              ),
+              Text(
+                AppLocalizations.of(context)!.cariAccounts.toUpperCase(),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1.5),
+              ),
+              IconButton(
+                onPressed: _yukleCariHesaplar,
+                icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _searchController,
+            onChanged: _aramaYap,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: AppLocalizations.of(context)!.searchCariHint,
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF2EC4B6)),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.05),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  String _currentFilter = 'all';
+
+  Widget _buildQuickFilters() {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        children: [
+          _buildFilterChip('all', AppLocalizations.of(context)!.all, Icons.dashboard_rounded),
+          _buildFilterChip('receivable', AppLocalizations.of(context)!.customerReceivables, Icons.arrow_downward_rounded),
+          _buildFilterChip('payable', AppLocalizations.of(context)!.supplierPayables, Icons.arrow_upward_rounded),
+          _buildFilterChip('cash', AppLocalizations.of(context)!.mainCashStatus, Icons.account_balance_wallet_rounded),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String id, String label, IconData icon) {
+    bool isSelected = _currentFilter == id;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Row(
+          children: [
+            Icon(icon, size: 14, color: isSelected ? Colors.white : Colors.grey),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : Colors.black87)),
+          ],
+        ),
+        selected: isSelected,
+        onSelected: (selected) {
+          setState(() {
+            _currentFilter = id;
+            _applyComplexFilter();
+          });
+        },
+        selectedColor: const Color(0xFF011627),
+        checkmarkColor: Colors.white,
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        side: BorderSide(color: Colors.grey.withOpacity(0.1)),
+      ),
+    );
+  }
+
+  void _applyComplexFilter() {
+    setState(() {
+      _filtrelenmisCariHesaplar = _cariHesaplar.where((cari) {
+        // Search filter
+        bool matchesSearch = true;
+        if (_searchController.text.isNotEmpty) {
+          final q = _searchController.text.toLowerCase();
+          matchesSearch = cari.unvan.toLowerCase().contains(q) ||
+                         (cari.vergiNo?.toLowerCase().contains(q) ?? false);
+        }
+
+        if (!matchesSearch) return false;
+
+        // Quick filter
+        switch (_currentFilter) {
+          case 'receivable': return !cari.isKasa && cari.bakiye < 0;
+          case 'payable': return !cari.isKasa && cari.bakiye > 0;
+          case 'cash': return cari.isKasa;
+          default: return true;
+        }
+      }).toList();
+      _displayedCariHesaplar = _filtrelenmisCariHesaplar.sublist(0, _filtrelenmisCariHesaplar.length > _perPage ? _perPage : _filtrelenmisCariHesaplar.length);
+    });
   }
 
   Widget _buildEmptyState() {
@@ -197,8 +295,11 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
         }
         
         final cari = _displayedCariHesaplar[index];
+        final bool isWorker = _workerCariIds.contains(cari.id);
+        
         return _CariCard(
           cari: cari,
+          isWorker: isWorker,
           onTap: () async {
             final result = await Navigator.push(
               context,
@@ -251,77 +352,145 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
 
 class _CariCard extends StatelessWidget {
   final CariHesap cari;
+  final bool isWorker;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
-  const _CariCard({required this.cari, required this.onTap, required this.onDelete});
+  const _CariCard({
+    required this.cari, 
+    required this.isWorker,
+    required this.onTap, 
+    required this.onDelete
+  });
 
   @override
   Widget build(BuildContext context) {
-    final bakiyeColor = cari.bakiye > 0 ? Colors.red : cari.bakiye < 0 ? Colors.green : Colors.grey;
+    final bool isReceivable = cari.bakiye < 0;
+    final bool isPayable = cari.bakiye > 0;
+    final bakiyeColor = isPayable ? const Color(0xFFE71D36) : isReceivable ? const Color(0xFF2EC4B6) : Colors.grey;
     
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: Colors.grey.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    backgroundColor: const Color(0xFF003399).withOpacity(0.1),
-                    child: Text(cari.unvan[0].toUpperCase(), style: const TextStyle(color: Color(0xFF003399), fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(cari.unvan, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
-                        if (cari.vergiNo != null && cari.vergiNo!.isNotEmpty)
-                          Text('${AppLocalizations.of(context)!.taxNo_short}: ${cari.vergiNo}', style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold)),
-                      ],
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: bakiyeColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Center(
+                        child: Text(
+                          cari.unvan[0].toUpperCase(), 
+                          style: TextStyle(color: bakiyeColor, fontWeight: FontWeight.w900, fontSize: 18)
+                        ),
+                      ),
                     ),
-                  ),
-                  IconButton(onPressed: onDelete, icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.grey)),
-                ],
-              ),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            cari.unvan, 
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF011627)), 
+                            maxLines: 1, 
+                            overflow: TextOverflow.ellipsis
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            cari.isKasa 
+                              ? AppLocalizations.of(context)!.cashAccount.toUpperCase() 
+                              : (isWorker 
+                                 ? (AppLocalizations.of(context)!.localeName == 'tr' ? 'ÇALIŞAN' : 'STAFF')
+                                 : (isPayable ? (AppLocalizations.of(context)!.localeName == 'tr' ? 'TEDARİKÇİLER' : 'SUPPLIERS') : (AppLocalizations.of(context)!.localeName == 'tr' ? 'MÜŞTERİLER' : 'CUSTOMERS'))),
+                            style: TextStyle(color: Colors.grey.shade400, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildPopupMenu(context),
+                  ],
+                ),
+                const Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
                           cari.isKasa ? AppLocalizations.of(context)!.netCashKasa_caps : AppLocalizations.of(context)!.currentBalance_caps, 
-                          style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)
+                          style: TextStyle(color: Colors.grey.shade400, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 0.5)
                         ),
-                        Text(
-                          NumberFormat.currency(
-                            locale: Localizations.localeOf(context).toString(),
-                            symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : '\$',
-                          ).format(cari.bakiye),
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: bakiyeColor),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            NumberFormat.currency(
+                              locale: Localizations.localeOf(context).toString(),
+                              symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : '\$',
+                            ).format(cari.bakiye.abs()),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900, 
+                              fontSize: 18, 
+                              color: bakiyeColor,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPopupMenu(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert_rounded, color: Colors.grey, size: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      onSelected: (val) {
+        if (val == 'delete') onDelete();
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+              const SizedBox(width: 8),
+              Text(AppLocalizations.of(context)!.delete, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

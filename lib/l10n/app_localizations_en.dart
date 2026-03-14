@@ -1738,4 +1738,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pending_caps => 'PENDING';
+
+  @override
+  String get projectBudgetUsage => 'PROJECT BUDGET USAGE';
+
+  @override
+  String get profitabilityRatio => 'PROFITABILITY RATIO';
+
+  @override
+  String get periodicLaborPayment => 'Periodic Worker Payment (Advance)';
+
+  @override
+  String get periodicPaymentSubtitle =>
+      'It will be deducted from the debt of the period you select below.';
+
+  @override
+  String get selectDateRange => 'Select Date Range';
+
+  @override
+  String pendingLaborForPeriod(String amount) {
+    return 'Pending Labor for Selected Period: $amount';
+  }
+
+  @override
+  String transactionDateWithColon(String date) {
+    return 'Transaction Date: $date';
+  }
+
+  @override
+  String get advanceWarning =>
+      'Warning: You are entering an advance payment for a past period. Do not forget to check the transaction date.';
+
+  @override
+  String get notWorkerAccount =>
+      'The selected account is not a worker account.';
+
+  @override
+  String get periodicLaborDescription => 'Periodic Worker Payment';
 }

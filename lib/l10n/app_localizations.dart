@@ -3347,6 +3347,66 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'BEKLİYOR'**
   String get pending_caps;
+
+  /// No description provided for @projectBudgetUsage.
+  ///
+  /// In tr, this message translates to:
+  /// **'PROJE BÜTÇE KULLANIMI'**
+  String get projectBudgetUsage;
+
+  /// No description provided for @profitabilityRatio.
+  ///
+  /// In tr, this message translates to:
+  /// **'KARLILIK ORANI'**
+  String get profitabilityRatio;
+
+  /// No description provided for @periodicLaborPayment.
+  ///
+  /// In tr, this message translates to:
+  /// **'Döneme Özel İşçi Ödemesi (Avans)'**
+  String get periodicLaborPayment;
+
+  /// No description provided for @periodicPaymentSubtitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aşağıdan seçeceğiniz dönemin borcundan düşer.'**
+  String get periodicPaymentSubtitle;
+
+  /// No description provided for @selectDateRange.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarih Aralığı Seçiniz'**
+  String get selectDateRange;
+
+  /// No description provided for @pendingLaborForPeriod.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçili Dönem Bekleyen İşçilik: {amount}'**
+  String pendingLaborForPeriod(String amount);
+
+  /// No description provided for @transactionDateWithColon.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlem Tarihi: {date}'**
+  String transactionDateWithColon(String date);
+
+  /// No description provided for @advanceWarning.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uyarı: Geçmiş bir döneme ait avans girişi yapıyorsunuz. İşlem tarihini kontrol etmeyi unutmayın.'**
+  String get advanceWarning;
+
+  /// No description provided for @notWorkerAccount.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçili cari bir işçi hesabı değildir.'**
+  String get notWorkerAccount;
+
+  /// No description provided for @periodicLaborDescription.
+  ///
+  /// In tr, this message translates to:
+  /// **'Döneme Özel İşçi Ödemesi'**
+  String get periodicLaborDescription;
 }
 
 class _AppLocalizationsDelegate
