@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 import 'dart:ui';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/database_helper.dart';
@@ -1057,36 +1058,63 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(context); // Onay kutusunu kapat
               
-              // Yükleme göstergesi
+              bool isFinished = false;
+
+              // GÜVENLİK ZAMANLAYICISI: 5 saniye sonra ne olursa olsun çıkış yap
+              final timer = Timer(const Duration(seconds: 5), () async {
+                if (!isFinished && mounted) {
+                  isFinished = true;
+                  Navigator.of(context, rootNavigator: true).pop(); // Loader'ı kapat
+                  await AuthService().signOut();
+                }
+              });
+
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (context) => const Center(child: CircularProgressIndicator()),
+                builder: (context) => const Center(
+                  child: Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Hesabınız siliniyor...', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               );
 
               try {
+                debugPrint('DEBUG: Silme işlemi başlatıldı...');
                 await AuthService().deleteAccount();
-                if (mounted) {
-                  Navigator.pop(context); // Yükleme göstergesini kapat
-                  
-                  // Şimdi güvenle çıkış yapabiliriz
-                  await AuthService().signOut();
-                  
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLocalizations.of(context)!.deleteAccountSuccess)),
-                  );
-                }
+                debugPrint('DEBUG: Silme işlemi başarıyla bitti.');
               } catch (e) {
-                if (mounted) {
-                  Navigator.pop(context); // Yükleme göstergesini kapat
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Hata: Hesap silme isteği iletilemedi.'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                debugPrint('DEBUG: Silme işlemi sırasında hata: $e');
+              } finally {
+                timer.cancel();
+                if (!isFinished && mounted) {
+                  isFinished = true;
+                  debugPrint('DEBUG: Diyalog kapatılıyor ve çıkış yapılıyor...');
+                  
+                  // GÜVENLİ KAPATMA: Navigator.pop yerine rootNavigator üzerinden 
+                  // ve mounted kontrolü ile kapatalım.
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  }
+                  
+                  await AuthService().signOut();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Hesabınız silindi ve çıkış yapıldı.')),
+                    );
+                  }
                 }
               }
             },

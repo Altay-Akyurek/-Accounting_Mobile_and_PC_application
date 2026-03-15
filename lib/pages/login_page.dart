@@ -74,6 +74,9 @@ class _LoginPageState extends State<LoginPage> {
             lowerMessage.contains('invalid email or password')) {
           message = AppLocalizations.of(context)!.invalidCredentials;
         }
+        else if (lowerMessage.contains('account_deleted_error')) {
+          message = 'Bu hesap silinme talebi nedeniyle askıya alınmıştır. Giriş yapamazsınız.';
+        }
         // Mükerrer kayıt hatası kontrolü
         else if (lowerMessage.contains('user already registered') || 
             lowerMessage.contains('already exists') ||

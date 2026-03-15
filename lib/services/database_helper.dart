@@ -79,7 +79,7 @@ class DatabaseHelper {
         _cariIslemlerBox.clear(),
         _puantajBox.clear(),
         _hakedisBox.clear(),
-      ]);
+      ]).timeout(const Duration(seconds: 3));
     } catch (e) {
       print('DatabaseHelper.clearAllData error: $e');
     }

@@ -35,23 +35,13 @@ void main() async {
     anonKey: 'sb_publishable_v6VWwf7RZtHT7521pcpohQ_-ayN2OdC',
   );
 
-  /* 
-  // Windows için protokol kaydını otomatik yap
-  try {
-    await ProtocolService.register();
-  } catch (e) {
-    // debugPrint('Protokol kaydı sırasında hata oluştu: $e');
-  }
-  */
-
   await initializeDateFormatting('tr_TR', null);
   await DatabaseHelper.instance.init();
   await SyncManager.instance.init();
   
-  // Premium durumunu, dili ve reklamları başlat
   await PremiumManager.instance.init();
   if (Platform.isAndroid || Platform.isIOS) {
-    IAPService.instance.init(); // Gerçek satın alma servisini başlat
+    IAPService.instance.init(); 
   }
   await LanguageService.instance.init();
   
@@ -76,19 +66,19 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF011627), // Deep Navy
+              seedColor: const Color(0xFF011627),
               primary: const Color(0xFF011627),
-              secondary: const Color(0xFF2EC4B6), // Professional Teal/Emerald
-              tertiary: const Color(0xFFE71D36), // Balanced Accent Red
+              secondary: const Color(0xFF2EC4B6),
+              tertiary: const Color(0xFFE71D36),
               surface: Colors.white,
-              background: const Color(0xFFF0F2F5), // Light Slate Gray Background
+              background: const Color(0xFFF0F2F5),
             ),
             scaffoldBackgroundColor: const Color(0xFFF0F2F5),
             appBarTheme: const AppBarTheme(
               backgroundColor: Color(0xFF011627),
               foregroundColor: Colors.white,
               elevation: 0,
-              centerTitle: false, // Professional left alignment
+              centerTitle: false,
               titleTextStyle: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
@@ -166,10 +156,10 @@ class MyApp extends StatelessWidget {
             '/labor_summary': (context) => const LaborSummaryReportPage(),
             '/premium': (context) => const PremiumPage(),
           },
-          ); // return MaterialApp
+          );
         },
-      ), // child: ValueListenableBuilder
-    ); // return MultiProvider
+      ),
+    );
   }
 }
 
@@ -186,8 +176,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
-    
-    // Animasyonun (2.5 sn) tamamlanması için bekle
     Future.delayed(const Duration(milliseconds: 2500), () {
       if (mounted) setState(() => _showSplash = false);
     });
@@ -206,17 +194,57 @@ class _AuthWrapperState extends State<AuthWrapper> {
         final session = authState?.session;
         final event = authState?.event;
 
-        // Şifre sıfırlama linkine tıklandıysa
         if (event == AuthChangeEvent.passwordRecovery) {
           return const ResetPasswordPage();
         }
 
         if (session != null) {
-          return const HomePage();
+          final user = session.user;
+          final metadata = user.userMetadata ?? {};
+          final isDeletedMetadata = metadata['account_deleted'] == true || 
+                                    metadata['account_deleted'].toString().toLowerCase() == 'true';
+          
+          if (isDeletedMetadata) {
+            debugPrint('DEBUG: AuthWrapper - Metadata üzerinden SİLİNMİŞ HESAP TESPİTİ!');
+            AuthService().signOut();
+            return const LoginPage();
+          }
+
+          return FutureBuilder<bool>(
+            future: _checkIfUserDeletedInSQL(user.id),
+            builder: (context, sqlSnapshot) {
+              if (sqlSnapshot.connectionState == ConnectionState.waiting) {
+                return const SplashScreen(); 
+              }
+
+              final isDeletedInSQL = sqlSnapshot.data ?? false;
+              
+              if (isDeletedInSQL) {
+                debugPrint('DEBUG: AuthWrapper - SQL üzerinden SİLİNMİŞ HESAP TESPİTİ!');
+                AuthService().signOut();
+                return const LoginPage();
+              }
+
+              return const HomePage();
+            },
+          );
         } else {
           return const LoginPage();
         }
       },
     );
+  }
+
+  Future<bool> _checkIfUserDeletedInSQL(String userId) async {
+    try {
+      final res = await Supabase.instance.client
+          .from('user_deletion_requests')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+      return res != null;
+    } catch (e) {
+      return false;
+    }
   }
 }
