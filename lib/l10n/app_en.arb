@@ -755,6 +755,13 @@
       }
     }
   },
+  "personnelStatus": "Personnel Salary Status",
+  "previousBalance": "Previous Balance (Carry-over)",
+  "previousBalanceTransfer": "Balance Carried Over (Previous Debt)",
+  "periodEarned": "Period Earned",
+  "periodEarnedPlus": "Period Earned (+)",
+  "periodPaidMinus": "Period Payments (-)",
+  "remainingPayableBalance": "REMAINING PAYABLE BALANCE",
   "producedHakedisNet": "Produced Net Hakedis",
   "pendingCollection": "Pending Collection",
   "customerReceivables": "Customer Receivables",

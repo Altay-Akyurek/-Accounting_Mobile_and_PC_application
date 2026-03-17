@@ -1646,6 +1646,27 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get personnelStatus => 'Personel Maaş Durumu';
+
+  @override
+  String get previousBalance => 'Eski Bakiye (Devir)';
+
+  @override
+  String get previousBalanceTransfer => 'Eski Bakiyeden Devreden (Önceki Borç)';
+
+  @override
+  String get periodEarned => 'Dönem Hakediş';
+
+  @override
+  String get periodEarnedPlus => 'Bu Dönem Hak Edilen (+)';
+
+  @override
+  String get periodPaidMinus => 'Bu Dönem Yapılan Ödeme (-)';
+
+  @override
+  String get remainingPayableBalance => 'KALAN ÖDENECEK BAKİYE';
+
+  @override
   String get producedHakedisNet => 'Üretilen Net Hakediş';
 
   @override

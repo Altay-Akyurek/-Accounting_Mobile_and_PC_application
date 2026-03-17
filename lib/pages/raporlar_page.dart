@@ -70,30 +70,33 @@ class _RaporlarPageState extends State<RaporlarPage> {
 
       setState(() {
         _genelOzet = {
-          'gelir': fin['total_revenue'].toDouble(),
-          'gider': fin['total_cost'].toDouble(),
-          'kar': fin['net_profit'].toDouble(),
+          'gelir': (fin['total_revenue'] ?? 0.0).toDouble(),
+          'gider': (fin['total_cost'] ?? 0.0).toDouble(),
+          'kar': (fin['net_profit'] ?? 0.0).toDouble(),
         };
         
-        // Match the categories used by _buildExpenseBreakdown
         _kategoriler = {
-          'Malzeme/Hizmet': invoices['purchases'].toDouble() + fin['extra_expense'].toDouble(),
-          'İşçilik (Ödenen)': labor['total_paid'].toDouble(),
-          'İşçilik (Bekleyen)': labor['net_debt'].toDouble(),
-          'Cari/Diğer Çıkışlar': 0.0, // Replaced specific tracking handled in getSettlementReport
+          'Malzeme/Hizmet': (invoices['purchases'] ?? 0.0).toDouble() + (fin['extra_expense'] ?? 0.0).toDouble(),
+          'İşçilik (Ödenen)': (labor['period_paid'] ?? 0.0).toDouble(),
+          'İşçilik (Bekleyen)': (labor['period_net'] ?? 0.0).toDouble(),
+          'Cari/Diğer Çıkışlar': 0.0,
         };
         
         final breakDownMap = <String, dynamic>{};
         final laborItems = List<Map<String, dynamic>>.from(labor['items'] ?? []);
         for (var item in laborItems) {
-          if ((item['amount'] ?? 0) > 0) {
-            breakDownMap[item['name']] = {
-              'amount': item['amount'],
-              'worked': item['worked'] ?? 0,
-              'leave': item['leave'] ?? 0,
-              'sunday': item['sunday'] ?? 0,
-            };
-          }
+          final double bakiye = (item['period_balance'] ?? 0.0).toDouble();
+          final double cumulative = (item['cumulative_balance'] ?? 0.0).toDouble();
+          final bool isPeriodCleared = bakiye.abs() < 0.1;
+          
+          breakDownMap[item['name']] = {
+            'amount': bakiye,
+            'cumulative': cumulative,
+            'worked': item['worked'] ?? 0,
+            'leave': item['leave'] ?? 0,
+            'sunday': item['sunday'] ?? 0,
+            'label': isPeriodCleared ? 'DÖNEM KAPALI' : (bakiye > 0 ? 'DÖNEM BORÇ' : 'DÖNEM ALACAK'),
+          };
         }
         
         _workerBreakdown = breakDownMap;
@@ -437,10 +440,14 @@ class _RaporlarPageState extends State<RaporlarPage> {
                             Text(_formatPara(amount), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.purple)),
                           ],
                         ),
-                        const SizedBox(height: 2),
                         Text(
                           '$worked ${AppLocalizations.of(context)!.normal} + $leave ${AppLocalizations.of(context)!.onLeave} + $sunday ${AppLocalizations.of(context)!.sunday}',
                           style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Toplam Kalan Borç: ${_formatPara(data['cumulative'] as double)}',
+                          style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
                         ),
                       ],
                     ),
@@ -576,6 +583,15 @@ class _ProjectReportItem extends StatelessWidget {
   final Map<String, dynamic> report;
   const _ProjectReportItem({required this.report});
 
+  String _formatPara(BuildContext context, double tutar) {
+    final locale = Localizations.localeOf(context).toString();
+    return NumberFormat.currency(
+      locale: locale,
+      symbol: locale == 'tr' ? '₺' : '\$',
+      decimalDigits: 0,
+    ).format(tutar);
+  }
+
   @override
   Widget build(BuildContext context) {
     double progress = 0;
@@ -636,11 +652,7 @@ class _ProjectReportItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    NumberFormat.currency(
-                      locale: Localizations.localeOf(context).toString(),
-                      symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : '\$',
-                      decimalDigits: 0,
-                    ).format(report['kar']),
+                    _formatPara(context, (report['kar'] as num).toDouble()),
                     style: TextStyle(
                       color: isPositive
                           ? const Color(0xFF2EC4B6)
@@ -686,38 +698,44 @@ class _ProjectReportItem extends StatelessWidget {
               ),
             ],
           ),
-          if ((report['bekleyenIscilik'] ?? 0.0) > 0) ...[
+          if (report['labor'] != null) ...[
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${AppLocalizations.of(context)!.pendingWorkerPayment}:',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange,
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                title: Text(
+                  '${AppLocalizations.of(context)!.personnelStatus}: ${_formatPara(context, (report['bekleyenIscilik'] ?? 0.0).toDouble())}',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: (report['bekleyenIscilik'] ?? 0.0) > 0 ? Colors.orange : Colors.grey),
+                ),
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: EdgeInsets.zero,
+                children: (report['labor']['items'] as List).map((item) {
+                  final double bakiye = (item['cumulative_balance'] ?? 0.0).toDouble();
+                  final bool isClosed = bakiye.abs() < 0.1;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(isClosed ? '${item['name']} (HESAP KAPALI)' : item['name'], 
+                                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isClosed ? Colors.grey : null)),
+                            Text(_formatPara(context, bakiye), 
+                                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isClosed ? Colors.grey : null)),
+                          ],
+                        ),
+                        if (!isClosed)
+                        Text(
+                          'Eski: ${_formatPara(context, (item['previous_balance']?.toDouble() ?? 0.0).abs())} | Hak: ${_formatPara(context, (item['period_earned']?.toDouble() ?? 0.0).abs())} | Öd: ${_formatPara(context, (item['period_paid']?.toDouble() ?? 0.0).abs())}',
+                          style: TextStyle(fontSize: 9, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
+                        ),
+                      ],
                     ),
-                  ),
-                  Text(
-                    NumberFormat.currency(
-                      locale: Localizations.localeOf(context).toString(),
-                      symbol: Localizations.localeOf(context).toString() == 'tr' ? '₺' : '\$',
-                      decimalDigits: 0,
-                    ).format(report['bekleyenIscilik']),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.orange,
-                    ),
-                  ),
-                ],
+                  );
+                }).toList(),
               ),
             ),
           ],

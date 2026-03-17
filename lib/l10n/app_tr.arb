@@ -755,6 +755,13 @@
       }
     }
   },
+  "personnelStatus": "Personel Maaş Durumu",
+  "previousBalance": "Eski Bakiye (Devir)",
+  "previousBalanceTransfer": "Eski Bakiyeden Devreden (Önceki Borç)",
+  "periodEarned": "Dönem Hakediş",
+  "periodEarnedPlus": "Bu Dönem Hak Edilen (+)",
+  "periodPaidMinus": "Bu Dönem Yapılan Ödeme (-)",
+  "remainingPayableBalance": "KALAN ÖDENECEK BAKİYE",
   "producedHakedisNet": "Üretilen Net Hakediş",
   "pendingCollection": "Bekleyen Tahsilat",
   "customerReceivables": "Müşteri Alacakları",

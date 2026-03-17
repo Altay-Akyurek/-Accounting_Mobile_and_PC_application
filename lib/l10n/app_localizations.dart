@@ -3180,6 +3180,48 @@ abstract class AppLocalizations {
   /// **'Çalışılan: {worked} | İzinli: {leave} | Pazar: {sunday}'**
   String laborSummaryDetail(int worked, int leave, int sunday);
 
+  /// No description provided for @personnelStatus.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel Maaş Durumu'**
+  String get personnelStatus;
+
+  /// No description provided for @previousBalance.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eski Bakiye (Devir)'**
+  String get previousBalance;
+
+  /// No description provided for @previousBalanceTransfer.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eski Bakiyeden Devreden (Önceki Borç)'**
+  String get previousBalanceTransfer;
+
+  /// No description provided for @periodEarned.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dönem Hakediş'**
+  String get periodEarned;
+
+  /// No description provided for @periodEarnedPlus.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu Dönem Hak Edilen (+)'**
+  String get periodEarnedPlus;
+
+  /// No description provided for @periodPaidMinus.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu Dönem Yapılan Ödeme (-)'**
+  String get periodPaidMinus;
+
+  /// No description provided for @remainingPayableBalance.
+  ///
+  /// In tr, this message translates to:
+  /// **'KALAN ÖDENECEK BAKİYE'**
+  String get remainingPayableBalance;
+
   /// No description provided for @producedHakedisNet.
   ///
   /// In tr, this message translates to:

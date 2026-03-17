@@ -33,22 +33,23 @@ class DatabaseHelper {
   DatabaseHelper._init();
 
   DateTime _getEffectiveDate(CariIslem islem) {
+    if (_isSettlementTransaction(islem) && islem.vade != null) {
+      return islem.vade!;
+    }
+    return islem.tarih;
+  }
+
+  bool _isSettlementTransaction(CariIslem islem) {
     final String descStr = islem.aciklama;
     final String descLower = descStr.toLowerCase();
     final String descLowerTr = descStr.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
     
-    bool isSettlement = 
-        descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
-        descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
-        descLower.contains('avans') || descLowerTr.contains('avans') ||
-        descLower.contains('işçi ödemesi') || descLowerTr.contains('işçi ödemesi') ||
-        descStr.contains('#H:[') ||
-        descStr == 'Hesap Kapatma';
-
-    if (isSettlement && islem.vade != null) {
-      return islem.vade!;
-    }
-    return islem.tarih;
+    return descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
+           descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
+           descLower.contains('avans') || descLowerTr.contains('avans') ||
+           descLower.contains('işçi ödemesi') || descLowerTr.contains('işçi ödemesi') ||
+           descStr.contains('#H:[') ||
+           descStr == 'Hesap Kapatma';
   }
 
   Future<void> init() async {
@@ -1380,29 +1381,70 @@ class DatabaseHelper {
       return true;
     }
 
-    bool belongsToPeriod(CariIslem islem) {
-      final String descStr = islem.aciklama;
-      final String descLower = descStr.toLowerCase();
-      final String descLowerTr = descStr.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
-      
-      bool isSettlement = 
-          descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
-          descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
-          descLower.contains('avans') || descLower.contains('işçi ödemesi') ||
-          descLowerTr.contains('işçi ödemesi') ||
-          descStr.contains('#H:[') ||
-          descStr == 'Hesap Kapatma';
-
-      if (isSettlement && islem.vade != null) {
-        return inRange(islem.vade!);
-      }
-      return inRange(islem.tarih);
-    }
+    bool belongsToPeriod(CariIslem islem) => inRange(_getEffectiveDate(islem));
 
     final workerCariIds = workers.map((w) => w.cariHesapId).where((id) => id != null).toSet();
     final Map<int, int> cariToWorker = {for (var w in workers) if (w.cariHesapId != null) w.cariHesapId!: w.id!};
 
     List<Map<String, dynamic>> reports = [];
+
+    // 0. Global Mutabakat: Tüm işçiler için dönem başı bakiyeleri hesapla
+    Map<int, double> globalWorkerHistoricalBalance = {};
+    if (rangeStart != null) {
+      for (var w in workers) {
+        if (w.id == null) continue;
+        double hEarned = 0;
+        final wPuantaj = puantajlar.where((p) => p.workerId == w.id).toList();
+        for (var p in wPuantaj) {
+          if (projectIds != null && !projectIds.contains(p.projectId)) continue;
+          if (p.tarih.isBefore(rangeStart)) hEarned += calculateLaborCost(p, w);
+        }
+        
+        DateTime bStart = DateTime(2024, 1, 1);
+        if (w.baslangicTarihi.isAfter(bStart)) bStart = DateTime(w.baslangicTarihi.year, w.baslangicTarihi.month, w.baslangicTarihi.day);
+        DateTime d = bStart;
+        while (d.isBefore(rangeStart)) {
+          if (d.weekday == DateTime.sunday) {
+            bool earnedB = true;
+            for (int i = 0; i <= 6; i++) {
+              DateTime cD = d.subtract(Duration(days: i));
+              final dayP = wPuantaj.where((p) => p.tarih.year == cD.year && p.tarih.month == cD.month && p.tarih.day == cD.day).toList();
+              if (i > 0 && (dayP.isEmpty || dayP.any((item) => item.status == PuantajStatus.izinsiz))) { earnedB = false; break; }
+            }
+            if (earnedB) {
+               Map<int, int> pC = {};
+               for (int i = 0; i <= 6; i++) {
+                 DateTime c = d.subtract(Duration(days: i));
+                 final dP = wPuantaj.where((p) => p.tarih.year == c.year && p.tarih.month == c.month && p.tarih.day == c.day).toList();
+                 if (dP.isNotEmpty && dP.last.projectId != null) {
+                   int pid = dP.last.projectId!;
+                   pC[pid] = (pC[pid] ?? 0) + 1;
+                 }
+               }
+               int? mP;
+               if (pC.isNotEmpty) mP = pC.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+               if (projectIds != null && (mP == null || !projectIds.contains(mP))) earnedB = false;
+            }
+            if (earnedB) {
+              final sunR = wPuantaj.where((p) => p.tarih.year == d.year && p.tarih.month == d.month && p.tarih.day == d.day).toList();
+              if (!sunR.any((p) => [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status))) hEarned += _getDailyRate(w);
+            }
+          }
+          d = d.add(const Duration(days: 1));
+        }
+
+        double hPaid = 0;
+        if (w.cariHesapId != null) {
+          for (var islem in islemler) {
+            if (islem.cariHesapId != w.cariHesapId) continue;
+            if (projectIds != null && islem.projectId != null && !projectIds.contains(islem.projectId)) continue;
+            DateTime eff = _getEffectiveDate(islem);
+            if (eff.isBefore(rangeStart)) hPaid += (islem.alacak - islem.borc);
+          }
+        }
+        globalWorkerHistoricalBalance[w.id!] = hEarned - hPaid;
+      }
+    }
 
     for (var project in projects) {
       if (projectIds != null && projectIds.isNotEmpty && !projectIds.contains(project.id)) {
@@ -1411,12 +1453,13 @@ class DatabaseHelper {
 
       double gelir = 0;
       double nonLaborGider = 0;
-
+      double projectLaborAccrual = 0;
+      double projectLaborPayment = 0;
       Map<int, double> projectWorkerAccrual = {};
       Map<int, double> projectWorkerPayment = {};
-      double unassignedLaborPayment = 0;
+      Map<int, Map<String, dynamic>> projectWorkerBreakdown = {};
 
-      // Hakedişler (Sadece tahsil edilenleri gelire ekle)
+      // Hakedişler
       for (var h in hakedisler) {
         if (h.projectId == project.id && h.durum == HakedisDurum.tahsilEdildi) {
           if (!inRange(h.tarih)) continue;
@@ -1424,18 +1467,15 @@ class DatabaseHelper {
         }
       }
 
-      // Projeye bağlı Gelir/Gider
+      // Projeye bağlı Gelir/Gider (ve maaş kategorisindeki giderlerin işçi ödemesi olarak sayılması)
       for (var gg in gelirGiderler) {
         if (gg.projectId == project.id) {
           if (!inRange(gg.tarih)) continue;
           if (gg.tipi == GelirGiderTipi.gelir) gelir += gg.tutar;
-          if (gg.tipi == GelirGiderTipi.gider) {
+          else {
             bool isLabor = (gg.kategori?.contains('İşçi') ?? false) || (gg.kategori?.contains('Maaş') ?? false);
-            if (isLabor) {
-              unassignedLaborPayment += gg.tutar;
-            } else {
-              nonLaborGider += gg.tutar;
-            }
+            if (isLabor) projectLaborPayment += gg.tutar;
+            else nonLaborGider += gg.tutar;
           }
         }
       }
@@ -1539,31 +1579,52 @@ class DatabaseHelper {
         }
       }
 
-      double totalPaidLabor = unassignedLaborPayment;
-      double totalBekleyen = 0;
+      double periodEarned = 0;
+      double periodPaid = projectLaborPayment;
+      List<Map<String, dynamic>> laborItems = [];
 
       for (var w in workers) {
+        if (w.id == null) continue;
         double acc = projectWorkerAccrual[w.id] ?? 0;
         double paid = projectWorkerPayment[w.id] ?? 0;
-        totalPaidLabor += paid;
+        double prev = globalWorkerHistoricalBalance[w.id] ?? 0.0;
         
-        double pending = acc - paid;
-        if (pending > 0) {
-          totalBekleyen += pending;
+        // Bu projede hakediş veya ödeme varsa listede göster
+        double rAcc = acc.roundToDouble();
+        double rPaid = paid.roundToDouble();
+        double rPrev = prev.roundToDouble();
+
+        if (rAcc > 0 || rPaid > 0 || rPrev.abs() > 0.1) {
+          periodEarned += rAcc;
+          periodPaid += rPaid;
+          laborItems.add({
+            'id': w.id,
+            'name': w.adSoyad,
+            'previous_balance': rPrev,
+            'period_earned': rAcc,
+            'period_paid': rPaid,
+            'cumulative_balance': rPrev + rAcc - rPaid,
+          });
         }
       }
 
-      double projectLaborCost = totalPaidLabor + totalBekleyen;
+      double finalLaborCost = periodEarned; // Kar hesabı için tahakkuk eden maliyeti kullanıyoruz
 
       reports.add({
-        'projeId': project.id,
+        'projeId': project.id ?? 0,
         'projeAd': project.ad,
         'durum': project.durum.name,
-        'gelir': gelir,
-        'gider': nonLaborGider + projectLaborCost,
-        'kar': gelir - (nonLaborGider + projectLaborCost),
-        'odenenIscilik': totalPaidLabor,
-        'bekleyenIscilik': totalBekleyen,
+        'gelir': gelir.roundToDouble(),
+        'gider': (nonLaborGider + finalLaborCost).roundToDouble(),
+        'kar': (gelir - (nonLaborGider + finalLaborCost)).roundToDouble(),
+        'odenenIscilik': periodPaid.roundToDouble(),
+        'bekleyenIscilik': periodEarned.roundToDouble() - periodPaid.roundToDouble(),
+        'labor': {
+          'previous_balance': globalWorkerHistoricalBalance.values.fold(0.0, (a, b) => a + b).roundToDouble(),
+          'period_earned': periodEarned.roundToDouble(),
+          'period_paid': periodPaid.roundToDouble(),
+          'items': laborItems,
+        }
       });
     }
 
@@ -2600,7 +2661,7 @@ class DatabaseHelper {
     final rangeStart = DateTime(start.year, start.month, start.day);
 
     final results = await Future.wait<List<dynamic>>([
-      getAllPuantajlar(baslangic: rangeStart.subtract(const Duration(days: 6)), bitis: rangeEnd),
+      getAllPuantajlar(), // Fetch all for historical reconciliation
       getAllWorkers(),
       getAllFaturalar(baslangic: rangeStart, bitis: rangeEnd),
       getAllGelirGider(baslangic: rangeStart, bitis: rangeEnd),
@@ -2623,159 +2684,172 @@ class DatabaseHelper {
              d.isBefore(rangeEnd.add(const Duration(seconds: 1)));
     }
 
-    bool belongsToPeriod(CariIslem islem) {
-      final String descStr = islem.aciklama;
-      final String descLower = descStr.toLowerCase();
-      final String descLowerTr = descStr.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
-      
-      bool isSettlement = 
-          descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
-          descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
-          descLower.contains('avans') || descLowerTr.contains('avans') ||
-          descLower.contains('işçi ödemesi') || descLowerTr.contains('işçi ödemesi') ||
-          descStr.contains('#H:[') ||
-          descStr == 'Hesap Kapatma';
+    bool belongsToPeriod(CariIslem islem) => inRange(_getEffectiveDate(islem));
 
-      if (isSettlement && islem.vade != null) {
-        return inRange(islem.vade!);
-      }
-      return inRange(islem.tarih);
-    }  
-
-    // 1. Personel / Maaş Hesaplama
-    double toplamIscilikHakedis = 0;
-    double toplamIscilikOdeme = 0;
-    Map<int, Map<String, dynamic>> workerDuesMap = {};
-
-    final workerMap = {for (var w in workers) w.id!: w};
-    final workerCariIds = workers.map((w) => w.cariHesapId).whereType<int>().toSet();
-    final cariToWorkerName = {for (var w in workers) if (w.cariHesapId != null) w.cariHesapId!: w.adSoyad};
-
-    // Standard puantaj calculation
-    for (var p in puantajlar) {
-      if (inRange(p.tarih)) {
-        if (projectIds != null && !projectIds.contains(p.projectId)) continue;
-        final w = workerMap[p.workerId];
-        if (w != null) {
-          double cost = calculateLaborCost(p, w);
-          toplamIscilikHakedis += cost;
-          if (!workerDuesMap.containsKey(w.id)) {
-            workerDuesMap[w.id!] = {
-              'name': w.adSoyad,
-              'cariId': w.cariHesapId,
-              'amount': 0.0,
-              'worked': 0,
-              'leave': 0,
-              'sunday': 0,
-            };
-          }
-          workerDuesMap[w.id!]!['amount'] += cost;
-          if (p.status == PuantajStatus.normal) {
-            workerDuesMap[w.id!]!['worked'] = (workerDuesMap[w.id!]!['worked'] as int) + 1;
-          } else if ([PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)) {
-            workerDuesMap[w.id!]!['leave'] = (workerDuesMap[w.id!]!['leave'] as int) + 1;
-          }
-        }
-      }
-    }
-
-    // Sunday Bonus calculation
+    // 0. Mutabakat: Tüm Zamanlar Verisi Üzerinden Bakiye Hesaplama
+    Map<int, double> workerHistoricalBalance = {};
+    Map<int, double> workerCumulativeBalance = {};
+    
     for (var w in workers) {
+      if (w.id == null) continue;
+      
       final workerPuantaj = puantajlar.where((p) => p.workerId == w.id).toList();
-
-      // Calculate bonuses for the range specifically to get count
-      int bonusCount = 0;
-      DateTime current = DateTime(rangeStart.year, rangeStart.month, rangeStart.day);
-      while (current.isBefore(rangeEnd.add(const Duration(seconds: 1)))) {
-        if (current.weekday == DateTime.sunday) {
+      double histEarned = 0;
+      double totalEarned = 0;
+      
+      // Puantaj ve Bonuslar
+      for (var p in workerPuantaj) {
+        if (projectIds != null && !projectIds.contains(p.projectId)) continue;
+        double cost = calculateLaborCost(p, w);
+        if (p.tarih.isBefore(rangeStart)) histEarned += cost;
+        totalEarned += cost;
+      }
+      
+      // Pazar Bonusları (Kümülatif hesaplama için basitleştirilmiş döngü)
+      DateTime bonusStart = DateTime(2024, 1, 1);
+      if (w.baslangicTarihi.isAfter(bonusStart)) bonusStart = DateTime(w.baslangicTarihi.year, w.baslangicTarihi.month, w.baslangicTarihi.day);
+      
+      DateTime d = bonusStart;
+      while (d.isBefore(rangeEnd.add(const Duration(seconds: 1)))) {
+        if (d.weekday == DateTime.sunday) {
           bool earnedBonus = true;
-          Map<int, int> projectCounts = {};
+          Map<int, int> pCounts = {};
           for (int i = 0; i <= 6; i++) {
-            DateTime checkDate = current.subtract(Duration(days: i));
-            final dayPuantajlar = workerPuantaj.where((p) =>
-              p.tarih.year == checkDate.year && p.tarih.month == checkDate.month && p.tarih.day == checkDate.day
-            ).toList();
-            if (i > 0) {
-              if (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz)) {
-                earnedBonus = false;
-                break;
-              }
-            }
+            DateTime checkDate = d.subtract(Duration(days: i));
+            final dayPuantajlar = workerPuantaj.where((p) => p.tarih.year == checkDate.year && p.tarih.month == checkDate.month && p.tarih.day == checkDate.day).toList();
+            if (i > 0 && (dayPuantajlar.isEmpty || dayPuantajlar.any((item) => item.status == PuantajStatus.izinsiz))) { earnedBonus = false; break; }
             if (dayPuantajlar.isNotEmpty && dayPuantajlar.last.projectId != null) {
               int pid = dayPuantajlar.last.projectId!;
-              projectCounts[pid] = (projectCounts[pid] ?? 0) + 1;
+              pCounts[pid] = (pCounts[pid] ?? 0) + 1;
             }
           }
+          if (earnedBonus) {
+             int? majPid;
+             if (pCounts.isNotEmpty) majPid = pCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+             if (projectIds != null && (majPid == null || !projectIds.contains(majPid))) earnedBonus = false;
+          }
+          if (earnedBonus) {
+            final sundayRecords = workerPuantaj.where((p) => p.tarih.year == d.year && p.tarih.month == d.month && p.tarih.day == d.day).toList();
+            if (!sundayRecords.any((p) => [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status))) {
+              double bonus = _getDailyRate(w);
+              if (d.isBefore(rangeStart)) histEarned += bonus;
+              totalEarned += bonus;
+            }
+          }
+        }
+        d = d.add(const Duration(days: 1));
+      }
+
+      // Cari İşlemler (Ödemeler Alacak, Ekstra Haklar Borç)
+      double histPaid = 0;
+      double totalPaid = 0;
+      if (w.cariHesapId != null) {
+        for (var islem in cariIslemler) {
+          if (islem.cariHesapId != w.cariHesapId) continue;
+          if (projectIds != null && islem.projectId != null && !projectIds.contains(islem.projectId)) continue;
           
-          if (earnedBonus) {
-            int? majorityProjectId;
-            if (projectCounts.isNotEmpty) {
-              majorityProjectId = projectCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
-            }
-            
-            // Project filter check for bonus
-            if (projectIds != null && (majorityProjectId == null || !projectIds.contains(majorityProjectId))) {
-              earnedBonus = false;
-            }
+          DateTime effectiveDate = _getEffectiveDate(islem);
+          
+          if (effectiveDate.isBefore(rangeStart)) {
+            histPaid += (islem.alacak - islem.borc);
           }
-          if (earnedBonus) {
-            // Rule check for double counting on Sunday itself
-            final sundayRecords = workerPuantaj.where((p) =>
-              p.tarih.year == current.year && p.tarih.month == current.month && p.tarih.day == current.day
-            ).toList();
-
-            bool isPaidHolidayRecord = sundayRecords.any((p) =>
-              [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)
-            );
-
-            if (!isPaidHolidayRecord) {
-              bonusCount++;
-            }
-          }
+          totalPaid += (islem.alacak - islem.borc);
         }
-        current = current.add(const Duration(days: 1));
       }
-
-      if (bonusCount > 0) {
-        double dailyRate = _getDailyRate(w);
-        double bonusTotal = bonusCount * dailyRate;
-        toplamIscilikHakedis += bonusTotal;
-        if (!workerDuesMap.containsKey(w.id)) {
-          workerDuesMap[w.id!] = {
-            'name': w.adSoyad,
-            'cariId': w.cariHesapId,
-            'amount': 0.0,
-            'worked': 0,
-            'leave': 0,
-            'sunday': 0,
-          };
-        }
-        workerDuesMap[w.id!]!['amount'] += bonusTotal;
-        workerDuesMap[w.id!]!['sunday'] = (workerDuesMap[w.id!]!['sunday'] ?? 0) + bonusCount;
-      }
+      
+      workerHistoricalBalance[w.id!] = histEarned - histPaid;
+      workerCumulativeBalance[w.id!] = totalEarned - totalPaid;
     }
 
-    for (var islem in cariIslemler) {
-      if (belongsToPeriod(islem)) {
-        // Fix: Ensure we include unassigned (projectId == null) worker payments even when filtering by project
-        // This ensures settlements made in the general account offset project-specific labor costs.
-        if (projectIds != null && islem.projectId != null && !projectIds.contains(islem.projectId)) continue;
-        if (projectIds != null && islem.projectId == null) {
-          bool isWorker = workerCariIds.contains(islem.cariHesapId);
-          if (!isWorker) continue;
-        }
+    // 1. Personel / Maaş Hesaplama Logic Cleanup (Already calculated globally, just populate breakdowns)
+    double totalPreviousBalance = 0;
+    double periodEarnedTotal = 0;
+    double periodPaidTotal = 0;
+    Map<int, Map<String, dynamic>> workerBreakdownMap = {};
+    final workerCariIds = workers.map((w) => w.cariHesapId).whereType<int>().toSet();
 
-        if (workerCariIds.contains(islem.cariHesapId)) {
-          toplamIscilikOdeme += islem.alacak;
-          
-          // Find worker for this cariId
-          final w = workers.firstWhere((w) => w.cariHesapId == islem.cariHesapId);
-          if (!workerDuesMap.containsKey(w.id)) {
-            workerDuesMap[w.id!] = {'name': w.adSoyad, 'cariId': w.cariHesapId, 'amount': 0.0};
-          }
-          workerDuesMap[w.id!]!['amount'] -= islem.alacak;
+    for (var w in workers) {
+      if (w.id == null) continue;
+      double prev = workerHistoricalBalance[w.id!] ?? 0.0;
+      double cumulative = workerCumulativeBalance[w.id!] ?? 0.0;
+      
+      // Dönem İçi Hak ve Öde (Basit Çıkarma)
+      // Ancak proje filtresi varsa burayı tekrar süzmemiz gerekebilir.
+      // Şimdilik global bakiyeyi esas alıyoruz çünkü kullanıcı "0 TL yazıcak" dedi.
+      
+      double pEarned = 0;
+      double pPaid = 0;
+      
+      final workerPuantaj = puantajlar.where((p) => p.workerId == w.id).toList();
+      for (var p in workerPuantaj) {
+        if (inRange(p.tarih)) {
+          if (projectIds != null && !projectIds.contains(p.projectId)) continue;
+          pEarned += calculateLaborCost(p, w);
         }
       }
+      
+      // Sunday Bonuses in period
+      DateTime d = rangeStart;
+      while (d.isBefore(rangeEnd.add(const Duration(seconds: 1)))) {
+        if (d.weekday == DateTime.sunday) {
+          bool earnedBonus = true;
+          Map<int, int> pCounts = {};
+          for (int i = 0; i <= 6; i++) {
+            DateTime cD = d.subtract(Duration(days: i));
+            final dayP = workerPuantaj.where((p) => p.tarih.year == cD.year && p.tarih.month == cD.month && p.tarih.day == cD.day).toList();
+            if (i > 0 && (dayP.isEmpty || dayP.any((item) => item.status == PuantajStatus.izinsiz))) { earnedBonus = false; break; }
+            if (dayP.isNotEmpty && dayP.last.projectId != null) {
+              int pid = dayP.last.projectId!;
+              pCounts[pid] = (pCounts[pid] ?? 0) + 1;
+            }
+          }
+          if (earnedBonus) {
+             int? majPid;
+             if (pCounts.isNotEmpty) majPid = pCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+             if (projectIds != null && (majPid == null || !projectIds.contains(majPid))) earnedBonus = false;
+          }
+          if (earnedBonus) {
+            final sunR = workerPuantaj.where((p) => p.tarih.year == d.year && p.tarih.month == d.month && p.tarih.day == d.day).toList();
+            if (!sunR.any((p) => [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status))) pEarned += _getDailyRate(w);
+          }
+        }
+        d = d.add(const Duration(days: 1));
+      }
+      
+      if (w.cariHesapId != null) {
+        for (var islem in cariIslemler) {
+          if (islem.cariHesapId != w.cariHesapId) continue;
+          if (belongsToPeriod(islem)) {
+            if (projectIds != null && islem.projectId != null && !projectIds.contains(islem.projectId)) continue;
+            pPaid += islem.alacak;
+            pEarned += islem.borc;
+          }
+        }
+      }
+
+      // Consistently round for visual and mathematical integrity
+      double roundedEarned = pEarned.roundToDouble();
+      double roundedPaid = pPaid.roundToDouble();
+      double roundedPrev = prev.roundToDouble();
+
+      periodEarnedTotal += roundedEarned;
+      periodPaidTotal += roundedPaid;
+      totalPreviousBalance += roundedPrev;
+      
+      workerBreakdownMap[w.id!] = {
+        'id': w.id, 'name': w.adSoyad, 'cariId': w.cariHesapId,
+        'previous_balance': roundedPrev, 
+        'period_earned': roundedEarned, 
+        'period_paid': roundedPaid,
+        'period_balance': roundedEarned - roundedPaid,
+        'cumulative_balance': roundedPrev + roundedEarned - roundedPaid,
+      };
+    }
+
+    workerBreakdownMap.removeWhere((id, data) => (data['period_earned'] as double) == 0 && (data['period_paid'] as double) == 0 && (data['previous_balance'] as double).abs() < 0.1);
+    for (var item in workerBreakdownMap.values) {
+      item['amount'] = item['cumulative_balance']; 
+      item['net_debt'] = item['cumulative_balance'];
     }
 
     // 2. Fatura ve KDV Analizi
@@ -2864,15 +2938,7 @@ class DatabaseHelper {
           final String descLower = descStr.toLowerCase();
           final String descLowerTr = descStr.replaceAll('İ', 'i').replaceAll('I', 'ı').toLowerCase();
           
-          bool isSettlement = 
-              descLower.contains('hakediş tahsilatı') || descLowerTr.contains('hakediş tahsilatı') ||
-              descLower.contains('maaş ödemesi') || descLowerTr.contains('maaş ödemesi') ||
-              descLower.contains('avans') || descLowerTr.contains('avans') ||
-              descLower.contains('işçi ödemesi') || descLowerTr.contains('işçi ödemesi') ||
-              descStr.contains('#H:[') ||
-              descStr == 'Hesap Kapatma';
-
-          if (!isSettlement) {
+          if (!_isSettlementTransaction(islem)) {
             manuallyEnteredGelir += islem.borc;
             manuallyEnteredGider += islem.alacak;
           }
@@ -2925,26 +2991,29 @@ class DatabaseHelper {
       'period_start': rangeStart,
       'period_end': rangeEnd,
       'labor': {
-        'total_earned': toplamIscilikHakedis,
-        'total_paid': toplamIscilikOdeme,
-        'net_debt': toplamIscilikHakedis - toplamIscilikOdeme,
-        'items': workerDuesMap.values.toList(),
+        'previous_balance': totalPreviousBalance.roundToDouble(),
+        'period_earned': periodEarnedTotal.roundToDouble(),
+        'period_paid': periodPaidTotal.roundToDouble(),
+        'period_net': periodEarnedTotal.roundToDouble() - periodPaidTotal.roundToDouble(),
+        'total_earned': periodEarnedTotal.roundToDouble(),
+        'total_paid': periodPaidTotal.roundToDouble(),
+        'net_debt': totalPreviousBalance.roundToDouble() + (periodEarnedTotal.roundToDouble() - periodPaidTotal.roundToDouble()),
+        'cumulative_balance': totalPreviousBalance.roundToDouble() + (periodEarnedTotal.roundToDouble() - periodPaidTotal.roundToDouble()),
+        'items': workerBreakdownMap.values.toList(),
       },
       'invoices': {
-        'sales': toplamSatis,
-        'purchases': toplamAlis,
-        'sales_vat': satisKdv,
-        'purchase_vat': alisKdv,
-        'vat_balance': satisKdv - alisKdv,
+        'sales': toplamSatis.roundToDouble(),
+        'purchases': toplamAlis.roundToDouble(),
+        'sales_vat': satisKdv.roundToDouble(),
+        'purchase_vat': alisKdv.roundToDouble(),
+        'vat_balance': (satisKdv - alisKdv).roundToDouble(),
         'items': invoiceBalances.values.toList(),
       },
       'financials': {
-        'extra_income': extraGelir + manuallyEnteredGelir,
-        'extra_expense': extraGider + manuallyEnteredGider,
-        'total_revenue': toplamSatis + extraGelir + manuallyEnteredGelir + toplamHakedisNetValue,
-        'total_cost': toplamAlis + extraGider + manuallyEnteredGider + toplamIscilikHakedis,
-        'net_profit': (toplamSatis + extraGelir + manuallyEnteredGelir + toplamHakedisNetValue) -
-                      (toplamAlis + extraGider + manuallyEnteredGider + toplamIscilikHakedis),
+        'total_revenue': (toplamSatis + extraGelir + manuallyEnteredGelir + tahsilEdilenHakedisValue).roundToDouble(),
+        'total_cost': (toplamAlis + extraGider + manuallyEnteredGider + periodEarnedTotal).roundToDouble(),
+        'net_profit': ((toplamSatis + extraGelir + manuallyEnteredGelir + tahsilEdilenHakedisValue) - (toplamAlis + extraGider + manuallyEnteredGider + periodEarnedTotal)).roundToDouble(),
+        'extra_expense': (extraGider + manuallyEnteredGider).roundToDouble(),
       },
       'ledger': {
         'total_receivable': toplamCariBorcValue,

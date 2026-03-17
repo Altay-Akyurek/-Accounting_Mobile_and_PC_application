@@ -1646,6 +1646,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get personnelStatus => 'Personnel Salary Status';
+
+  @override
+  String get previousBalance => 'Previous Balance (Carry-over)';
+
+  @override
+  String get previousBalanceTransfer => 'Balance Carried Over (Previous Debt)';
+
+  @override
+  String get periodEarned => 'Period Earned';
+
+  @override
+  String get periodEarnedPlus => 'Period Earned (+)';
+
+  @override
+  String get periodPaidMinus => 'Period Payments (-)';
+
+  @override
+  String get remainingPayableBalance => 'REMAINING PAYABLE BALANCE';
+
+  @override
   String get producedHakedisNet => 'Produced Net Hakedis';
 
   @override

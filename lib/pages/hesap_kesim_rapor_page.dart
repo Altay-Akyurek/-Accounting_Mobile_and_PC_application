@@ -426,17 +426,19 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
   Future<void> _settleLabor() async {
     final labor = _reportData!['labor'];
     final items = List<Map<String, dynamic>>.from(labor['items']);
-    final toSettle = items.where((i) => i['amount'] != 0).toList();
+    // Filter items where there is something to pay in the CURRENT PERIOD
+    final toSettle = items.where((i) => (i['period_balance'] ?? 0.0) != 0).toList();
 
-    // Kural kaldırıldı
-    if (false && toSettle.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noBalanceToReset)));
+    if (toSettle.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Seçilen dönem için ödenecek bakiye bulunamadı.')));
       return;
     }
 
+    final double periodNet = labor['period_net']?.toDouble() ?? 0.0;
+
     final confirm = await _showConfirmDialog(
-      AppLocalizations.of(context)!.settlePersonnelAccount,
-      AppLocalizations.of(context)!.laborSettleConfirm(toSettle.length, _formatPara(labor['net_debt'].toDouble())),
+      'Seçili Dönemi Kapat',
+      'Seçili tarih aralığındaki ${toSettle.length} personelin net hakediş ödemesini (${_formatPara(periodNet.abs())}) yapmak istiyor musunuz?',
     );
 
     if (confirm != true) return;
@@ -446,7 +448,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       final List<CariIslem> transactions = [];
       final islemTarihi = _getSettlementDate();
       for (var item in toSettle) {
-        final double amount = item['amount'].toDouble();
+        final double amount = item['period_balance'].toDouble();
         if (item['cariId'] == null) {
            throw Exception('${item['name']} için Cari Hesap tanımlanmamış. Lütfen Personel Düzenle kısmından bir Cari Hesap bağlayın.');
         }
@@ -456,10 +458,10 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
           projectId: _selectedProjectIds.length == 1 ? _selectedProjectIds.first : null,
           tarih: islemTarihi,
           vade: _endDate, // Indicate this settles the selected period
-          aciklama: 'Maaş Ödemesi: ${item['name']}',
+          aciklama: 'Maaş Ödemesi (Dönem): ${item['name']}',
           hesapTipi: 'Nakit',
-          borc: 0,
-          alacak: amount,
+          borc: amount < 0 ? amount.abs() : 0,
+          alacak: amount > 0 ? amount : 0,
           bakiye: -amount,
         ));
       }
@@ -770,25 +772,78 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
   Widget _buildLaborSection() {
     final labor = _reportData!['labor'];
     final List<Map<String, dynamic>> items = List<Map<String, dynamic>>.from(labor['items']);
+    final double cumulative = labor['cumulative_balance'].toDouble();
+    final double periodNet = labor['period_net']?.toDouble() ?? 0.0;
+    final bool isPeriodClosed = periodNet.abs() < 0.1;
 
     return _buildCardWrapper(
       child: Column(
         children: [
-          _buildDataRow(AppLocalizations.of(context)!.totalEarned, labor['total_earned'].toDouble()),
-          _buildDataRow(AppLocalizations.of(context)!.totalPaid, labor['total_paid'].toDouble()),
-          const Divider(),
           _buildDataRow(
-            AppLocalizations.of(context)!.remainingPersonnelDebt, 
-            labor['net_debt'].toDouble(), 
-            isBold: true, 
-            valueColor: Colors.red
+            AppLocalizations.of(context)!.previousBalanceTransfer, 
+            labor['previous_balance'].toDouble().abs(), 
+            valueColor: Colors.grey.shade600
+          ),
+          _buildDataRow(
+            AppLocalizations.of(context)!.periodEarnedPlus, 
+            labor['period_earned'].toDouble().abs(), 
+            isBold: true,
+            valueColor: Colors.black,
+          ),
+          _buildDataRow(
+            AppLocalizations.of(context)!.periodPaidMinus, 
+            labor['period_paid'].toDouble().abs(), 
+            valueColor: Colors.blue.shade400
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.red.withOpacity(0.1)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Seçili Dönem Kalan Bakiye',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF011627),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Text(
+                  _formatPara(periodNet.abs()),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: isPeriodClosed ? Colors.grey : const Color(0xFFE71D36),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildDataRow(
+            'Genel Toplam Bakiye (Tüm Zamanlar)', 
+            cumulative, 
+            isBold: true,
+            valueColor: cumulative.abs() < 0.1 ? Colors.grey : const Color(0xFF011627)
           ),
           if (items.isNotEmpty) ...[
-            const Divider(),
+            const SizedBox(height: 8),
             Theme(
               data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
-                title: Text(AppLocalizations.of(context)!.seePersonnelDetails, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                title: Text(
+                  AppLocalizations.of(context)!.seePersonnelDetails, 
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)
+                ),
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: EdgeInsets.zero,
                 onExpansionChanged: (expanded) => setState(() => _isLaborExpanded = expanded),
@@ -796,6 +851,12 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                   final worked = item['worked'] ?? 0;
                   final leave = item['leave'] ?? 0;
                   final sunday = item['sunday'] ?? 0;
+                  final prev = item['previous_balance']?.toDouble() ?? 0.0;
+                  final earned = item['period_earned']?.toDouble() ?? 0.0;
+                                final double periodBalance = item['period_balance']?.toDouble() ?? 0.0;
+                  final double total = item['cumulative_balance']?.toDouble() ?? 0.0;
+                  final bool periodSettled = periodBalance.abs() < 0.1;
+
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Column(
@@ -804,14 +865,37 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(item['name'], style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                            Text(_formatPara(item['amount'].toDouble()), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                            Text(
+                              periodSettled ? '${item['name']} (Dönem Kapalı)' : item['name'], 
+                              style: TextStyle(
+                                fontSize: 14, 
+                                fontWeight: FontWeight.w600, 
+                                color: periodSettled ? Colors.grey : const Color(0xFF011627)
+                              )
+                            ),
+                            Text(
+                              _formatPara(periodBalance.abs()), 
+                              style: TextStyle(
+                                fontSize: 14, 
+                                fontWeight: FontWeight.bold, 
+                                color: periodSettled ? Colors.grey : const Color(0xFFE71D36)
+                              )
+                            ),
                           ],
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          AppLocalizations.of(context)!.laborSummaryDetail(worked, leave, sunday),
-                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                        Row(
+                          children: [
+                            Text(
+                              AppLocalizations.of(context)!.laborSummaryDetail(worked, leave, sunday),
+                              style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                            ),
+                            const Spacer(),
+                            Text(
+                              'Eski Borç: ${_formatPara(prev.abs())} | Genel Toplam: ${_formatPara(total.abs())}',
+                              style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -819,7 +903,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                 }).toList(),
               ),
             ),
-          ]
+          ],
         ],
       ),
     );
