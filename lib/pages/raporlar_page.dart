@@ -95,6 +95,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
             'worked': item['worked'] ?? 0,
             'leave': item['leave'] ?? 0,
             'sunday': item['sunday'] ?? 0,
+            'absent': item['absent'] ?? 0,
             'label': isPeriodCleared ? 'DÖNEM KAPALI' : (bakiye > 0 ? 'DÖNEM BORÇ' : 'DÖNEM ALACAK'),
           };
         }
@@ -440,14 +441,22 @@ class _RaporlarPageState extends State<RaporlarPage> {
                             Text(_formatPara(amount), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.purple)),
                           ],
                         ),
-                        Text(
-                          '$worked ${AppLocalizations.of(context)!.normal} + $leave ${AppLocalizations.of(context)!.onLeave} + $sunday ${AppLocalizations.of(context)!.sunday}',
-                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Toplam Kalan Borç: ${_formatPara(data['cumulative'] as double)}',
-                          style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            _buildMiniActivityBadge(Icons.check_circle_rounded, worked.toString(), const Color(0xFF2EC4B6), worked > 0),
+                            const SizedBox(width: 6),
+                            _buildMiniActivityBadge(Icons.event_note_rounded, leave.toString(), Colors.blue, leave > 0),
+                            const SizedBox(width: 6),
+                            _buildMiniActivityBadge(Icons.wb_sunny_rounded, sunday.toString(), Colors.amber.shade700, sunday > 0),
+                            const SizedBox(width: 6),
+                            _buildMiniActivityBadge(Icons.error_outline_rounded, (data['absent'] ?? 0).toString(), Colors.red, (data['absent'] ?? 0) > 0),
+                            const Spacer(),
+                            Text(
+                              'Kalan: ${_formatPara(data['cumulative'] as double)}',
+                              style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -710,28 +719,52 @@ class _ProjectReportItem extends StatelessWidget {
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: EdgeInsets.zero,
                 children: (report['labor']['items'] as List).map((item) {
+                  final int worked = item['worked'] ?? 0;
+                  final int leave = item['leave'] ?? 0;
+                  final int sunday = item['sunday'] ?? 0;
                   final double bakiye = (item['cumulative_balance'] ?? 0.0).toDouble();
                   final bool isClosed = bakiye.abs() < 0.1;
 
                   return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(isClosed ? '${item['name']} (HESAP KAPALI)' : item['name'], 
-                                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isClosed ? Colors.grey : null)),
-                            Text(_formatPara(context, bakiye), 
-                                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isClosed ? Colors.grey : null)),
+                            Expanded(
+                              child: Text(
+                                isClosed ? '${item['name']} (HESAP KAPALI)' : item['name'], 
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isClosed ? Colors.grey : const Color(0xFF011627)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              _formatPara(context, bakiye), 
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: isClosed ? Colors.grey : const Color(0xFF011627))
+                            ),
                           ],
                         ),
-                        if (!isClosed)
-                        Text(
-                          'Eski: ${_formatPara(context, (item['previous_balance']?.toDouble() ?? 0.0).abs())} | Hak: ${_formatPara(context, (item['period_earned']?.toDouble() ?? 0.0).abs())} | Öd: ${_formatPara(context, (item['period_paid']?.toDouble() ?? 0.0).abs())}',
-                          style: TextStyle(fontSize: 9, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            _buildMiniActivityBadge(Icons.check_circle_rounded, worked.toString(), const Color(0xFF2EC4B6), worked > 0),
+                            const SizedBox(width: 4),
+                            _buildMiniActivityBadge(Icons.event_note_rounded, leave.toString(), Colors.blue, leave > 0),
+                            const SizedBox(width: 4),
+                            _buildMiniActivityBadge(Icons.wb_sunny_rounded, sunday.toString(), Colors.amber.shade700, sunday > 0),
+                            const SizedBox(width: 4),
+                            _buildMiniActivityBadge(Icons.error_outline_rounded, (item['absent'] ?? 0).toString(), Colors.red, (item['absent'] ?? 0) > 0),
+                            const Spacer(),
+                            if (!isClosed)
+                              Text(
+                                'E: ${_formatPara(context, (item['previous_balance']?.toDouble() ?? 0.0).abs())} | H: ${_formatPara(context, (item['period_earned']?.toDouble() ?? 0.0).abs())} | Ö: ${_formatPara(context, (item['period_paid']?.toDouble() ?? 0.0).abs())}',
+                                style: TextStyle(fontSize: 8, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
+                              ),
+                          ],
                         ),
+                        const Divider(height: 12, thickness: 0.3),
                       ],
                     ),
                   );
@@ -743,6 +776,31 @@ class _ProjectReportItem extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _buildMiniActivityBadge(IconData icon, String value, Color color, bool isActive) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+    decoration: BoxDecoration(
+      color: isActive ? color.withOpacity(0.1) : Colors.grey.shade100,
+      borderRadius: BorderRadius.circular(4),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 8, color: isActive ? color : Colors.grey.shade400),
+        const SizedBox(width: 3),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            color: isActive ? color : Colors.grey.shade400,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _SimpleRatioBar extends StatelessWidget {

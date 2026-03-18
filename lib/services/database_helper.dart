@@ -1512,6 +1512,11 @@ class DatabaseHelper {
         }
       }
 
+      Map<int, int> projectWorkedCounts = {};
+      Map<int, int> projectLeaveCounts = {};
+      Map<int, int> projectAbsentCounts = {};
+      Map<int, int> projectSundayCounts = {};
+
       // Projeye bağlı İşçilik (Puantaj)
       for (var p in puantajlar) {
         if (p.projectId == project.id) {
@@ -1519,6 +1524,15 @@ class DatabaseHelper {
           final worker = workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
           double cost = calculateLaborCost(p, worker);
           projectWorkerAccrual[p.workerId] = (projectWorkerAccrual[p.workerId] ?? 0) + cost;
+
+          // Update counts
+          if (p.status == PuantajStatus.normal) {
+            projectWorkedCounts[p.workerId] = (projectWorkedCounts[p.workerId] ?? 0) + 1;
+          } else if ([PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)) {
+            projectLeaveCounts[p.workerId] = (projectLeaveCounts[p.workerId] ?? 0) + 1;
+          } else if (p.status == PuantajStatus.izinsiz) {
+            projectAbsentCounts[p.workerId] = (projectAbsentCounts[p.workerId] ?? 0) + 1;
+          }
         }
       }
 
@@ -1572,6 +1586,7 @@ class DatabaseHelper {
               if (!isPaidHolidayRecord && majorityProjectId == project.id) {
                 double dailyRate = _getDailyRate(w);
                 projectWorkerAccrual[w.id!] = (projectWorkerAccrual[w.id!] ?? 0) + dailyRate;
+                projectSundayCounts[w.id!] = (projectSundayCounts[w.id!] ?? 0) + 1;
               }
             }
           }
@@ -1604,6 +1619,10 @@ class DatabaseHelper {
             'period_earned': rAcc,
             'period_paid': rPaid,
             'cumulative_balance': rPrev + rAcc - rPaid,
+            'worked': projectWorkedCounts[w.id] ?? 0,
+            'leave': projectLeaveCounts[w.id] ?? 0,
+            'absent': projectAbsentCounts[w.id] ?? 0,
+            'sunday': projectSundayCounts[w.id] ?? 0,
           });
         }
       }
@@ -2779,12 +2798,24 @@ class DatabaseHelper {
       
       double pEarned = 0;
       double pPaid = 0;
+      int workedCount = 0;
+      int leaveCount = 0;
+      int absentCount = 0;
+      int sundayCount = 0;
       
       final workerPuantaj = puantajlar.where((p) => p.workerId == w.id).toList();
       for (var p in workerPuantaj) {
         if (inRange(p.tarih)) {
           if (projectIds != null && !projectIds.contains(p.projectId)) continue;
           pEarned += calculateLaborCost(p, w);
+          
+          if (p.status == PuantajStatus.normal) {
+            workedCount++;
+          } else if ([PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status)) {
+            leaveCount++;
+          } else if (p.status == PuantajStatus.izinsiz) {
+            absentCount++;
+          }
         }
       }
       
@@ -2810,7 +2841,10 @@ class DatabaseHelper {
           }
           if (earnedBonus) {
             final sunR = workerPuantaj.where((p) => p.tarih.year == d.year && p.tarih.month == d.month && p.tarih.day == d.day).toList();
-            if (!sunR.any((p) => [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status))) pEarned += _getDailyRate(w);
+            if (!sunR.any((p) => [PuantajStatus.izinli, PuantajStatus.raporlu, PuantajStatus.mazeretli].contains(p.status))) {
+              pEarned += _getDailyRate(w);
+              sundayCount++;
+            }
           }
         }
         d = d.add(const Duration(days: 1));
@@ -2843,6 +2877,10 @@ class DatabaseHelper {
         'period_paid': roundedPaid,
         'period_balance': roundedEarned - roundedPaid,
         'cumulative_balance': roundedPrev + roundedEarned - roundedPaid,
+        'worked': workedCount,
+        'leave': leaveCount,
+        'absent': absentCount,
+        'sunday': sundayCount,
       };
     }
 

@@ -815,8 +815,10 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                       color: Color(0xFF011627),
                       letterSpacing: 0.5,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   _formatPara(periodNet.abs()),
                   style: TextStyle(
@@ -851,6 +853,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                   final worked = item['worked'] ?? 0;
                   final leave = item['leave'] ?? 0;
                   final sunday = item['sunday'] ?? 0;
+                  final absent = item['absent'] ?? 0;
                   final prev = item['previous_balance']?.toDouble() ?? 0.0;
                   final earned = item['period_earned']?.toDouble() ?? 0.0;
                                 final double periodBalance = item['period_balance']?.toDouble() ?? 0.0;
@@ -865,38 +868,56 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              periodSettled ? '${item['name']} (Dönem Kapalı)' : item['name'], 
-                              style: TextStyle(
-                                fontSize: 14, 
-                                fontWeight: FontWeight.w600, 
-                                color: periodSettled ? Colors.grey : const Color(0xFF011627)
-                              )
+                            Expanded(
+                              child: Text(
+                                periodSettled ? '${item['name']} (Dönem Kapalı)' : item['name'], 
+                                style: TextStyle(
+                                  fontSize: 14, 
+                                  fontWeight: FontWeight.w900, 
+                                  color: periodSettled ? Colors.grey : const Color(0xFF011627)
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
                               _formatPara(periodBalance.abs()), 
                               style: TextStyle(
                                 fontSize: 14, 
-                                fontWeight: FontWeight.bold, 
+                                fontWeight: FontWeight.w900, 
                                 color: periodSettled ? Colors.grey : const Color(0xFFE71D36)
                               )
                             ),
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
-                            Text(
-                              AppLocalizations.of(context)!.laborSummaryDetail(worked, leave, sunday),
-                              style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                            ),
+                            _buildMiniActivityBadge(Icons.check_circle_rounded, worked.toString(), const Color(0xFF2EC4B6), worked > 0),
+                            const SizedBox(width: 8),
+                            _buildMiniActivityBadge(Icons.event_note_rounded, leave.toString(), Colors.blue, leave > 0),
+                            const SizedBox(width: 8),
+                            _buildMiniActivityBadge(Icons.wb_sunny_rounded, sunday.toString(), Colors.amber.shade700, sunday > 0),
+                            const SizedBox(width: 8),
+                            _buildMiniActivityBadge(Icons.error_outline_rounded, absent.toString(), Colors.red, absent > 0),
                             const Spacer(),
-                            Text(
-                              'Eski Borç: ${_formatPara(prev.abs())} | Genel Toplam: ${_formatPara(total.abs())}',
-                              style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Eski Borç: ${_formatPara(prev.abs())}',
+                                  style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
+                                ),
+                                Text(
+                                  'Genel Toplam: ${_formatPara(total.abs())}',
+                                  style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.bold),
+                                ),
+                              ],
                             ),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                        const Divider(height: 1, thickness: 0.5),
                       ],
                     ),
                   );
@@ -983,20 +1004,50 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     );
   }
 
+  Widget _buildMiniActivityBadge(IconData icon, String value, Color color, bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: isActive ? color.withOpacity(0.1) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: isActive ? color.withOpacity(0.3) : Colors.grey.shade200),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: isActive ? color : Colors.grey.shade400),
+          const SizedBox(width: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: isActive ? color : Colors.grey.shade400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDataRow(String label, double value, {bool isBold = false, Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: isBold ? const Color(0xFF011627) : Colors.black87,
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                color: isBold ? const Color(0xFF011627) : Colors.black87,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+          const SizedBox(width: 12),
           Text(
             _formatPara(value),
             style: TextStyle(
