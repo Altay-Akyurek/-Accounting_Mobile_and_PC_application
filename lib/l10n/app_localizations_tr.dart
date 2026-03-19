@@ -111,6 +111,27 @@ class AppLocalizationsTr extends AppLocalizations {
   String get premiumPackages => 'Premium Paketler';
 
   @override
+  String get freePremium => '10 Dk Ücretsiz Premium';
+
+  @override
+  String get analysisAndReports => 'Analiz ve Raporlar';
+
+  @override
+  String get premiumAndAccount => 'Premium ve Hesap';
+
+  @override
+  String get supportAndInfo => 'Destek ve Bilgi';
+
+  @override
+  String get termsOfUse => 'Kullanım Şartları';
+
+  @override
+  String get rateUs => 'Bizi Değerlendirin';
+
+  @override
+  String get contactSupport => 'Bize Ulaşın / Destek';
+
+  @override
   String get logout => 'Çıkış Yap';
 
   @override

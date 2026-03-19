@@ -155,144 +155,182 @@ class _DashboardPageState extends State<DashboardPage> {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _buildDrawerItem(
-                    icon: Icons.analytics_rounded,
-                    label: AppLocalizations.of(context)!.workerAnalysis,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const WorkerAnalysisPage()),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.cases_rounded,
-                    label: AppLocalizations.of(context)!.ourPortfolio,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const PortfolioPage()),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.engineering_rounded,
-                    label: AppLocalizations.of(context)!.laborSummary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, '/labor_summary');
-                    },
-                  ),
-                  ValueListenableBuilder<bool>(
-                    valueListenable: PremiumManager.instance.premiumStatusNotifier,
-                    builder: (context, isPremium, child) {
-                      if (isPremium) return const SizedBox.shrink();
-                      return Column(
-                        children: [
-                          _buildDrawerItem(
-                            icon: Icons.stars_rounded,
-                            label: AppLocalizations.of(context)!.premiumPackages,
-                            color: const Color(0xFF2EC4B6),
-                            onTap: () {
-                              Navigator.pop(context);
-                              Navigator.pushNamed(context, '/premium');
-                            },
-                          ),
-                          _buildDrawerItem(
-                            icon: Icons.ondemand_video_rounded,
-                            label: "10 Dk Ücretsiz Premium",
-                            color: Colors.orange,
-                            onTap: () {
-                              Navigator.pop(context);
-                              _showRewardedAdFromDashboard();
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.language_rounded,
-                    label: AppLocalizations.of(context)!.language,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showLanguageDialog();
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.privacy_tip_rounded,
-                    label: AppLocalizations.of(context)!.privacyPolicy,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.gavel_rounded,
-                    label: "Kullanım Şartları",
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const TermsOfUsePage()),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.star_rate_rounded,
-                    label: "Bizi Değerlendirin",
-                    color: Colors.amber,
-                    onTap: () async {
-                      Navigator.pop(context);
-                      final Uri marketUri = Uri.parse('market://details?id=com.muhasebepro.app');
-                      final Uri playStoreUri = Uri.parse('https://play.google.com/store/apps/details?id=com.muhasebepro.app');
-                      
-                      try {
-                        if (await canLaunchUrl(marketUri)) {
-                          await launchUrl(marketUri, mode: LaunchMode.externalApplication);
-                        } else if (await canLaunchUrl(playStoreUri)) {
-                          await launchUrl(playStoreUri, mode: LaunchMode.externalApplication);
-                        } else {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Uygulama mağazası açılamadı.')),
-                            );
-                          }
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Uygulama mağazası açılamadı.')),
+                  ExpansionTile(
+                    leading: const Icon(Icons.analytics_rounded, color: Color(0xFF011627)),
+                    title: Text(
+                      AppLocalizations.of(context)!.analysisAndReports,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    children: [
+                      _buildDrawerItem(
+                        icon: Icons.analytics_rounded,
+                        label: AppLocalizations.of(context)!.workerAnalysis,
+                        horizontalPadding: 32,
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const WorkerAnalysisPage()),
                           );
-                        }
-                      }
-                    },
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.cases_rounded,
+                        label: AppLocalizations.of(context)!.ourPortfolio,
+                        horizontalPadding: 32,
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const PortfolioPage()),
+                          );
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.engineering_rounded,
+                        label: AppLocalizations.of(context)!.laborSummary,
+                        horizontalPadding: 32,
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, '/labor_summary');
+                        },
+                      ),
+                    ],
                   ),
-                  _buildDrawerItem(
-                    icon: Icons.support_agent_rounded,
-                    label: "Bize Ulaşın / Destek",
-                    color: Colors.blue,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const SupportPage()),
-                      );
-                    },
+                  ExpansionTile(
+                    leading: const Icon(Icons.stars_rounded, color: Color(0xFF2EC4B6)),
+                    title: Text(
+                      AppLocalizations.of(context)!.premiumAndAccount,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    children: [
+                      ValueListenableBuilder<bool>(
+                        valueListenable: PremiumManager.instance.premiumStatusNotifier,
+                        builder: (context, isPremium, child) {
+                          if (isPremium) return const SizedBox.shrink();
+                          return Column(
+                            children: [
+                              _buildDrawerItem(
+                                icon: Icons.stars_rounded,
+                                label: AppLocalizations.of(context)!.premiumPackages,
+                                color: const Color(0xFF2EC4B6),
+                                horizontalPadding: 32,
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  Navigator.pushNamed(context, '/premium');
+                                },
+                              ),
+                              _buildDrawerItem(
+                                icon: Icons.ondemand_video_rounded,
+                                label: AppLocalizations.of(context)!.freePremium,
+                                color: Colors.orange,
+                                horizontalPadding: 32,
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _showRewardedAdFromDashboard();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                       _buildDrawerItem(
+                        icon: Icons.delete_forever_rounded,
+                        label: AppLocalizations.of(context)!.deleteAccount,
+                        color: const Color(0xFFE71D36).withOpacity(0.7),
+                        horizontalPadding: 32,
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showDeleteAccountDialog();
+                        },
+                      ),
+                    ],
                   ),
-                   _buildDrawerItem(
-                    icon: Icons.delete_forever_rounded,
-                    label: AppLocalizations.of(context)!.deleteAccount,
-                    color: const Color(0xFFE71D36).withOpacity(0.7),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showDeleteAccountDialog();
-                    },
+                  ExpansionTile(
+                    leading: const Icon(Icons.info_outline_rounded, color: Color(0xFF011627)),
+                    title: Text(
+                      AppLocalizations.of(context)!.supportAndInfo,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    children: [
+                      _buildDrawerItem(
+                        icon: Icons.language_rounded,
+                        label: AppLocalizations.of(context)!.language,
+                        horizontalPadding: 32,
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showLanguageDialog();
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.privacy_tip_rounded,
+                        label: AppLocalizations.of(context)!.privacyPolicy,
+                        horizontalPadding: 32,
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()),
+                          );
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.gavel_rounded,
+                        label: AppLocalizations.of(context)!.termsOfUse,
+                        horizontalPadding: 32,
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const TermsOfUsePage()),
+                          );
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.star_rate_rounded,
+                        label: AppLocalizations.of(context)!.rateUs,
+                        color: Colors.amber,
+                        horizontalPadding: 32,
+                        onTap: () async {
+                          Navigator.pop(context);
+                          final Uri marketUri = Uri.parse('market://details?id=com.muhasebepro.app');
+                          final Uri playStoreUri = Uri.parse('https://play.google.com/store/apps/details?id=com.muhasebepro.app');
+                          
+                          try {
+                            if (await canLaunchUrl(marketUri)) {
+                              await launchUrl(marketUri, mode: LaunchMode.externalApplication);
+                            } else if (await canLaunchUrl(playStoreUri)) {
+                              await launchUrl(playStoreUri, mode: LaunchMode.externalApplication);
+                            } else {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Uygulama mağazası açılamadı.')),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Uygulama mağazası açılamadı.')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.support_agent_rounded,
+                        label: AppLocalizations.of(context)!.contactSupport,
+                        color: Colors.blue,
+                        horizontalPadding: 32,
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const SupportPage()),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   const Divider(indent: 20, endIndent: 20),
                   _buildDrawerItem(
@@ -1025,6 +1063,7 @@ class _DashboardPageState extends State<DashboardPage> {
     required String label,
     required VoidCallback onTap,
     Color color = const Color(0xFF011627),
+    double horizontalPadding = 24.0,
   }) {
     return ListTile(
       leading: Icon(icon, color: color),
@@ -1040,7 +1079,7 @@ class _DashboardPageState extends State<DashboardPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      contentPadding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 4),
     );
   }
 

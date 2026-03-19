@@ -296,6 +296,48 @@ abstract class AppLocalizations {
   /// **'Premium Paketler'**
   String get premiumPackages;
 
+  /// No description provided for @freePremium.
+  ///
+  /// In tr, this message translates to:
+  /// **'10 Dk Ücretsiz Premium'**
+  String get freePremium;
+
+  /// No description provided for @analysisAndReports.
+  ///
+  /// In tr, this message translates to:
+  /// **'Analiz ve Raporlar'**
+  String get analysisAndReports;
+
+  /// No description provided for @premiumAndAccount.
+  ///
+  /// In tr, this message translates to:
+  /// **'Premium ve Hesap'**
+  String get premiumAndAccount;
+
+  /// No description provided for @supportAndInfo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Destek ve Bilgi'**
+  String get supportAndInfo;
+
+  /// No description provided for @termsOfUse.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kullanım Şartları'**
+  String get termsOfUse;
+
+  /// No description provided for @rateUs.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bizi Değerlendirin'**
+  String get rateUs;
+
+  /// No description provided for @contactSupport.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bize Ulaşın / Destek'**
+  String get contactSupport;
+
   /// No description provided for @logout.
   ///
   /// In tr, this message translates to:

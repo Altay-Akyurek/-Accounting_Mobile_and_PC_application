@@ -111,6 +111,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get premiumPackages => 'Premium Packages';
 
   @override
+  String get freePremium => '10 Min Free Premium';
+
+  @override
+  String get analysisAndReports => 'Analysis and Reports';
+
+  @override
+  String get premiumAndAccount => 'Premium and Account';
+
+  @override
+  String get supportAndInfo => 'Support and Information';
+
+  @override
+  String get termsOfUse => 'Terms of Use';
+
+  @override
+  String get rateUs => 'Rate Us';
+
+  @override
+  String get contactSupport => 'Contact / Support';
+
+  @override
   String get logout => 'Logout';
 
   @override
