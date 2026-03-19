@@ -1817,4 +1817,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get periodicLaborDescription => 'Periodic Worker Payment';
+
+  @override
+  String get totalCost => 'Total Cost';
+
+  @override
+  String get totalWork_caps => 'TOTAL WORK';
+
+  @override
+  String get noRecordFound => 'No record found.';
+
+  @override
+  String get hour_caps => 'HOUR';
 }

@@ -858,5 +858,9 @@
   },
   "advanceWarning": "Uyarı: Geçmiş bir döneme ait avans girişi yapıyorsunuz. İşlem tarihini kontrol etmeyi unutmayın.",
   "notWorkerAccount": "Seçili cari bir işçi hesabı değildir.",
-  "periodicLaborDescription": "Döneme Özel İşçi Ödemesi"
+  "periodicLaborDescription": "Döneme Özel İşçi Ödemesi",
+  "totalCost": "Toplam Maliyet",
+  "totalWork_caps": "TOPLAM ÇALIŞMA",
+  "noRecordFound": "Kayıt bulunamadı.",
+  "hour_caps": "SAAT"
 }

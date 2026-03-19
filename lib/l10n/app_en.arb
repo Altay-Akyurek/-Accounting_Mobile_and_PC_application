@@ -858,5 +858,9 @@
   },
   "advanceWarning": "Warning: You are entering an advance payment for a past period. Do not forget to check the transaction date.",
   "notWorkerAccount": "The selected account is not a worker account.",
-  "periodicLaborDescription": "Periodic Worker Payment"
-}
+  "periodicLaborDescription": "Periodic Worker Payment",
+  "totalCost": "Total Cost",
+  "totalWork_caps": "TOTAL WORK",
+  "noRecordFound": "No record found.",
+  "hour_caps": "HOUR"
+}

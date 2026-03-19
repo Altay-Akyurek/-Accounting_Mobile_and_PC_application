@@ -1816,4 +1816,16 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get periodicLaborDescription => 'Döneme Özel İşçi Ödemesi';
+
+  @override
+  String get totalCost => 'Toplam Maliyet';
+
+  @override
+  String get totalWork_caps => 'TOPLAM ÇALIŞMA';
+
+  @override
+  String get noRecordFound => 'Kayıt bulunamadı.';
+
+  @override
+  String get hour_caps => 'SAAT';
 }

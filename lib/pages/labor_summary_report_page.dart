@@ -24,6 +24,10 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
 
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -115,8 +119,36 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.laborSummaryReport_caps),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.search,
+                  hintStyle: const TextStyle(color: Colors.white70),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  setState(() => _searchQuery = value);
+                },
+              )
+            : Text(AppLocalizations.of(context)!.laborSummaryReport_caps),
         actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                if (_isSearching) {
+                  _isSearching = false;
+                  _searchQuery = '';
+                  _searchController.clear();
+                } else {
+                  _isSearching = true;
+                }
+              });
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.date_range),
             onPressed: _selectDateRange,
@@ -132,6 +164,16 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
             onSelected: (value) async {
               if (value == 'pdf') {
                 if (PremiumManager.instance.checkPremium(context)) {
+                  // Total cost and hours for all (ignoring search for export or using searched? let's use all)
+                  double totalCost = 0;
+                  double totalHours = 0;
+                  for (var p in _puantajlar) {
+                    final worker = _workerMap[p.workerId];
+                    if (worker != null) {
+                      totalCost += DatabaseHelper.instance.calculateLaborCost(p, worker);
+                    }
+                    totalHours += p.saat;
+                  }
                   final l10n = AppLocalizations.of(context)!;
                   await WorkerExportService.exportToPDF(
                     l10n: l10n,
@@ -185,164 +227,420 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
       ),
       body: Column(
         children: [
-          // Filter Summary Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: const Color(0xFF011627),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_endDate)}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                    Text(AppLocalizations.of(context)!.selectedPeriodRecords, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      _formatPara(totalCost),
-                      style: const TextStyle(color: Color(0xFF2EC4B6), fontWeight: FontWeight.w900, fontSize: 18),
-                    ),
-                    Text(
-                      AppLocalizations.of(context)!.xHoursWork(totalHours),
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Grouped List
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _puantajlar.isEmpty
-                    ? Center(child: Text(AppLocalizations.of(context)!.noRecordFoundInRange))
-                    : ListView.builder(
-                        itemCount: sortedWorkerIds.length,
-                        itemBuilder: (context, index) {
-                          final workerId = sortedWorkerIds[index];
-                          final worker = _workerMap[workerId];
-                          final puantajs = groupedPuantaj[workerId]!;
-                          
-                          double workerTotalHours = 0;
-                          double workerTotalCost = 0;
-                          for (var p in puantajs) {
-                            workerTotalHours += p.saat;
-                            if (worker != null) {
-                              workerTotalCost += DatabaseHelper.instance.calculateLaborCost(p, worker);
-                            }
-                          }
-
-                          return Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            child: ExpansionTile(
-                              leading: const CircleAvatar(
-                                backgroundColor: Color(0xFF011627),
-                                child: Icon(Icons.person, color: Colors.white),
-                              ),
-                              title: Text(
-                                worker?.adSoyad ?? AppLocalizations.of(context)!.unknown,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              subtitle: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '${AppLocalizations.of(context)!.total}: ${AppLocalizations.of(context)!.xHours(workerTotalHours)}  |  ${_formatPara(workerTotalCost)}',
-                                      style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w600),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.picture_as_pdf, size: 20, color: Colors.red),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    onPressed: () {
-                                      if (PremiumManager.instance.checkPremium(context)) {
-                                        final l10n = AppLocalizations.of(context)!;
-                                        WorkerExportService.exportToPDF(
-                                          l10n: l10n,
-                                          startDate: _startDate,
-                                          endDate: _endDate,
-                                          puantajlar: puantajs,
-                                          workerMap: _workerMap,
-                                          projectNames: _projectNames,
-                                          totalCost: workerTotalCost,
-                                          totalHours: workerTotalHours,
-                                          filterWorkerId: workerId,
-                                        );
-                                      }
-                                    },
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: const Icon(Icons.table_chart, size: 20, color: Colors.green),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    onPressed: () {
-                                      if (PremiumManager.instance.checkPremium(context)) {
-                                        final l10n = AppLocalizations.of(context)!;
-                                        WorkerExportService.exportToExcel(
-                                          l10n: l10n,
-                                          startDate: _startDate,
-                                          endDate: _endDate,
-                                          puantajlar: puantajs,
-                                          workerMap: _workerMap,
-                                          projectNames: _projectNames,
-                                          filterWorkerId: workerId,
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ],
-                              ),
-                              children: [
-                                const Divider(height: 1),
-                                SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: DataTable(
-                                    headingRowHeight: 40,
-                                    columnSpacing: 24,
-                                    headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
-                                    columns: [
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableDate_caps, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableProject_caps, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableHour_caps, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableMesai_caps, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableAmount_caps, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                                    ],
-                                    rows: puantajs.map((p) {
-                                      final cost = worker != null 
-                                          ? DatabaseHelper.instance.calculateLaborCost(p, worker)
-                                          : 0.0;
-                                      return DataRow(
-                                        cells: [
-                                          DataCell(Text(DateFormat('dd.MM.yy', Localizations.localeOf(context).toString()).format(p.tarih), style: const TextStyle(fontSize: 12))),
-                                          DataCell(Text(_projectNames[p.projectId] ?? '-', style: const TextStyle(fontSize: 12))),
-                                          DataCell(Text(p.saat.toString(), style: const TextStyle(fontSize: 12))),
-                                          DataCell(Text(p.mesai.toString(), style: const TextStyle(fontSize: 12))),
-                                          DataCell(Text(_formatPara(cost), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                                        ],
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-          ),
+          _buildHeader(totalCost, totalHours),
+          _buildWorkerList(groupedPuantaj, sortedWorkerIds, totalHours),
         ],
       ),
       bottomNavigationBar: const BannerAdWidget(),
     );
   }
+
+  Widget _buildHeader(double totalCost, double totalHours) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF011627), Color(0xFF013354)],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_today, color: Colors.white70, size: 14),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(_endDate)}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  title: AppLocalizations.of(context)!.totalCost,
+                  value: _formatPara(totalCost),
+                  icon: Icons.account_balance_wallet_rounded,
+                  color: const Color(0xFF2EC4B6),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _StatCard(
+                  title: AppLocalizations.of(context)!.totalWork_caps,
+                  value: AppLocalizations.of(context)!.xHoursWork(totalHours),
+                  icon: Icons.timer_rounded,
+                  color: Colors.orangeAccent,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkerList(Map<int, List<Puantaj>> groupedPuantaj, List<int> sortedWorkerIds, double totalHours) {
+    // Filter by search query
+    final filteredIds = sortedWorkerIds.where((id) {
+      final worker = _workerMap[id];
+      if (worker == null) return false;
+      return worker.adSoyad.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+
+    if (filteredIds.isEmpty) {
+      return Expanded(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.search_off_rounded, size: 64, color: Colors.grey.shade300),
+              const SizedBox(height: 16),
+              Text(
+                _searchQuery.isEmpty 
+                  ? AppLocalizations.of(context)!.noRecordFoundInRange 
+                  : AppLocalizations.of(context)!.noRecordFound,
+                style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Expanded(
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              padding: const EdgeInsets.only(top: 16, bottom: 24),
+              itemCount: filteredIds.length,
+              itemBuilder: (context, index) {
+                final workerId = filteredIds[index];
+                final worker = _workerMap[workerId];
+                final puantajs = groupedPuantaj[workerId]!;
+                
+                double workerTotalHours = 0;
+                double workerTotalCost = 0;
+                for (var p in puantajs) {
+                  workerTotalHours += p.saat;
+                  if (worker != null) {
+                    workerTotalCost += DatabaseHelper.instance.calculateLaborCost(p, worker);
+                  }
+                }
+
+                double contribution = totalHours > 0 ? workerTotalHours / totalHours : 0;
+
+                return TweenAnimationBuilder<double>(
+                  duration: Duration(milliseconds: 300 + (index * 50)),
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  builder: (context, value, child) {
+                    return Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, 20 * (1 - value)),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        dividerColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
+                        splashColor: const Color(0xFF011627).withOpacity(0.05),
+                        highlightColor: Colors.transparent,
+                      ),
+                      child: ExpansionTile(
+                      leading: CircleAvatar(
+                        radius: 24,
+                        backgroundColor: const Color(0xFF011627).withOpacity(0.1),
+                        child: Text(
+                          (worker != null && worker.adSoyad.isNotEmpty 
+                              ? worker.adSoyad[0] 
+                              : '?').toUpperCase(),
+                          style: const TextStyle(color: Color(0xFF011627), fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      title: Text(
+                        worker?.adSoyad ?? AppLocalizations.of(context)!.unknown,
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF011627)),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          FittedBox(
+                            child: Text(
+                              '${AppLocalizations.of(context)!.total}: ${AppLocalizations.of(context)!.xHours(workerTotalHours)} | ${_formatPara(workerTotalCost)}',
+                              style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: contribution,
+                              backgroundColor: Colors.grey.shade100,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                contribution > 0.5 ? const Color(0xFF2EC4B6) : Colors.blue.shade400,
+                              ),
+                              minHeight: 4,
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.picture_as_pdf, size: 22, color: Color(0xFFE71D36)),
+                            onPressed: () {
+                              if (PremiumManager.instance.checkPremium(context)) {
+                                final l10n = AppLocalizations.of(context)!;
+                                WorkerExportService.exportToPDF(
+                                  l10n: l10n,
+                                  startDate: _startDate,
+                                  endDate: _endDate,
+                                  puantajlar: puantajs,
+                                  workerMap: _workerMap,
+                                  projectNames: _projectNames,
+                                  totalCost: workerTotalCost,
+                                  totalHours: workerTotalHours,
+                                  filterWorkerId: workerId,
+                                );
+                              }
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.table_chart, size: 22, color: Color(0xFF2EC4B6)),
+                            onPressed: () {
+                              if (PremiumManager.instance.checkPremium(context)) {
+                                final l10n = AppLocalizations.of(context)!;
+                                WorkerExportService.exportToExcel(
+                                  l10n: l10n,
+                                  startDate: _startDate,
+                                  endDate: _endDate,
+                                  puantajlar: puantajs,
+                                  workerMap: _workerMap,
+                                  projectNames: _projectNames,
+                                  filterWorkerId: workerId,
+                                );
+                              }
+                            },
+                          ),
+                          const Icon(Icons.expand_more_rounded, color: Colors.grey),
+                        ],
+                      ),
+                      children: [
+                        const Divider(height: 1, indent: 24, endIndent: 24),
+                        _buildTimelineDetail(puantajs, worker),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+    );
+  }
+
+  Widget _buildTimelineDetail(List<Puantaj> puantajs, Worker? worker) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        children: puantajs.asMap().entries.map((entry) {
+          final index = entry.key;
+          final p = entry.value;
+          final isLast = index == puantajs.length - 1;
+          final cost = worker != null ? DatabaseHelper.instance.calculateLaborCost(p, worker) : 0.0;
+
+          return IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Timeline Line and Dot
+                Column(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2EC4B6).withOpacity(0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFF2EC4B6), width: 2),
+                      ),
+                    ),
+                    if (!isLast)
+                      Expanded(
+                        child: Container(
+                          width: 2,
+                          color: Colors.grey.shade200,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 20),
+                // Content Card
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey.shade100),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(p.tarih),
+                                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF011627)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  if (p.mesai > 0)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        '+${p.mesai} ${AppLocalizations.of(context)!.tableMesai_caps}',
+                                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.blue),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _projectNames[p.projectId] ?? '-',
+                                style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              _formatPara(cost),
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFFE71D36)),
+                            ),
+                            Text(
+                              '${p.saat} ${AppLocalizations.of(context)!.hour_caps}',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
 }
+
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {}, // Simple feedback
+          borderRadius: BorderRadius.circular(24),
+          splashColor: color.withOpacity(0.1),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+                const SizedBox(height: 12),
+                Text(title, style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                FittedBox(
+                  child: Text(
+                    value,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+

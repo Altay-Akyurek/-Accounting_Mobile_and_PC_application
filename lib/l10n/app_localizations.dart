@@ -3491,6 +3491,30 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Döneme Özel İşçi Ödemesi'**
   String get periodicLaborDescription;
+
+  /// No description provided for @totalCost.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam Maliyet'**
+  String get totalCost;
+
+  /// No description provided for @totalWork_caps.
+  ///
+  /// In tr, this message translates to:
+  /// **'TOPLAM ÇALIŞMA'**
+  String get totalWork_caps;
+
+  /// No description provided for @noRecordFound.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt bulunamadı.'**
+  String get noRecordFound;
+
+  /// No description provided for @hour_caps.
+  ///
+  /// In tr, this message translates to:
+  /// **'SAAT'**
+  String get hour_caps;
 }
 
 class _AppLocalizationsDelegate
