@@ -5,9 +5,11 @@ import '../models/cari_hesap.dart';
 import '../models/cari_islem.dart';
 import '../models/project.dart';
 import '../services/database_helper.dart';
+import '../services/sync_manager.dart';
 import 'cari_detay_sayfasi.dart';
 import '../widgets/cari_ekle_dialog.dart';
 import '../utils/error_handler.dart';
+import 'dart:async';
 
 class MuhasebeSayfasi extends StatefulWidget {
   const MuhasebeSayfasi({super.key});
@@ -26,6 +28,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
   bool _seciliProjeLoading = false; // dummy or existing
   bool _isLoading = true;
   bool _isSaving = false;
+  StreamSubscription? _syncSubscription;
 
   // Form controllers
   final _aciklamaController = TextEditingController();
@@ -51,6 +54,13 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
   void initState() {
     super.initState();
     _yukleVeriler();
+    
+    // Senkronizasyon tamamlandığında verileri otomatik yenile
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((force) {
+      if (mounted) {
+        _yukleVeriler(ignoreThrottle: force == true);
+      }
+    });
   }
 
   @override
@@ -59,20 +69,22 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
     _evrakNoController.dispose();
     _borcController.dispose();
     _alacakController.dispose();
+    _syncSubscription?.cancel();
     super.dispose();
   }
 
-  Future<void> _yukleVeriler() async {
+  Future<void> _yukleVeriler({bool ignoreThrottle = false}) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final cariHesaplar = await DatabaseHelper.instance.getAllCariHesaplar();
-      final projeler = await DatabaseHelper.instance.getAllProjects();
+      final cariHesaplar = await DatabaseHelper.instance.getAllCariHesaplar(ignoreThrottle: ignoreThrottle);
+      final projeler = await DatabaseHelper.instance.getAllProjects(ignoreThrottle: ignoreThrottle);
       final islemler = await DatabaseHelper.instance.getUnifiedLedger(
         cariId: _seciliCari?.id,
         projectId: _seciliProje?.id,
+        ignoreThrottle: ignoreThrottle,
       );
       final toplamlar = await DatabaseHelper.instance.getCariToplamlar(_seciliCari?.id);
 
@@ -511,221 +523,223 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                 ),
               ),
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(2))),
-                  const SizedBox(height: 24),
-                  Text(AppLocalizations.of(context)!.quickTransactionEntry, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-                  const SizedBox(height: 24),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<CariHesap?>(
-                          value: _seciliCari,
-                          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.cariAccountSelection),
-                          items: _cariHesaplar.map((cari) => DropdownMenuItem(value: cari, child: Text(cari.unvan))).toList(),
-                          onChanged: (cari) {
-                             setState(() => _seciliCari = cari);
-                             setModalState(() {});
-                             if (_isDonemsel && _donemBaslangic != null) _getDonemBorcu().then((_) => setModalState((){}));
-                          },
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(2))),
+                    const SizedBox(height: 24),
+                    Text(AppLocalizations.of(context)!.quickTransactionEntry, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                    const SizedBox(height: 24),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<CariHesap?>(
+                            value: _seciliCari,
+                            decoration: InputDecoration(labelText: AppLocalizations.of(context)!.cariAccountSelection),
+                            items: _cariHesaplar.map((cari) => DropdownMenuItem(value: cari, child: Text(cari.unvan))).toList(),
+                            onChanged: (cari) {
+                               setState(() => _seciliCari = cari);
+                               setModalState(() {});
+                               if (_isDonemsel && _donemBaslangic != null) _getDonemBorcu().then((_) => setModalState((){}));
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        height: 56,
-                        width: 56,
-                        decoration: BoxDecoration(color: const Color(0xFF003399).withOpacity(0.05), borderRadius: BorderRadius.circular(16)),
-                        child: IconButton(
-                          icon: const Icon(Icons.add_rounded, color: Color(0xFF003399)),
-                          onPressed: () async {
-                            final result = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => const CariEkleDialog(),
-                            );
-                            if (result == true) {
-                               await _yukleVeriler();
-                               setModalState((){});
-                            }
-                          },
+                        const SizedBox(width: 8),
+                        Container(
+                          height: 56,
+                          width: 56,
+                          decoration: BoxDecoration(color: const Color(0xFF003399).withOpacity(0.05), borderRadius: BorderRadius.circular(16)),
+                          child: IconButton(
+                            icon: const Icon(Icons.add_rounded, color: Color(0xFF003399)),
+                            onPressed: () async {
+                              final result = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => const CariEkleDialog(),
+                              );
+                              if (result == true) {
+                                 await _yukleVeriler();
+                                 setModalState((){});
+                              }
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Dönemsel Ödeme Seçeneği
-                  SwitchListTile(
-                    title: Text(AppLocalizations.of(context)!.periodicLaborPayment),
-                    subtitle: Text(AppLocalizations.of(context)!.periodicPaymentSubtitle),
-                    value: _isDonemsel,
-                    activeColor: const Color(0xFF003399),
-                    contentPadding: EdgeInsets.zero,
-                    onChanged: (val) {
-                      setState(() {
-                         _isDonemsel = val;
-                      });
-                      setModalState(() {});
-                    },
-                  ),
-                  if (_isDonemsel) ...[
-                    GestureDetector(
-                      onTap: () async {
-                        final picked = await showDateRangePicker(
-                          context: context,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2030),
-                        );
-                        if (picked != null) {
-                           setState(() {
-                             _donemBaslangic = picked.start;
-                             _donemBitis = picked.end;
-                           });
-                           setModalState(() {});
-                           await _getDonemBorcu();
-                           setModalState(() {});
-                        }
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Dönemsel Ödeme Seçeneği
+                    SwitchListTile(
+                      title: Text(AppLocalizations.of(context)!.periodicLaborPayment),
+                      subtitle: Text(AppLocalizations.of(context)!.periodicPaymentSubtitle),
+                      value: _isDonemsel,
+                      activeColor: const Color(0xFF003399),
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (val) {
+                        setState(() {
+                           _isDonemsel = val;
+                        });
+                        setModalState(() {});
                       },
-                      child: Container(
+                    ),
+                    if (_isDonemsel) ...[
+                      GestureDetector(
+                        onTap: () async {
+                          final picked = await showDateRangePicker(
+                            context: context,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2030),
+                          );
+                          if (picked != null) {
+                             setState(() {
+                               _donemBaslangic = picked.start;
+                               _donemBitis = picked.end;
+                             });
+                             setModalState(() {});
+                             await _getDonemBorcu();
+                             setModalState(() {});
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                             border: Border.all(color: Colors.grey.shade400),
+                             borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                             children: [
+                               const Icon(Icons.date_range, color: Colors.indigo),
+                               const SizedBox(width: 8),
+                               Expanded(child: Text(
+                                  _donemBaslangic == null 
+                                    ? AppLocalizations.of(context)!.selectDateRange 
+                                    : '${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_donemBaslangic!)} - ${DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(_donemBitis!)}'
+                               )),
+                             ],
+                          )
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (_donemSorgulaniyor)
+                         const CircularProgressIndicator()
+                      else if (_donemBaslangic != null && _seciliCari != null)
+                         Text(
+                           AppLocalizations.of(context)!.pendingLaborForPeriod(_formatPara(_donemBekleyenAlacak)),
+                           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+                         ),
+                      const SizedBox(height: 16),
+                    ],
+    
+                    DropdownButtonFormField<Project?>(
+                  value: _seciliProje,
+                  isExpanded: true,
+                  decoration: InputDecoration(labelText: '${AppLocalizations.of(context)!.selectProject} (${AppLocalizations.of(context)!.descriptionOptional})'),
+                  items: [
+                     DropdownMenuItem(value: null, child: Text('- ${AppLocalizations.of(context)!.notEntered} -')),
+                     ..._projeler.map((p) => DropdownMenuItem(value: p, child: Text(p.ad))).toList(),
+                  ],
+                  onChanged: (p) {
+                     setState(() => _seciliProje = p);
+                     setModalState(() {});
+                     if (_isDonemsel && _donemBaslangic != null) _getDonemBorcu().then((_) => setModalState((){}));
+                  },
+                ),
+                const SizedBox(height: 16),
+                
+                // Ana İşlem Tarihi Seçici
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _tarih,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                    );
+                    if (picked != null) {
+                      setState(() => _tarih = picked);
+                      setModalState(() {});
+                    }
+                  },
+                  child: Column(
+                    children: [
+                      Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
-                           border: Border.all(color: Colors.grey.shade400),
-                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
-                           children: [
-                             const Icon(Icons.date_range, color: Colors.indigo),
-                             const SizedBox(width: 8),
-                             Expanded(child: Text(
-                                _donemBaslangic == null 
-                                  ? AppLocalizations.of(context)!.selectDateRange 
-                                  : '${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_donemBaslangic!)} - ${DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(_donemBitis!)}'
-                             )),
-                           ],
-                        )
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (_donemSorgulaniyor)
-                       const CircularProgressIndicator()
-                    else if (_donemBaslangic != null && _seciliCari != null)
-                       Text(
-                         AppLocalizations.of(context)!.pendingLaborForPeriod(_formatPara(_donemBekleyenAlacak)),
-                         style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
-                       ),
-                    const SizedBox(height: 16),
-                  ],
-
-                  DropdownButtonFormField<Project?>(
-                value: _seciliProje,
-                isExpanded: true,
-                decoration: InputDecoration(labelText: '${AppLocalizations.of(context)!.selectProject} (${AppLocalizations.of(context)!.descriptionOptional})'),
-                items: [
-                   DropdownMenuItem(value: null, child: Text('- ${AppLocalizations.of(context)!.notEntered} -')),
-                   ..._projeler.map((p) => DropdownMenuItem(value: p, child: Text(p.ad))).toList(),
-                ],
-                onChanged: (p) {
-                   setState(() => _seciliProje = p);
-                   setModalState(() {});
-                   if (_isDonemsel && _donemBaslangic != null) _getDonemBorcu().then((_) => setModalState((){}));
-                },
-              ),
-              const SizedBox(height: 16),
-              
-              // Ana İşlem Tarihi Seçici
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _tarih,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                  );
-                  if (picked != null) {
-                    setState(() => _tarih = picked);
-                    setModalState(() {});
-                  }
-                },
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.calendar_today, color: Color(0xFF003399)),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(AppLocalizations.of(context)!.transactionDateWithColon(DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(_tarih)))),
-                          const Icon(Icons.edit, size: 16, color: Colors.grey),
-                        ],
-                      ),
-                    ),
-                    if ((_tarih.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)) || 
-                        (_isDonemsel && _donemBitis != null && _donemBitis!.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)))) && 
-                        (_isDonemsel || _aciklamaController.text.toLowerCase().replaceAll('ı', 'i').contains('avans')))
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8, left: 4),
-                        child: Row(
                           children: [
-                            const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.orange),
-                            const SizedBox(width: 4),
-                             Expanded(
-                              child: Text(
-                                AppLocalizations.of(context)!.advanceWarning,
-                                style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
-                              ),
-                            ),
+                            const Icon(Icons.calendar_today, color: Color(0xFF003399)),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(AppLocalizations.of(context)!.transactionDateWithColon(DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(_tarih)))),
+                            const Icon(Icons.edit, size: 16, color: Colors.grey),
                           ],
                         ),
                       ),
+                      if ((_tarih.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)) || 
+                          (_isDonemsel && _donemBitis != null && _donemBitis!.isBefore(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)))) && 
+                          (_isDonemsel || _aciklamaController.text.toLowerCase().replaceAll('ı', 'i').contains('avans')))
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, left: 4),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.orange),
+                              const SizedBox(width: 4),
+                               Expanded(
+                                child: Text(
+                                  AppLocalizations.of(context)!.advanceWarning,
+                                  style: const TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _aciklamaController, 
+                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.descriptionNote),
+                  onChanged: (_) => setModalState(() {}),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _borcController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.debtIncoming, prefixIcon: const Icon(Icons.arrow_downward_rounded, color: Colors.red, size: 20)),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextField(
+                        controller: _alacakController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.creditOutgoing, prefixIcon: const Icon(Icons.arrow_upward_rounded, color: Colors.green, size: 20)),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _aciklamaController, 
-                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.descriptionNote),
-                onChanged: (_) => setModalState(() {}),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _borcController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.debtIncoming, prefixIcon: const Icon(Icons.arrow_downward_rounded, color: Colors.red, size: 20)),
-                    ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _kaydet();
+                      Navigator.pop(context);
+                    },
+                    child: _isSaving 
+                      ? const Center(child: CircularProgressIndicator()) 
+                      : Text(AppLocalizations.of(context)!.saveTransaction),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextField(
-                      controller: _alacakController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.creditOutgoing, prefixIcon: const Icon(Icons.arrow_upward_rounded, color: Colors.green, size: 20)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    _kaydet();
-                    Navigator.pop(context);
-                  },
-                  child: _isSaving 
-                    ? const Center(child: CircularProgressIndicator()) 
-                    : Text(AppLocalizations.of(context)!.saveTransaction),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );

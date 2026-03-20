@@ -6,6 +6,8 @@ import '../models/cari_hesap.dart';
 import '../models/worker.dart';
 import '../models/project.dart';
 import '../services/database_helper.dart';
+import '../services/sync_manager.dart';
+import 'dart:async';
 
 class CariDetaySayfasi extends StatefulWidget {
   final int cariId;
@@ -29,22 +31,36 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
   Map<int, String> _projectNames = {};
   bool _isLoading = true;
   Map<String, double> _toplamlar = {'borc': 0.0, 'alacak': 0.0, 'bakiye': 0.0};
+  StreamSubscription? _syncSubscription;
 
   @override
   void initState() {
     super.initState();
     _yukleVeriler();
+    
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((force) {
+      if (mounted) {
+        _yukleVeriler(ignoreThrottle: force == true);
+      }
+    });
   }
 
-  Future<void> _yukleVeriler() async {
+  @override
+  void dispose() {
+    _syncSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _yukleVeriler({bool ignoreThrottle = false}) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final islemler = await DatabaseHelper.instance.getCariIslemlerByCariId(widget.cariId);
+      final islemler = await DatabaseHelper.instance.getAllCariIslemler(ignoreThrottle: ignoreThrottle);
+      final filteredIslemler = islemler.where((i) => i.cariHesapId == widget.cariId).toList();
       final toplamlar = await DatabaseHelper.instance.getCariToplamlar(widget.cariId);
-      final cariler = await DatabaseHelper.instance.getAllCariHesaplar();
+      final cariler = await DatabaseHelper.instance.getAllCariHesaplar(ignoreThrottle: ignoreThrottle);
       final cari = cariler.firstWhere((c) => c.id == widget.cariId);
       
       Worker? worker = await DatabaseHelper.instance.getWorkerByCariId(widget.cariId);
@@ -52,17 +68,18 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
       Map<int, String> projectNames = {};
       
       if (worker != null && worker.id != null) {
-        puantaj = await DatabaseHelper.instance.getPuantajByWorkerId(worker.id!, null, null);
+        puantaj = await DatabaseHelper.instance.getAllPuantajlar(ignoreThrottle: ignoreThrottle);
+        puantaj = puantaj.where((p) => p.workerId == worker.id).toList();
         puantaj.sort((a, b) => b.tarih.compareTo(a.tarih));
         
-        final projects = await DatabaseHelper.instance.getAllProjects();
+        final projects = await DatabaseHelper.instance.getAllProjects(ignoreThrottle: ignoreThrottle);
         for (var p in projects) {
           if (p.id != null) projectNames[p.id!] = p.ad;
         }
       }
 
       setState(() {
-        _islemler = islemler;
+        _islemler = filteredIslemler;
         _toplamlar = toplamlar;
         _cari = cari;
         _worker = worker;

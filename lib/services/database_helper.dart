@@ -24,6 +24,7 @@ class DatabaseHelper {
   late Box<String> _cariIslemlerBox;
   late Box<String> _puantajBox;
   late Box<String> _hakedisBox;
+  final Map<String, DateTime> _lastSyncTimes = {};
 
   String? _testUserId;
   void setTestUserId(String? id) => _testUserId = id;
@@ -121,6 +122,14 @@ class DatabaseHelper {
     }
   }
 
+  bool _shouldSync(String table) {
+    if (!SyncManager.instance.isOnline) return false;
+    final lastSync = _lastSyncTimes[table];
+    if (lastSync == null) return true;
+    // En az 5 saniye geçmeden tekrar senkronize etme (flood önleme ve akıcılık)
+    return DateTime.now().difference(lastSync).inSeconds > 5;
+  }
+
   // ========== CARİ HESAP İŞLEMLERİ ==========
   Future<int> insertCariHesap(CariHesap cariHesap) async {
     try {
@@ -150,7 +159,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<CariHesap>> getAllCariHesaplar() async {
+  Future<List<CariHesap>> getAllCariHesaplar({bool ignoreThrottle = false}) async {
     final userId = currentUserId;
     if (userId == null) return [];
     
@@ -183,8 +192,9 @@ class DatabaseHelper {
       print('DEBUG: Purged ${ghostKeys.length} ghost CariHesap entries');
     }
 
-    // 2. Online isek senkronize et
-    if (SyncManager.instance.isOnline) {
+    // 2. Online isek senkronize et (Throttle ekle)
+    if (ignoreThrottle || _shouldSync('cari_hesaplar')) {
+      _lastSyncTimes['cari_hesaplar'] = DateTime.now();
       _syncCarisFromServer(userId, localCaris);
     }
     
@@ -193,8 +203,10 @@ class DatabaseHelper {
   }
   
   Future<void> _syncCarisFromServer(String userId, List<CariHesap> initialList) async {
+      print('DEBUG: _syncCarisFromServer starting...');
       try {
         final List<dynamic> data = await _supabase.from('cari_hesaplar').select().eq('user_id', userId);
+        print('DEBUG: _syncCarisFromServer received ${data.length} records from Supabase');
         
         List<CariHesap> serverCaris = data.map((m) => CariHesap.fromMap(m)).toList();
         
@@ -214,6 +226,7 @@ class DatabaseHelper {
         List<CariHesap> tempList = initialList.where((c) => c.id! < 0 && SyncManager.instance.isTempIdPending('cari_hesaplar', c.id!)).toList();
         
         final allUpdatedCaris = [...serverCaris, ...tempList];
+        print('DEBUG: _syncCarisFromServer - Updating Hive box with ${allUpdatedCaris.length} total caris');
         
         await _carisBox.clear();
         for (var c in allUpdatedCaris) {
@@ -221,6 +234,7 @@ class DatabaseHelper {
            map['user_id'] = userId;
            await _carisBox.put(c.id.toString(), jsonEncode(map));
         }
+        SyncManager.instance.triggerSyncCompleted();
       } catch (e) {
          print('DEBUG: Background sync failed for caris: $e');
       }
@@ -345,7 +359,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Fatura>> getAllFaturalar({DateTime? baslangic, DateTime? bitis}) async {
+  Future<List<Fatura>> getAllFaturalar({DateTime? baslangic, DateTime? bitis, bool ignoreThrottle = false}) async {
     final userId = currentUserId;
     if (userId == null) return [];
     
@@ -384,8 +398,9 @@ class DatabaseHelper {
       print('DEBUG: Purged ${ghostKeys.length} ghost Fatura entries');
     }
 
-    // 2. Online isek senkronize et
-    if (SyncManager.instance.isOnline) {
+    // 2. Online isek senkronize et (Throttle ekle)
+    if (ignoreThrottle || _shouldSync('faturalar')) {
+      _lastSyncTimes['faturalar'] = DateTime.now();
       _syncFaturasFromServer(userId, localFaturas, baslangic, bitis);
     }
     
@@ -428,6 +443,7 @@ class DatabaseHelper {
            map['user_id'] = userId;
            await _faturasBox.put(f.id.toString(), jsonEncode(map));
         }
+        SyncManager.instance.triggerSyncCompleted();
       } catch (e) {
          print('DEBUG: Background sync failed for faturas: $e');
       }
@@ -523,7 +539,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Stok>> getAllStoklar() async {
+  Future<List<Stok>> getAllStoklar({bool ignoreThrottle = false}) async {
     final userId = currentUserId;
     if (userId == null) return [];
     
@@ -558,7 +574,8 @@ class DatabaseHelper {
     }
 
     // 2. Online isek senkronize et
-    if (SyncManager.instance.isOnline) {
+    if (ignoreThrottle || _shouldSync('stoklar')) {
+      _lastSyncTimes['stoklar'] = DateTime.now();
       _syncStoksFromServer(userId, localStoks);
     }
     
@@ -595,6 +612,7 @@ class DatabaseHelper {
            map['user_id'] = userId;
            await _stoksBox.put(s.id.toString(), jsonEncode(map));
         }
+        SyncManager.instance.triggerSyncCompleted();
       } catch (e) {
          print('DEBUG: Background sync failed for stoks: $e');
       }
@@ -695,7 +713,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<GelirGider>> getAllGelirGider({DateTime? baslangic, DateTime? bitis}) async {
+  Future<List<GelirGider>> getAllGelirGider({DateTime? baslangic, DateTime? bitis, bool ignoreThrottle = false}) async {
     final userId = currentUserId;
     if (userId == null) return [];
     
@@ -725,8 +743,9 @@ class DatabaseHelper {
       }
     }
 
-    // 2. Online isek senkronize et
-    if (SyncManager.instance.isOnline) {
+    // 2. Online isek senkronize et (Throttle ekle)
+    if (ignoreThrottle || _shouldSync('gelir_giderler')) {
+      _lastSyncTimes['gelir_giderler'] = DateTime.now();
       _syncGelirGiderFromServer(userId, localData, baslangic, bitis);
     }
     
@@ -765,6 +784,7 @@ class DatabaseHelper {
            map['user_id'] = userId;
            await _gelirGiderBox.put(item.id.toString(), jsonEncode(map));
         }
+        SyncManager.instance.triggerSyncCompleted();
       } catch (e) {
          print('DEBUG: Background sync failed for GelirGider: $e');
       }
@@ -959,7 +979,7 @@ class DatabaseHelper {
     };
   }
 
-  Future<List<Puantaj>> getAllPuantajlar({DateTime? baslangic, DateTime? bitis}) async {
+  Future<List<Puantaj>> getAllPuantajlar({DateTime? baslangic, DateTime? bitis, bool ignoreThrottle = false}) async {
     final userId = currentUserId;
     if (userId == null) return [];
 
@@ -980,8 +1000,9 @@ class DatabaseHelper {
       }
     }
 
-    // 2. Online isek senkronize et
-    if (SyncManager.instance.isOnline) {
+    // 2. Online isek senkronize et (Throttle ekle)
+    if (ignoreThrottle || _shouldSync('puantajlar')) {
+      _lastSyncTimes['puantajlar'] = DateTime.now();
       _syncPuantajlarFromServer(userId, localData, baslangic, bitis);
     }
 
@@ -1023,17 +1044,18 @@ class DatabaseHelper {
         map['user_id'] = userId;
         await _puantajBox.put(item.id.toString(), jsonEncode(map));
       }
+      SyncManager.instance.triggerSyncCompleted();
     } catch (e) {
       print('DEBUG: Background sync failed for Puantajlar: $e');
     }
   }
 
-  Future<List<CariIslem>> getUnifiedLedger({int? cariId, int? projectId}) async {
+  Future<List<CariIslem>> getUnifiedLedger({int? cariId, int? projectId, bool ignoreThrottle = false}) async {
     final List<CariIslem> ledger = [];
 
     // 1. Cari İşlemler
-    final islemler = await getAllCariIslemler();
-    final allCaris = await getAllCariHesaplar();
+    final islemler = await getAllCariIslemler(ignoreThrottle: ignoreThrottle);
+    final allCaris = await getAllCariHesaplar(ignoreThrottle: ignoreThrottle);
     final cariMap = {for (var c in allCaris) c.id!: c.unvan};
 
     for (var i in islemler) {
@@ -1688,7 +1710,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<CariIslem>> getAllCariIslemler({DateTime? baslangic, DateTime? bitis}) async {
+  Future<List<CariIslem>> getAllCariIslemler({DateTime? baslangic, DateTime? bitis, bool ignoreThrottle = false}) async {
     final userId = currentUserId;
     if (userId == null) return [];
 
@@ -1726,8 +1748,9 @@ class DatabaseHelper {
       print('DEBUG: Purged ${ghostKeys.length} ghost CariIslem entries');
     }
 
-    // 2. Online isek senkronize et
-    if (SyncManager.instance.isOnline) {
+    // 2. Online isek senkronize et (Throttle ekle)
+    if (ignoreThrottle || _shouldSync('cari_islemler')) {
+      _lastSyncTimes['cari_islemler'] = DateTime.now();
       _syncCariIslemlerFromServer(userId, localData, baslangic, bitis);
     }
 
@@ -1770,6 +1793,7 @@ class DatabaseHelper {
         map['user_id'] = userId;
         await _cariIslemlerBox.put(item.id.toString(), jsonEncode(map));
       }
+      SyncManager.instance.triggerSyncCompleted();
     } catch (e) {
       print('DEBUG: Background sync failed for CariIslemler: $e');
     }
@@ -1931,7 +1955,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Project>> getAllProjects() async {
+  Future<List<Project>> getAllProjects({bool ignoreThrottle = false}) async {
     final userId = currentUserId;
     if (userId == null) return [];
     
@@ -1966,7 +1990,8 @@ class DatabaseHelper {
     }
 
     // 2. Online isek senkronize et
-    if (SyncManager.instance.isOnline) {
+    if (ignoreThrottle || _shouldSync('projects')) {
+      _lastSyncTimes['projects'] = DateTime.now();
       _syncProjectsFromServer(userId, localProjects);
     }
     
@@ -2003,7 +2028,7 @@ class DatabaseHelper {
            map['user_id'] = userId;
            await _projectsBox.put(p.id.toString(), jsonEncode(map));
         }
-        
+        SyncManager.instance.triggerSyncCompleted();
       } catch (e) {
          print('DEBUG: Background sync failed for projects: $e');
       }
@@ -2121,7 +2146,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Hakedis>> getAllHakedisler({DateTime? baslangic, DateTime? bitis}) async {
+  Future<List<Hakedis>> getAllHakedisler({DateTime? baslangic, DateTime? bitis, bool ignoreThrottle = false}) async {
     final userId = currentUserId;
     if (userId == null) return [];
     
@@ -2159,8 +2184,9 @@ class DatabaseHelper {
       print('DEBUG: Purged ${ghostKeys.length} ghost Hakedis entries');
     }
 
-    // 2. Online isek senkronize et
-    if (SyncManager.instance.isOnline) {
+    // 2. Online isek senkronize et (Throttle ekle)
+    if (ignoreThrottle || _shouldSync('hakedisler')) {
+      _lastSyncTimes['hakedisler'] = DateTime.now();
       _syncHakedislerFromServer(userId, localHakedisler, baslangic, bitis);
     }
     
@@ -2199,6 +2225,7 @@ class DatabaseHelper {
            map['user_id'] = userId;
            await _hakedisBox.put(h.id.toString(), jsonEncode(map));
         }
+        SyncManager.instance.triggerSyncCompleted();
       } catch (e) {
          print('DEBUG: Background sync failed for hakedisler: $e');
       }
@@ -2364,7 +2391,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Worker>> getAllWorkers() async {
+  Future<List<Worker>> getAllWorkers({bool ignoreThrottle = false}) async {
     final userId = currentUserId;
     if (userId == null) return [];
     
@@ -2398,8 +2425,9 @@ class DatabaseHelper {
       print('DEBUG: Purged ${ghostKeys.length} ghost Worker entries');
     }
 
-    // 2. Eğer online isek, Supabase'den güncel veriyi çek ve Hive'ı eşle
-    if (SyncManager.instance.isOnline) {
+    // 2. Eğer online isek, Supabase'den güncel veriyi çek ve Hive'ı eşle (Throttle ekle)
+    if (ignoreThrottle || _shouldSync('workers')) {
+      _lastSyncTimes['workers'] = DateTime.now();
       _syncWorkersFromServer(userId, localWorkers);
     }
     
@@ -2442,7 +2470,7 @@ class DatabaseHelper {
            map['user_id'] = userId;
            await _workersBox.put(w.id.toString(), jsonEncode(map));
         }
-        
+        SyncManager.instance.triggerSyncCompleted();
       } catch (e) {
          print('DEBUG: Background sync failed for workers: $e');
       }

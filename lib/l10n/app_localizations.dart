@@ -125,13 +125,13 @@ abstract class AppLocalizations {
   /// No description provided for @processingPayment.
   ///
   /// In tr, this message translates to:
-  /// **'İşlem başlatıldı...'**
+  /// **'İşlem yapılıyor...'**
   String get processingPayment;
 
   /// No description provided for @appTitle.
   ///
   /// In tr, this message translates to:
-  /// **'Muhasebe Pro'**
+  /// **'Muhasebe Pro: Gelir Gider ve İşçi Takibi'**
   String get appTitle;
 
   /// No description provided for @dashboard.
@@ -3515,6 +3515,60 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'SAAT'**
   String get hour_caps;
+
+  /// No description provided for @premiumActiveStatus.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ayrıcalıklı Özellikler Aktif'**
+  String get premiumActiveStatus;
+
+  /// No description provided for @unlockAllFeatures.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm Özellikleri Kilitle'**
+  String get unlockAllFeatures;
+
+  /// No description provided for @accountAndSettings.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesap ve Ayarlar'**
+  String get accountAndSettings;
+
+  /// No description provided for @premiumFeatures.
+  ///
+  /// In tr, this message translates to:
+  /// **'Premium Özellikler'**
+  String get premiumFeatures;
+
+  /// No description provided for @tryFreeTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ücretsiz Deneyin'**
+  String get tryFreeTitle;
+
+  /// No description provided for @tryFreeDescription.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kısa bir reklam izleyerek 10 dakika boyunca tüm Premium özelliklere ücretsiz erişin.'**
+  String get tryFreeDescription;
+
+  /// No description provided for @watchAdButton.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reklam İzle ve 10dk Aç'**
+  String get watchAdButton;
+
+  /// No description provided for @restorePurchases.
+  ///
+  /// In tr, this message translates to:
+  /// **'Satın Almaları Geri Yükle'**
+  String get restorePurchases;
+
+  /// No description provided for @premiumBenefitPerformance.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşçi & Performans Analizi'**
+  String get premiumBenefitPerformance;
 }
 
 class _AppLocalizationsDelegate

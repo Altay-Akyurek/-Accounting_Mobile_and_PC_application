@@ -11,6 +11,10 @@ class IAPService {
   InAppPurchase? _iap;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
   
+  // UI'ın dinleyebileceği bir ValueNotifier ekleyelim
+  final ValueNotifier<PurchaseStatus?> purchaseStatusNotifier = ValueNotifier<PurchaseStatus?>(null);
+  String? lastErrorMessage;
+
   // Google Play Console'da oluşturulacak ürün ID'leri
   static const String _monthlyId = 'premium_monthly';
   static const String _yearlyId = 'premium_yearly';
@@ -34,6 +38,8 @@ class IAPService {
       onDone: () => _subscription?.cancel(),
       onError: (error) {
         debugPrint('IAP Error: $error');
+        purchaseStatusNotifier.value = PurchaseStatus.error;
+        lastErrorMessage = error.toString();
       },
     );
     _loadProducts();
@@ -41,30 +47,34 @@ class IAPService {
 
   Future<void> _loadProducts() async {
     if (_iap == null) return;
-    isAvailable = await _iap!.isAvailable();
-    if (!isAvailable) return;
+    try {
+      isAvailable = await _iap!.isAvailable();
+      if (!isAvailable) return;
 
-    final ProductDetailsResponse response = await _iap!.queryProductDetails(_kIds);
-    if (response.error == null) {
-      products = response.productDetails;
+      final ProductDetailsResponse response = await _iap!.queryProductDetails(_kIds);
+      if (response.error == null) {
+        products = response.productDetails;
+      }
+    } catch (e) {
+      debugPrint('Error loading products: $e');
     }
   }
 
   void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
     for (var purchase in purchaseDetailsList) {
+      purchaseStatusNotifier.value = purchase.status;
+
       if (purchase.status == PurchaseStatus.pending) {
-        // Bekleyen işlem - UI'da bir loading gösterilebilir
         debugPrint('Purchase Pending...');
       } else if (purchase.status == PurchaseStatus.error) {
-        // Hata
         debugPrint('Purchase Error: ${purchase.error}');
+        lastErrorMessage = purchase.error?.message;
       } else if (purchase.status == PurchaseStatus.purchased || 
                  purchase.status == PurchaseStatus.restored) {
         // Satın alma başarılı veya geri yüklendi
-        // İlgili productDetails'ı bulalım
         final product = products.firstWhere(
           (p) => p.id == purchase.productID,
-          orElse: () => products.first, // Fallback (riskli ama genelde liste doludur)
+          orElse: () => products.isNotEmpty ? products.first : products.first, // Dummy handle
         );
         _verifyPurchase(purchase, product);
       }
@@ -74,6 +84,7 @@ class IAPService {
       }
     }
   }
+
 
   void _verifyPurchase(PurchaseDetails purchase, ProductDetails product) {
     // Sunucu tarafı senkronizasyonu için ürün bilgisini de gönderiyoruz

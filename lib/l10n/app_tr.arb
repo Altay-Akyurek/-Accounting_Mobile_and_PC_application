@@ -5,7 +5,7 @@
   "deleteAccountSuccess": "Silme talebiniz alındı. Hesabınızdan çıkış yapılıyor.",
   "demoDataLoaded": "Örnek veriler başarıyla yüklendi. Görseller için uygulama hazır!",
   "processingPayment": "İşlem başlatıldı...",
-  "appTitle": "Muhasebe Pro",
+  "appTitle": "Muhasebe Pro: Gelir Gider ve İşçi Takibi",
   "dashboard": "Ana Sayfa",
   "netCash": "NET NAKİT (KASA)",
   "current": "GÜNCEL",
@@ -862,5 +862,18 @@
   "totalCost": "Toplam Maliyet",
   "totalWork_caps": "TOPLAM ÇALIŞMA",
   "noRecordFound": "Kayıt bulunamadı.",
-  "hour_caps": "SAAT"
+  "hour_caps": "SAAT",
+  "premiumActiveStatus": "Ayrıcalıklı Özellikler Aktif",
+  "unlockAllFeatures": "Tüm Özellikleri Kilitle",
+  "accountAndSettings": "Hesap ve Ayarlar",
+  "premiumFeatures": "Premium Özellikler",
+  "tryFreeTitle": "Ücretsiz Deneyin",
+  "tryFreeDescription": "Kısa bir reklam izleyerek 10 dakika boyunca tüm Premium özelliklere ücretsiz erişin.",
+  "watchAdButton": "Reklam İzle ve 10dk Aç",
+  "restorePurchases": "Satın Almaları Geri Yükle",
+  "processingPayment": "İşlem yapılıyor...",
+  "congratulations": "Tebrikler!",
+  "premiumBenefitPerformance": "İşçi & Performans Analizi"
 }
+
+

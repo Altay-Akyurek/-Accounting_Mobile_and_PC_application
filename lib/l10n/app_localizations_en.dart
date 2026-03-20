@@ -27,7 +27,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get processingPayment => 'Processing payment...';
 
   @override
-  String get appTitle => 'Accounting Pro';
+  String get appTitle => 'Muhasebe Pro: Expense & Worker Tracker';
 
   @override
   String get dashboard => 'Dashboard';
@@ -1829,4 +1829,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hour_caps => 'HOUR';
+
+  @override
+  String get premiumActiveStatus => 'Premium Features Active';
+
+  @override
+  String get unlockAllFeatures => 'Unlock All Features';
+
+  @override
+  String get accountAndSettings => 'Account and Settings';
+
+  @override
+  String get premiumFeatures => 'Premium Features';
+
+  @override
+  String get tryFreeTitle => 'Try Premium for Free';
+
+  @override
+  String get tryFreeDescription =>
+      'Watch a short ad to unlock all premium features for 10 minutes.';
+
+  @override
+  String get watchAdButton => 'Watch Ad & Unlock 10m';
+
+  @override
+  String get restorePurchases => 'Restore Purchases';
+
+  @override
+  String get premiumBenefitPerformance => 'Worker & Performance Analysis';
 }

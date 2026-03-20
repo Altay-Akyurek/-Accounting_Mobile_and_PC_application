@@ -24,10 +24,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Örnek veriler başarıyla yüklendi. Görseller için uygulama hazır!';
 
   @override
-  String get processingPayment => 'İşlem başlatıldı...';
+  String get processingPayment => 'İşlem yapılıyor...';
 
   @override
-  String get appTitle => 'Muhasebe Pro';
+  String get appTitle => 'Muhasebe Pro: Gelir Gider ve İşçi Takibi';
 
   @override
   String get dashboard => 'Ana Sayfa';
@@ -1828,4 +1828,32 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get hour_caps => 'SAAT';
+
+  @override
+  String get premiumActiveStatus => 'Ayrıcalıklı Özellikler Aktif';
+
+  @override
+  String get unlockAllFeatures => 'Tüm Özellikleri Kilitle';
+
+  @override
+  String get accountAndSettings => 'Hesap ve Ayarlar';
+
+  @override
+  String get premiumFeatures => 'Premium Özellikler';
+
+  @override
+  String get tryFreeTitle => 'Ücretsiz Deneyin';
+
+  @override
+  String get tryFreeDescription =>
+      'Kısa bir reklam izleyerek 10 dakika boyunca tüm Premium özelliklere ücretsiz erişin.';
+
+  @override
+  String get watchAdButton => 'Reklam İzle ve 10dk Aç';
+
+  @override
+  String get restorePurchases => 'Satın Almaları Geri Yükle';
+
+  @override
+  String get premiumBenefitPerformance => 'İşçi & Performans Analizi';
 }

@@ -14,13 +14,26 @@ class SyncManager {
   bool get isOnline => _isOnline;
 
   // Sync olaylarını dinlemek için StreamController (mesela WorkerProvider için)
-  final StreamController<void> _syncCompletedController = StreamController<void>.broadcast();
-  Stream<void> get onSyncCompleted => _syncCompletedController.stream;
+  final StreamController<bool> _syncCompletedController = StreamController<bool>.broadcast();
+  Stream<bool> get onSyncCompleted => _syncCompletedController.stream;
+  Timer? _debounceTimer;
 
   /// Callback to resolve temporary IDs in the local database
   Future<void> Function(String table, int tempId, int realId)? onTempIdResolved;
 
   SyncManager._init();
+
+  /// Senkronizasyon (Yükleme veya İndirme) bittiğinde UI'ı bilgilendirmek için kullanılır
+  void triggerSyncCompleted({bool force = false}) {
+    print('DEBUG: SyncManager.triggerSyncCompleted(force: $force) called');
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (!_syncCompletedController.isClosed) {
+        print('DEBUG: SyncManager - Broadcasting sync completed event (force: $force)');
+        _syncCompletedController.add(force);
+      }
+    });
+  }
 
   Future<void> init() async {
     // Open the sync queue box
@@ -36,10 +49,32 @@ class SyncManager {
         _syncData();
       }
     });
+
+    // Supabase Realtime listener (Dışarıdan gelen değişiklikleri anlık yakala)
+    _initRealtimeListener();
+  }
+
+  void _initRealtimeListener() {
+    // Tüm tablolardaki INSERT, UPDATE, DELETE olaylarını dinle
+    // Not: PostgreSQL tarafında Replication -> Tables kısmından tabloların aktif edilmesi gerekir.
+    _supabase
+        .channel('public:any')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          callback: (payload) {
+            print('DEBUG: Realtime change detected on ${payload.table} | Event: ${payload.eventType}');
+            // Dışarıdan gelen bir değişiklik olduğunda UI'ı tetikle
+            // Realtime olayları için force=true gönderiyoruz ki bekleme süresini (throttle) atlasın
+            triggerSyncCompleted(force: true);
+          },
+        )
+        .subscribe();
   }
 
   void dispose() {
     _connectivitySubscription?.cancel();
+    _debounceTimer?.cancel();
   }
 
   /// Belirli bir işlemi çevrimdışı kuyruğa ekler
@@ -224,7 +259,7 @@ class SyncManager {
         if (keysToDelete.isNotEmpty) {
           await _syncQueueBox.deleteAll(keysToDelete);
           // Dışarıya sync tamamlandı olayı gönder ki Provider'lar refresh yapsın (Örn: temp_id -> real_id dönüşümü için)
-          _syncCompletedController.add(null);
+          triggerSyncCompleted();
         }
         
         // Eğer hiçbir şey silinmediyse (hata oldu ve break dendi), döngüden çık

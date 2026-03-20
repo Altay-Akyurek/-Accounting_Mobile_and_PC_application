@@ -10,6 +10,8 @@ import '../services/database_helper.dart';
 import '../services/project_export_service.dart';
 import '../services/premium_manager.dart';
 import '../widgets/banner_ad_widget.dart';
+import '../services/sync_manager.dart';
+import 'dart:async';
 import '../utils/error_handler.dart';
 
 class ProjectDetailPage extends StatefulWidget {
@@ -29,6 +31,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
   List<Puantaj> _puantajlar = [];
   List<Worker> _workers = [];
   bool _isLoading = true;
+  StreamSubscription? _syncSubscription;
 
   double _toplamGider = 0;
   double _netKar = 0;
@@ -40,21 +43,36 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
+    
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((force) {
+      if (mounted) {
+        _loadData(ignoreThrottle: force == true);
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _syncSubscription?.cancel();
     super.dispose();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool ignoreThrottle = false}) async {
     setState(() => _isLoading = true);
-    final hakedisler = await DatabaseHelper.instance.getHakedisByProjectId(widget.project.id!);
-    final gelirGiderler = await DatabaseHelper.instance.getGelirGiderByProjectId(widget.project.id!);
-    final cariIslemler = await DatabaseHelper.instance.getCariIslemlerByProjectId(widget.project.id!);
-    final puantajlar = await DatabaseHelper.instance.getPuantajByProjectId(widget.project.id!);
-    final workers = await DatabaseHelper.instance.getAllWorkers();
+    final hakedisler = await DatabaseHelper.instance.getAllHakedisler(ignoreThrottle: ignoreThrottle);
+    final projectHakedisler = hakedisler.where((h) => h.projectId == widget.project.id).toList();
+    
+    final gelirGiderler = await DatabaseHelper.instance.getAllGelirGider(ignoreThrottle: ignoreThrottle);
+    final projectGelirGider = gelirGiderler.where((gg) => gg.projectId == widget.project.id).toList();
+
+    final cariIslemler = await DatabaseHelper.instance.getAllCariIslemler(ignoreThrottle: ignoreThrottle);
+    final projectCariIslemler = cariIslemler.where((islem) => islem.projectId == widget.project.id).toList();
+
+    final puantajlar = await DatabaseHelper.instance.getAllPuantajlar(ignoreThrottle: ignoreThrottle);
+    final projectPuantajlar = puantajlar.where((p) => p.projectId == widget.project.id).toList();
+
+    final workers = await DatabaseHelper.instance.getAllWorkers(ignoreThrottle: ignoreThrottle);
 
     if (!mounted) return;
 
@@ -63,7 +81,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
     double tahsilEdilen = 0;
     double toplamH = 0;
 
-    for (var h in hakedisler) {
+    for (var h in projectHakedisler) {
       toplamH += h.netTutar;
       if (h.durum == HakedisDurum.tahsilEdildi) {
         gelir += h.netTutar;
@@ -71,28 +89,28 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
       }
     }
 
-    for (var gg in gelirGiderler) {
+    for (var gg in projectGelirGider) {
       if (gg.tipi == GelirGiderTipi.gelir) gelir += gg.tutar;
       if (gg.tipi == GelirGiderTipi.gider) gider += gg.tutar;
     }
 
-    for (var islem in cariIslemler) {
+    for (var islem in projectCariIslemler) {
       if (!(islem.aciklama.contains('Hakediş Tahsilatı'))) {
         gelir += islem.borc;
       }
       gider += islem.alacak;
     }
 
-    for (var p in puantajlar) {
+    for (var p in projectPuantajlar) {
       final worker = workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: AppLocalizations.of(context)!.unknown, baslangicTarihi: DateTime.now()));
       gider += DatabaseHelper.instance.calculateLaborCost(p, worker);
     }
 
     setState(() {
-      _hakedisler = hakedisler;
-      _gelirGiderler = gelirGiderler;
-      _cariIslemler = cariIslemler;
-      _puantajlar = puantajlar;
+      _hakedisler = projectHakedisler;
+      _gelirGiderler = projectGelirGider;
+      _cariIslemler = projectCariIslemler;
+      _puantajlar = projectPuantajlar;
       _workers = workers;
       _toplamGider = gider;
       _toplamHakedis = toplamH;

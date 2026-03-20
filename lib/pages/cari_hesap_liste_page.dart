@@ -33,9 +33,9 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
     super.initState();
     _yukleCariHesaplar();
     
-    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((_) {
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((force) {
       if (mounted) {
-        _yukleCariHesaplar();
+        _yukleCariHesaplar(ignoreThrottle: force == true);
       }
     });
 
@@ -69,11 +69,11 @@ class _CariHesapListePageState extends State<CariHesapListePage> {
     super.dispose();
   }
 
-  Future<void> _yukleCariHesaplar() async {
+  Future<void> _yukleCariHesaplar({bool ignoreThrottle = false}) async {
     setState(() => _isLoading = true);
     try {
-      final cariHesaplar = await DatabaseHelper.instance.getAllCariHesaplar();
-      final workers = await DatabaseHelper.instance.getAllWorkers();
+      final cariHesaplar = await DatabaseHelper.instance.getAllCariHesaplar(ignoreThrottle: ignoreThrottle);
+      final workers = await DatabaseHelper.instance.getAllWorkers(ignoreThrottle: ignoreThrottle);
       setState(() {
         _workerCariIds = workers.map((w) => w.cariHesapId).whereType<int>().toSet();
         _cariHesaplar = cariHesaplar;

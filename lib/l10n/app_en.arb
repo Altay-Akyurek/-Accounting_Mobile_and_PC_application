@@ -5,7 +5,7 @@
   "deleteAccountSuccess": "Deletion request received. You are being logged out.",
   "demoDataLoaded": "Demo data successfully loaded. App is ready for screenshots!",
   "processingPayment": "Processing payment...",
-  "appTitle": "Accounting Pro",
+  "appTitle": "Muhasebe Pro: Expense & Worker Tracker",
   "dashboard": "Dashboard",
   "netCash": "NET CASH",
   "current": "CURRENT",
@@ -862,5 +862,19 @@
   "totalCost": "Total Cost",
   "totalWork_caps": "TOTAL WORK",
   "noRecordFound": "No record found.",
-  "hour_caps": "HOUR"
-}
+  "hour_caps": "HOUR",
+  "premiumActiveStatus": "Premium Features Active",
+  "unlockAllFeatures": "Unlock All Features",
+  "accountAndSettings": "Account and Settings",
+  "premiumFeatures": "Premium Features",
+  "tryFreeTitle": "Try Premium for Free",
+  "tryFreeDescription": "Watch a short ad to unlock all premium features for 10 minutes.",
+  "watchAdButton": "Watch Ad & Unlock 10m",
+  "restorePurchases": "Restore Purchases",
+  "processingPayment": "Processing payment...",
+  "congratulations": "Congratulations!",
+  "premiumBenefitPerformance": "Worker & Performance Analysis"
+}
+
+
+

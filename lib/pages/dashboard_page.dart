@@ -20,6 +20,7 @@ import '../services/ad_helper.dart';
 import 'privacy_policy_page.dart';
 import 'terms_of_use_page.dart';
 import 'support_page.dart';
+import '../services/sync_manager.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -41,11 +42,19 @@ class _DashboardPageState extends State<DashboardPage> {
   List<Map<String, dynamic>> _topProjeler = [];
 
   bool _isLoading = true;
+  StreamSubscription? _syncSubscription;
 
   @override
   void initState() {
     super.initState();
     _yukleOzetBilgiler();
+    
+    // Senkronizasyon tamamlandığında verileri otomatik yenile
+    _syncSubscription = SyncManager.instance.onSyncCompleted.listen((_) {
+      if (mounted) {
+        _yukleOzetBilgiler();
+      }
+    });
   }
 
   Future<void> _yukleOzetBilgiler() async {
@@ -80,8 +89,14 @@ class _DashboardPageState extends State<DashboardPage> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _syncSubscription?.cancel();
+    super.dispose();
   }
 
   String _formatPara(double tutar) {
@@ -155,6 +170,61 @@ class _DashboardPageState extends State<DashboardPage> {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
+                  ValueListenableBuilder<bool>(
+                    valueListenable: PremiumManager.instance.premiumStatusNotifier,
+                    builder: (context, isPremium, child) {
+                      return Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              gradient: isPremium 
+                                ? LinearGradient(colors: [const Color(0xFF2EC4B6).withOpacity(0.1), const Color(0xFF2EC4B6).withOpacity(0.05)])
+                                : LinearGradient(colors: [Colors.amber.shade100, Colors.amber.shade50]),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isPremium ? const Color(0xFF2EC4B6).withOpacity(0.3) : Colors.amber.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: ListTile(
+                              leading: Icon(
+                                isPremium ? Icons.verified_rounded : Icons.stars_rounded, 
+                                color: isPremium ? const Color(0xFF2EC4B6) : Colors.amber.shade800,
+                                size: 28,
+                              ),
+                              title: Text(
+                                isPremium 
+                                  ? AppLocalizations.of(context)!.premiumSubtitle 
+                                  : AppLocalizations.of(context)!.premiumPackages,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  color: isPremium ? const Color(0xFF011627) : Colors.amber.shade900,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              subtitle: Text(
+                                isPremium 
+                                  ? AppLocalizations.of(context)!.premiumActiveStatus 
+                                  : AppLocalizations.of(context)!.unlockAllFeatures,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isPremium ? const Color(0xFF011627).withOpacity(0.6) : Colors.amber.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey),
+                              onTap: () {
+                                Navigator.pop(context);
+                                Navigator.pushNamed(context, '/premium');
+                              },
+                            ),
+                          ),
+                          const Divider(indent: 20, endIndent: 20, height: 16),
+                        ],
+                      );
+                    },
+                  ),
                   ExpansionTile(
                     leading: const Icon(Icons.analytics_rounded, color: Color(0xFF011627)),
                     title: Text(
@@ -198,42 +268,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
                   ExpansionTile(
-                    leading: const Icon(Icons.stars_rounded, color: Color(0xFF2EC4B6)),
+                    leading: const Icon(Icons.settings_rounded, color: Color(0xFF011627)),
                     title: Text(
-                      AppLocalizations.of(context)!.premiumAndAccount,
+                      AppLocalizations.of(context)!.accountAndSettings,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     children: [
-                      ValueListenableBuilder<bool>(
-                        valueListenable: PremiumManager.instance.premiumStatusNotifier,
-                        builder: (context, isPremium, child) {
-                          if (isPremium) return const SizedBox.shrink();
-                          return Column(
-                            children: [
-                              _buildDrawerItem(
-                                icon: Icons.stars_rounded,
-                                label: AppLocalizations.of(context)!.premiumPackages,
-                                color: const Color(0xFF2EC4B6),
-                                horizontalPadding: 32,
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  Navigator.pushNamed(context, '/premium');
-                                },
-                              ),
-                              _buildDrawerItem(
-                                icon: Icons.ondemand_video_rounded,
-                                label: AppLocalizations.of(context)!.freePremium,
-                                color: Colors.orange,
-                                horizontalPadding: 32,
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  _showRewardedAdFromDashboard();
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      ),
                        _buildDrawerItem(
                         icon: Icons.delete_forever_rounded,
                         label: AppLocalizations.of(context)!.deleteAccount,
@@ -246,6 +286,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ],
                   ),
+
                   ExpansionTile(
                     leading: const Icon(Icons.info_outline_rounded, color: Color(0xFF011627)),
                     title: Text(

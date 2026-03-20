@@ -95,30 +95,37 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     ),
                     const SizedBox(height: 60),
                     
-                    // App Branding
-                    Opacity(
-                      opacity: _opacityAnimation.value,
-                      child: Column(
-                        children: [
-                          Text(
-                            AppLocalizations.of(context)!.appTitle.toUpperCase(),
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 32 * _controller.value.clamp(0.8, 1.0),
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 8 * _controller.value,
+                    // App Branding (Eskisi gibi uzaktan yakına gelme efekti, sabitlenmiş boyutla)
+                    Transform.scale(
+                      scale: _scaleAnimation.value.clamp(0.1, 1.0),
+                      child: Opacity(
+                        opacity: _opacityAnimation.value,
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 40),
+                              child: Text(
+                                AppLocalizations.of(context)!.appTitle.toUpperCase(),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 6 * _controller.value,
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            AppLocalizations.of(context)!.appTagline,
-                            style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: 14,
-                              letterSpacing: 4,
+                            const SizedBox(height: 12),
+                            Text(
+                              AppLocalizations.of(context)!.appTagline,
+                              style: TextStyle(
+                                color: Colors.white38,
+                                fontSize: 13,
+                                letterSpacing: 4 * _controller.value,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 100),
