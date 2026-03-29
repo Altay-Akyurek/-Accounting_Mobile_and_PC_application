@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/language_switcher.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -256,7 +258,9 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
+
           Center(
+
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -421,6 +425,17 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // Language Switcher positioned at the top right (placed last to be on top)
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: const LanguageSwitcher(),
               ),
             ),
           ),

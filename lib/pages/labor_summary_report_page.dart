@@ -217,7 +217,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
               if (value == 'pdf' || value == 'excel') {
                 if (PremiumManager.instance.checkPremium(context)) {
                     setState(() {
-                      _currentStatus = "Hazirlaniyor...";
+                      _currentStatus = AppLocalizations.of(context)!.preparing_ellipsis;
                       _isCancelled = false;
                     });
                     _showLoadingDialog();
@@ -255,7 +255,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                     } catch (e) {
                         if (mounted && !_isCancelled) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Hata: $e')),
+                            SnackBar(content: Text('${AppLocalizations.of(context)!.error_colon}$e')),
                           );
                         }
                     } finally {
@@ -485,7 +485,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                             onPressed: () async {
                               if (PremiumManager.instance.checkPremium(context)) {
                                 setState(() {
-                                  _currentStatus = "Hazirlaniyor...";
+                                  _currentStatus = AppLocalizations.of(context)!.preparing_ellipsis;
                                   _isCancelled = false;
                                 });
                                 _showLoadingDialog();
@@ -513,7 +513,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                                 } catch (e) {
                                   if (mounted && !_isCancelled) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Hata: $e')),
+                                      SnackBar(content: Text('${AppLocalizations.of(context)!.error_colon}$e')),
                                     );
                                   }
                                 } finally {
@@ -742,7 +742,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                   StatefulBuilder(
                     builder: (context, setDialogState) {
                       return Text(
-                        _currentStatus.isEmpty ? "Raporunuz hazirlaniyor..." : _currentStatus,
+                        _currentStatus.isEmpty ? AppLocalizations.of(context)!.reportPreparing_ellipsis : _currentStatus,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.grey.shade600,
@@ -763,7 +763,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                       Navigator.of(context).pop();
                     },
                     child: Text(
-                      "İPTAL",
+                      AppLocalizations.of(context)!.cancel_caps_upper,
                       style: TextStyle(
                         color: Colors.red.shade400,
                         fontWeight: FontWeight.bold,

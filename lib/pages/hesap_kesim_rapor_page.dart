@@ -387,7 +387,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
         final double amount = item['amount'].toDouble();
         if (amount > 0) {
           if (item['cariId'] == null) {
-             throw Exception('${item['name'] ?? 'Proje'} için Cari Hesap tanımlanmamış. Lütfen düzenlemeden bir Cari Hesap bağlayın.');
+              throw Exception(AppLocalizations.of(context)!.noCariLinked(item['name'] ?? 'Proje'));
           }
           transactions.add(CariIslem(
             cariHesapId: item['cariId'],
@@ -395,7 +395,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
             projectId: item['projectId'],
             tarih: islemTarihi,
             vade: _endDate, // Indicate this settles the selected period
-            aciklama: 'Hakediş tahsilatı: ${item['name']} #H:[${(item['hakedisIds'] as List<int>).join(',')}]',
+            aciklama: '${AppLocalizations.of(context)!.hakedisCollection_internal}: ${item['name']} #H:[${(item['hakedisIds'] as List<int>).join(',')}]',
             hesapTipi: 'Nakit',
             borc: amount,
             alacak: 0,
@@ -430,15 +430,15 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     final toSettle = items.where((i) => (i['period_balance'] ?? 0.0) != 0).toList();
 
     if (toSettle.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Seçilen dönem için ödenecek bakiye bulunamadı.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noPendingLaborBalance)));
       return;
     }
 
     final double periodNet = labor['period_net']?.toDouble() ?? 0.0;
 
     final confirm = await _showConfirmDialog(
-      'Seçili Dönemi Kapat',
-      'Seçili tarih aralığındaki ${toSettle.length} personelin net hakediş ödemesini (${_formatPara(periodNet.abs())}) yapmak istiyor musunuz?',
+      AppLocalizations.of(context)!.settleSelectedPeriod,
+      AppLocalizations.of(context)!.laborSettleConfirmDetail(toSettle.length, _formatPara(periodNet.abs())),
     );
 
     if (confirm != true) return;
@@ -450,7 +450,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
       for (var item in toSettle) {
         final double amount = item['period_balance'].toDouble();
         if (item['cariId'] == null) {
-           throw Exception('${item['name']} için Cari Hesap tanımlanmamış. Lütfen Personel Düzenle kısmından bir Cari Hesap bağlayın.');
+           throw Exception(AppLocalizations.of(context)!.noCariLinked(item['name']));
         }
         transactions.add(CariIslem(
           cariHesapId: item['cariId'],
@@ -458,7 +458,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
           projectId: _selectedProjectIds.length == 1 ? _selectedProjectIds.first : null,
           tarih: islemTarihi,
           vade: _endDate, // Indicate this settles the selected period
-          aciklama: 'Maaş Ödemesi (Dönem): ${item['name']}',
+          aciklama: '${AppLocalizations.of(context)!.salaryPaymentPeriod}${item['name']}',
           hesapTipi: 'Nakit',
           borc: amount < 0 ? amount.abs() : 0,
           alacak: amount > 0 ? amount : 0,
@@ -501,7 +501,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
         final balance = item['balance'].toDouble();
         
         if (item['cariId'] == null) {
-           throw Exception('${item['name']} için Cari Hesap bulunamadı.');
+           throw Exception(AppLocalizations.of(context)!.noCariLinked(item['name']));
         }
 
         // Cari Hesap Kaydı (Bakiyeyi kapatıyoruz)
@@ -510,7 +510,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
           cariHesapUnvan: item['name'],
           tarih: islemTarihi,
           vade: _endDate, // Indicate this settles the selected period
-          aciklama: 'Hesap Kapatma',
+          aciklama: AppLocalizations.of(context)!.accountClosure,
           hesapTipi: 'Nakit',
           borc: balance < 0 ? balance.abs() : 0,
           alacak: balance > 0 ? balance : 0,
@@ -627,7 +627,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                         ),
                       ),
                       child: Text(
-                        isProfit ? 'KARDA' : 'ZARARDA',
+                        isProfit ? AppLocalizations.of(context)!.inProfit_caps : AppLocalizations.of(context)!.inLoss_caps,
                         style: TextStyle(
                           color: isProfit ? const Color(0xFF2EC4B6) : const Color(0xFFE71D36),
                           fontSize: 10,
@@ -659,11 +659,15 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '${AppLocalizations.of(context)!.incomeShare} %${(ratio * 100).toStringAsFixed(0)}',
+                          Localizations.localeOf(context).languageCode == 'tr' 
+                            ? '${AppLocalizations.of(context)!.incomeShare} %${(ratio * 100).toStringAsFixed(0)}'
+                            : '${AppLocalizations.of(context)!.incomeShare} ${(ratio * 100).toStringAsFixed(0)}%',
                           style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          '${AppLocalizations.of(context)!.expenseShare} %${((1 - ratio) * 100).toStringAsFixed(0)}',
+                          Localizations.localeOf(context).languageCode == 'tr'
+                            ? '${AppLocalizations.of(context)!.expenseShare} %${((1 - ratio) * 100).toStringAsFixed(0)}'
+                            : '${AppLocalizations.of(context)!.expenseShare} ${((1 - ratio) * 100).toStringAsFixed(0)}%',
                           style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -808,7 +812,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
               children: [
                 Expanded(
                   child: Text(
-                    'Seçili Dönem Kalan Bakiye',
+                    AppLocalizations.of(context)!.selectedPeriodRemainingBalance,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -832,7 +836,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
           ),
           const SizedBox(height: 8),
           _buildDataRow(
-            'Genel Toplam Bakiye (Tüm Zamanlar)', 
+            AppLocalizations.of(context)!.grandTotalBalanceAllTime, 
             cumulative, 
             isBold: true,
             valueColor: cumulative.abs() < 0.1 ? Colors.grey : const Color(0xFF011627)
@@ -870,7 +874,7 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                           children: [
                             Expanded(
                               child: Text(
-                                periodSettled ? '${item['name']} (Dönem Kapalı)' : item['name'], 
+                                periodSettled ? '${item['name']} ${AppLocalizations.of(context)!.periodClosed_parentheses_small}' : item['name'], 
                                 style: TextStyle(
                                   fontSize: 14, 
                                   fontWeight: FontWeight.w900, 
@@ -905,11 +909,11 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'Eski Borç: ${_formatPara(prev.abs())}',
+                                  '${AppLocalizations.of(context)!.previousDebt_colon}${_formatPara(prev.abs())}',
                                   style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
                                 ),
                                 Text(
-                                  'Genel Toplam: ${_formatPara(total.abs())}',
+                                  '${AppLocalizations.of(context)!.grandTotal_colon}${_formatPara(total.abs())}',
                                   style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.bold),
                                 ),
                               ],

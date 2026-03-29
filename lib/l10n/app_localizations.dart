@@ -134,6 +134,48 @@ abstract class AppLocalizations {
   /// **'İşleniyor...'**
   String get processing;
 
+  /// No description provided for @marketError.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uygulama mağazası açılamadı.'**
+  String get marketError;
+
+  /// No description provided for @deletingAccount.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınız siliniyor...'**
+  String get deletingAccount;
+
+  /// No description provided for @accountDeletedSuccess.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınız silindi ve çıkış yapıldı.'**
+  String get accountDeletedSuccess;
+
+  /// No description provided for @cash.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nakit'**
+  String get cash;
+
+  /// No description provided for @bankTransfer.
+  ///
+  /// In tr, this message translates to:
+  /// **'Banka Havale'**
+  String get bankTransfer;
+
+  /// No description provided for @check.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çek'**
+  String get check;
+
+  /// No description provided for @creditCard.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kredi Kartı'**
+  String get creditCard;
+
   /// No description provided for @appTitle.
   ///
   /// In tr, this message translates to:
@@ -343,6 +385,84 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Bize Ulaşın / Destek'**
   String get contactSupport;
+
+  /// No description provided for @supportPageTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bize Ulaşın / Destek'**
+  String get supportPageTitle;
+
+  /// No description provided for @customerServiceHeader.
+  ///
+  /// In tr, this message translates to:
+  /// **'Müşteri Hizmetleri ve Teknik Destek'**
+  String get customerServiceHeader;
+
+  /// No description provided for @supportDescription.
+  ///
+  /// In tr, this message translates to:
+  /// **'Uygulamamızı tercih ettiğiniz için teşekkür ederiz. Muhasebe Pro deneyiminizi en üst seviyeye taşımak amacıyla uzman destek ekibimiz sorularınızı yanıtlamaya ve teknik problemlerinizi çözmeye hazırdır. Uygulama ile ilgili karşılaştığınız her türlü sorunu çözebilmemiz için detaylı olarak bizimle paylaşmaktan çekinmeyin.'**
+  String get supportDescription;
+
+  /// No description provided for @workingHoursTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışma ve Yanıt Süreleri'**
+  String get workingHoursTitle;
+
+  /// No description provided for @workingHoursDescription.
+  ///
+  /// In tr, this message translates to:
+  /// **'Destek taleplerinize hafta içi (Pazartesi-Cuma) 09:00 - 18:00 saatleri arasında, ortalama 24 ile 48 saat içerisinde geri dönüş yapılmaktadır.'**
+  String get workingHoursDescription;
+
+  /// No description provided for @dataPrivacyTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişisel Veri Talepleri'**
+  String get dataPrivacyTitle;
+
+  /// No description provided for @dataPrivacyDescription.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kullanım koşulları veya gizlilik sözleşmesi uyarınca hesabınızın silinmesi ve verilerinizin yok edilmesi taleplerinizi doğrudan destek mailimize e-posta aracılığıyla iletebilirsiniz.'**
+  String get dataPrivacyDescription;
+
+  /// No description provided for @officialSupportEmail.
+  ///
+  /// In tr, this message translates to:
+  /// **'Resmi Destek Adresi'**
+  String get officialSupportEmail;
+
+  /// No description provided for @createSupportRequest.
+  ///
+  /// In tr, this message translates to:
+  /// **'Destek Talebi Oluştur (E-posta)'**
+  String get createSupportRequest;
+
+  /// No description provided for @emailNotOpened.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta uygulaması açılamadı.'**
+  String get emailNotOpened;
+
+  /// No description provided for @emailNotFound.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta uygulaması bulunamadı veya açılamadı.'**
+  String get emailNotFound;
+
+  /// No description provided for @supportEmailSubject.
+  ///
+  /// In tr, this message translates to:
+  /// **'Muhasebe Pro - Destek Talebi / Geri Bildirim'**
+  String get supportEmailSubject;
+
+  /// No description provided for @supportEmailBody.
+  ///
+  /// In tr, this message translates to:
+  /// **'Lütfen karşılaştığınız sorunu veya önerinizi detaylı bir şekilde açıklayın:\n\n--- Sorun / Öneri Detayları ---\n\n\n--- Cihaz ve Uygulama Bilgileri ---\nUygulama Sürümü: 1.0.0\nCihaz Modeli: (Lütfen Belirtin)\nİşletim Sistemi: (Lütfen Belirtin)\n'**
+  String get supportEmailBody;
 
   /// No description provided for @logout.
   ///
@@ -920,6 +1040,282 @@ abstract class AppLocalizations {
   /// **'Kasa Çıkışları'**
   String get cashOutflows;
 
+  /// No description provided for @otherAccountOutflows.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cari/Diğer Çıkışlar'**
+  String get otherAccountOutflows;
+
+  /// No description provided for @periodClosed_caps.
+  ///
+  /// In tr, this message translates to:
+  /// **'DÖNEM KAPALI'**
+  String get periodClosed_caps;
+
+  /// No description provided for @periodDebt_caps.
+  ///
+  /// In tr, this message translates to:
+  /// **'DÖNEM BORÇ'**
+  String get periodDebt_caps;
+
+  /// No description provided for @periodCredit_caps.
+  ///
+  /// In tr, this message translates to:
+  /// **'DÖNEM ALACAK'**
+  String get periodCredit_caps;
+
+  /// No description provided for @remaining_colon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kalan: '**
+  String get remaining_colon;
+
+  /// No description provided for @accountClosed_parentheses.
+  ///
+  /// In tr, this message translates to:
+  /// **'(HESAP KAPALI)'**
+  String get accountClosed_parentheses;
+
+  /// No description provided for @previous_short.
+  ///
+  /// In tr, this message translates to:
+  /// **'E: '**
+  String get previous_short;
+
+  /// No description provided for @accrued_short.
+  ///
+  /// In tr, this message translates to:
+  /// **'H: '**
+  String get accrued_short;
+
+  /// No description provided for @paid_short.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ö: '**
+  String get paid_short;
+
+  /// No description provided for @noPendingLaborBalance.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçilen dönem için ödenecek bakiye bulunamadı.'**
+  String get noPendingLaborBalance;
+
+  /// No description provided for @settleSelectedPeriod.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçili Dönemi Kapat'**
+  String get settleSelectedPeriod;
+
+  /// No description provided for @laborSettleConfirmDetail.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçili tarih aralığındaki {count} personelin net hakediş ödemesini ({amount}) yapmak istiyor musunuz?'**
+  String laborSettleConfirmDetail(Object amount, Object count);
+
+  /// No description provided for @noCariLinked.
+  ///
+  /// In tr, this message translates to:
+  /// **'{name} için Cari Hesap tanımlanmamış. Lütfen Personel Düzenle kısmından bir Cari Hesap bağlayın.'**
+  String noCariLinked(Object name);
+
+  /// No description provided for @salaryPaymentPeriod.
+  ///
+  /// In tr, this message translates to:
+  /// **'Maaş Ödemesi (Dönem): '**
+  String get salaryPaymentPeriod;
+
+  /// No description provided for @accountClosure.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesap Kapatma'**
+  String get accountClosure;
+
+  /// No description provided for @inProfit_caps.
+  ///
+  /// In tr, this message translates to:
+  /// **'KARDA'**
+  String get inProfit_caps;
+
+  /// No description provided for @inLoss_caps.
+  ///
+  /// In tr, this message translates to:
+  /// **'ZARARDA'**
+  String get inLoss_caps;
+
+  /// No description provided for @efficiencyScore.
+  ///
+  /// In tr, this message translates to:
+  /// **'Genel Verimlilik Puanı'**
+  String get efficiencyScore;
+
+  /// No description provided for @attendanceRate.
+  ///
+  /// In tr, this message translates to:
+  /// **'Katılım Oranı'**
+  String get attendanceRate;
+
+  /// No description provided for @hourPerformance.
+  ///
+  /// In tr, this message translates to:
+  /// **'Saat Performansı'**
+  String get hourPerformance;
+
+  /// No description provided for @totalWorkHours_short.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplam Çalışma'**
+  String get totalWorkHours_short;
+
+  /// No description provided for @overtime_short.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fazla Mesai'**
+  String get overtime_short;
+
+  /// No description provided for @activityHeatmap.
+  ///
+  /// In tr, this message translates to:
+  /// **'AKTİVİTE ISI HARİTASI (SON 6 AY)'**
+  String get activityHeatmap;
+
+  /// No description provided for @noRecord.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt Yok'**
+  String get noRecord;
+
+  /// No description provided for @holidayOrNoRecord.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tatil/Kayıt Yok'**
+  String get holidayOrNoRecord;
+
+  /// No description provided for @onLeaveOrReported.
+  ///
+  /// In tr, this message translates to:
+  /// **'İzinli/Raporlu'**
+  String get onLeaveOrReported;
+
+  /// No description provided for @projectTimeDistribution.
+  ///
+  /// In tr, this message translates to:
+  /// **'PROJE BAZLI ZAMAN DAĞILIMI'**
+  String get projectTimeDistribution;
+
+  /// No description provided for @veryGood.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çok İyi'**
+  String get veryGood;
+
+  /// No description provided for @good.
+  ///
+  /// In tr, this message translates to:
+  /// **'İyi'**
+  String get good;
+
+  /// No description provided for @average.
+  ///
+  /// In tr, this message translates to:
+  /// **'Orta'**
+  String get average;
+
+  /// No description provided for @poor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zayıf'**
+  String get poor;
+
+  /// No description provided for @unknownProject.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilinmeyen Proje'**
+  String get unknownProject;
+
+  /// No description provided for @deletedProject.
+  ///
+  /// In tr, this message translates to:
+  /// **'Silinmiş Proje'**
+  String get deletedProject;
+
+  /// No description provided for @taxAndDeductionRates_percent.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vergi ve Kesinti Oranları (%)'**
+  String get taxAndDeductionRates_percent;
+
+  /// No description provided for @hakedisDate.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hakediş Tarihi'**
+  String get hakedisDate;
+
+  /// No description provided for @hakedisDescriptionHint.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama / Not (Opsiyonel)'**
+  String get hakedisDescriptionHint;
+
+  /// No description provided for @hakedisCollection_internal.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hakediş Tahsilatı'**
+  String get hakedisCollection_internal;
+
+  /// No description provided for @selectedPeriodRemainingBalance.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçili Dönem Kalan Bakiye'**
+  String get selectedPeriodRemainingBalance;
+
+  /// No description provided for @grandTotalBalanceAllTime.
+  ///
+  /// In tr, this message translates to:
+  /// **'Genel Toplam Bakiye (Tüm Zamanlar)'**
+  String get grandTotalBalanceAllTime;
+
+  /// No description provided for @previousDebt_colon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Eski Borç: '**
+  String get previousDebt_colon;
+
+  /// No description provided for @grandTotal_colon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Genel Toplam: '**
+  String get grandTotal_colon;
+
+  /// No description provided for @periodClosed_parentheses_small.
+  ///
+  /// In tr, this message translates to:
+  /// **'(Dönem Kapalı)'**
+  String get periodClosed_parentheses_small;
+
+  /// No description provided for @preparing_ellipsis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hazırlanıyor...'**
+  String get preparing_ellipsis;
+
+  /// No description provided for @error_colon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hata: '**
+  String get error_colon;
+
+  /// No description provided for @reportPreparing_ellipsis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Raporunuz hazırlanıyor...'**
+  String get reportPreparing_ellipsis;
+
+  /// No description provided for @cancel_caps_upper.
+  ///
+  /// In tr, this message translates to:
+  /// **'İPTAL'**
+  String get cancel_caps_upper;
+
   /// No description provided for @sunday.
   ///
   /// In tr, this message translates to:
@@ -1033,12 +1429,6 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Teminat'**
   String get guarantee;
-
-  /// No description provided for @hakedisDate.
-  ///
-  /// In tr, this message translates to:
-  /// **'Hakediş Tarihi'**
-  String get hakedisDate;
 
   /// No description provided for @descriptionOptional.
   ///
@@ -2454,6 +2844,18 @@ abstract class AppLocalizations {
   /// **'Puantaj Özeti'**
   String get attendanceSummary;
 
+  /// No description provided for @expectedTarget.
+  ///
+  /// In tr, this message translates to:
+  /// **'Beklenen Hedef'**
+  String get expectedTarget;
+
+  /// No description provided for @daysWorked.
+  ///
+  /// In tr, this message translates to:
+  /// **'{count} Gün Çalıştı'**
+  String daysWorked(int count);
+
   /// No description provided for @noWorkerFound.
   ///
   /// In tr, this message translates to:
@@ -2471,6 +2873,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Yazdırma özelliği yakında eklenecek'**
   String get printFeatureSoon;
+
+  /// No description provided for @receiptFeatureSoon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Makbuz özelliği yakında eklenecek'**
+  String get receiptFeatureSoon;
+
+  /// No description provided for @ledger.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ekstre'**
+  String get ledger;
 
   /// No description provided for @turkish.
   ///
@@ -3575,6 +3989,60 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'İşçi & Performans Analizi'**
   String get premiumBenefitPerformance;
+
+  /// No description provided for @newCariAccountDialog.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni Cari Hesap'**
+  String get newCariAccountDialog;
+
+  /// No description provided for @editCariAccountDialog.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cari Hesap Düzenle'**
+  String get editCariAccountDialog;
+
+  /// No description provided for @titleLabelStar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ünvan *'**
+  String get titleLabelStar;
+
+  /// No description provided for @titleIsRequired.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ünvan zorunludur'**
+  String get titleIsRequired;
+
+  /// No description provided for @taxNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vergi No'**
+  String get taxNo;
+
+  /// No description provided for @taxOffice.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vergi Dairesi'**
+  String get taxOffice;
+
+  /// No description provided for @phone.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon'**
+  String get phone;
+
+  /// No description provided for @cariAccountAdded.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cari hesap başarıyla eklendi'**
+  String get cariAccountAdded;
+
+  /// No description provided for @cariAccountUpdated.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cari hesap başarıyla güncellendi'**
+  String get cariAccountUpdated;
 }
 
 class _AppLocalizationsDelegate

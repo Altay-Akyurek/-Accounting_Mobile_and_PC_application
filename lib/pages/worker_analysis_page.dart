@@ -230,7 +230,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
     final projColors = [const Color(0xFF2EC4B6), Colors.blue, Colors.orange, Colors.purple];
     int colorIdx = 0;
     projectHoursMap.forEach((pId, hours) {
-       final proj = _allProjects.firstWhere((pr) => pr.id == pId, orElse: () => Project(ad: 'Silinmiş Proje', baslangicTarihi: DateTime.now()));
+       final proj = _allProjects.firstWhere((pr) => pr.id == pId, orElse: () => Project(ad: AppLocalizations.of(context)!.deletedProject, baslangicTarihi: DateTime.now()));
        _projectDistribution.add({
          'name': proj.ad,
          'hours': hours,
@@ -342,7 +342,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    '${DateFormat('dd MMMM yyyy', 'tr_TR').format(_startDate)} - ${DateFormat('dd MMMM yyyy', 'tr_TR').format(_endDate)}',
+                    '${DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd MMMM yyyy', Localizations.localeOf(context).toString()).format(_endDate)}',
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF011627)),
                   ),
                 ),
@@ -356,16 +356,16 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
   }
 
   Widget _buildProfileScoreCard() {
-    String ratingText = "Zayıf";
+    String ratingText = AppLocalizations.of(context)!.poor;
     Color ratingColor = Colors.red;
     if (_productivityScore > 85) {
-      ratingText = "Çok İyi";
+      ratingText = AppLocalizations.of(context)!.veryGood;
       ratingColor = Colors.green;
     } else if (_productivityScore >= 65) {
-      ratingText = "İyi";
+      ratingText = AppLocalizations.of(context)!.good;
       ratingColor = Colors.amber;
     } else if (_productivityScore >= 45) {
-       ratingText = "Orta";
+       ratingText = AppLocalizations.of(context)!.average;
        ratingColor = Colors.orange;
     }
 
@@ -413,7 +413,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Genel Verimlilik Puanı",
+                  AppLocalizations.of(context)!.efficiencyScore,
                   style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
                 ),
                 const SizedBox(height: 8),
@@ -440,9 +440,9 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
   Widget _buildStatsGrid() {
     return Row(
       children: [
-        Expanded(child: _buildStatItem(Icons.calendar_month_outlined, "Katılım Oranı", "%${_participationRate.toStringAsFixed(0)}", const Color(0xFF2EC4B6), _participationRate / 100)),
+        Expanded(child: _buildStatItem(Icons.calendar_month_outlined, AppLocalizations.of(context)!.attendanceRate, Localizations.localeOf(context).languageCode == 'tr' ? "%${_participationRate.toStringAsFixed(0)}" : "${_participationRate.toStringAsFixed(0)}%", const Color(0xFF2EC4B6), _participationRate / 100)),
         const SizedBox(width: 16),
-        Expanded(child: _buildStatItem(Icons.access_time_rounded, "Saat Performansı", "%${_hourPerformanceRate.toStringAsFixed(0)}", Colors.blue, _hourPerformanceRate / 100)),
+        Expanded(child: _buildStatItem(Icons.access_time_rounded, AppLocalizations.of(context)!.hourPerformance, Localizations.localeOf(context).languageCode == 'tr' ? "%${_hourPerformanceRate.toStringAsFixed(0)}" : "${_hourPerformanceRate.toStringAsFixed(0)}%", Colors.blue, _hourPerformanceRate / 100)),
       ],
     );
   }
@@ -450,9 +450,9 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
   Widget _buildAbsenceCard() {
      return Row(
        children: [
-          Expanded(child: _buildStatItem(Icons.work_history_rounded, "Toplam Çalışma", "${_selectedWorkerTotalHours.toStringAsFixed(1)} sa", const Color(0xFF011627), 0.8)), // Arbitrary progress to look good
+          Expanded(child: _buildStatItem(Icons.work_history_rounded, AppLocalizations.of(context)!.totalWorkHours_short, "${_selectedWorkerTotalHours.toStringAsFixed(1)} ${Localizations.localeOf(context).languageCode == 'tr' ? 'sa' : 'h'}", const Color(0xFF011627), 0.8)), // Arbitrary progress to look good
           const SizedBox(width: 16),
-          Expanded(child: _buildStatItem(Icons.update_rounded, "Fazla Mesai", "${_selectedWorkerOvertime.toStringAsFixed(1)} sa", Colors.orange, 0.4)),
+          Expanded(child: _buildStatItem(Icons.update_rounded, AppLocalizations.of(context)!.overtime_short, "${_selectedWorkerOvertime.toStringAsFixed(1)} ${Localizations.localeOf(context).languageCode == 'tr' ? 'sa' : 'h'}", Colors.orange, 0.4)),
        ],
      );
   }
@@ -517,7 +517,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
         String key = "${current.year}-${current.month.toString().padLeft(2, '0')}-${current.day.toString().padLeft(2, '0')}";
         
         Color cellColor = Colors.grey.shade200; // Default off day
-        String statusText = "Kayıt Yok";
+        String statusText = AppLocalizations.of(context)!.noRecord;
         bool isEmpty = current.isAfter(_heatmapEnd);
         
         if (isEmpty) {
@@ -525,18 +525,18 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
            statusText = "";
         } else {
            PuantajStatus? status = _heatmapData[key];
-           if (status == PuantajStatus.normal) {
+            if (status == PuantajStatus.normal) {
               cellColor = const Color(0xFF2EC4B6);
-              statusText = "Normal";
-           } else if (status == PuantajStatus.izinsiz) {
+              statusText = AppLocalizations.of(context)!.normal;
+            } else if (status == PuantajStatus.izinsiz) {
               cellColor = const Color(0xFFE71D36);
-              statusText = "İzinsiz";
-           } else if (status != null) { // Izinli vb
+              statusText = AppLocalizations.of(context)!.unexcusedLeave;
+            } else if (status != null) { // Izinli vb
               cellColor = Colors.amber;
-              statusText = "İzinli/Raporlu";
-           } else {
-              statusText = "Tatil/Kayıt Yok";
-           }
+              statusText = AppLocalizations.of(context)!.onLeaveOrReported;
+            } else {
+              statusText = AppLocalizations.of(context)!.holidayOrNoRecord;
+            }
         }
         
         Widget cell = Container(
@@ -548,7 +548,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
         
         if (!isEmpty) {
             cell = Tooltip(
-               message: "${DateFormat('dd MMM yyyy', 'tr_TR').format(current)}\n$statusText",
+               message: "${DateFormat('dd MMM yyyy', Localizations.localeOf(context).toString()).format(current)}\n$statusText",
                textStyle: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
                decoration: BoxDecoration(color: const Color(0xFF011627), borderRadius: BorderRadius.circular(8)),
                child: MouseRegion(
@@ -575,7 +575,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("AKTİVİTE ISI HARİTASI (SON 6 AY)", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF011627), letterSpacing: 1.2)),
+          Text(AppLocalizations.of(context)!.activityHeatmap, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF011627), letterSpacing: 1.2)),
           const SizedBox(height: 20),
           // We use a SizedBox to restrain grid height and enable horizontal scrolling if needed, or just shrink
           SizedBox(
@@ -592,11 +592,11 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
           const SizedBox(height: 16),
           Row(
             children: [
-               _buildLegendBadge("Normal", const Color(0xFF2EC4B6)),
+               _buildLegendBadge(AppLocalizations.of(context)!.normal, const Color(0xFF2EC4B6)),
                const SizedBox(width: 12),
-               _buildLegendBadge("İzinli", Colors.amber),
+               _buildLegendBadge(AppLocalizations.of(context)!.onLeave, Colors.amber),
                const SizedBox(width: 12),
-               _buildLegendBadge("İzinsiz", const Color(0xFFE71D36)),
+               _buildLegendBadge(AppLocalizations.of(context)!.unexcusedLeave, const Color(0xFFE71D36)),
             ],
           )
         ],
@@ -629,7 +629,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           const Text("PROJE BAZLI ZAMAN DAĞILIMI", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF011627), letterSpacing: 1.2)),
+           Text(AppLocalizations.of(context)!.projectTimeDistribution, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF011627), letterSpacing: 1.2)),
            const SizedBox(height: 24),
            ..._projectDistribution.map((proj) {
               double maxHours = _projectDistribution.first['hours']; // First is max since sorted
@@ -643,7 +643,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                          children: [
                             Text(proj['name'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF011627))),
-                            Text("${proj['hours'].toStringAsFixed(1)} sa", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
+                            Text("${proj['hours'].toStringAsFixed(1)} ${Localizations.localeOf(context).languageCode == 'tr' ? 'sa' : 'h'}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
                          ],
                       ),
                       const SizedBox(height: 8),
@@ -682,9 +682,9 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Zaman İçinde Performans", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
+                Text(AppLocalizations.of(context)!.performanceOverTime, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
                  Text(
-                   '${DateFormat('dd MMM', 'tr_TR').format(_startDate)} - ${DateFormat('dd MMM', 'tr_TR').format(_endDate)}',
+                   '${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_startDate)} - ${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(_endDate)}',
                    style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold),
                  ),
               ],
@@ -705,11 +705,11 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                          if (touchedSpot.barIndex == 0) return null; // Ignore baseline
                          final date = _startDate.add(Duration(days: touchedSpot.x.toInt()));
                          return LineTooltipItem(
-                            '${DateFormat('dd MMM', 'tr_TR').format(date)}\n',
+                            '${DateFormat('dd MMM', Localizations.localeOf(context).toString()).format(date)}\n',
                             const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                             children: [
                                TextSpan(
-                                 text: '${touchedSpot.y} sa',
+                                 text: '${touchedSpot.y} ${Localizations.localeOf(context).languageCode == 'tr' ? 'sa' : 'h'}',
                                  style: const TextStyle(color: Color(0xFF2EC4B6), fontSize: 14, fontWeight: FontWeight.w900),
                                )
                             ]
@@ -743,7 +743,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                              return Padding(
                                padding: const EdgeInsets.only(top: 8.0),
                                child: Text(
-                                 DateFormat('dd.MM', 'tr_TR').format(date), 
+                                 DateFormat('dd.MM', Localizations.localeOf(context).toString()).format(date), 
                                  style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)
                                ),
                              );
@@ -817,7 +817,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                            alignment: Alignment.topRight,
                            padding: const EdgeInsets.only(right: 8, bottom: -4),
                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.purple),
-                           labelResolver: (line) => "Beklenen Hedef: 8 sa",
+                           labelResolver: (line) => "${AppLocalizations.of(context)!.expectedTarget}: 8 ${Localizations.localeOf(context).languageCode == 'tr' ? 'sa' : 'h'}",
                         )
                       ),
                   ],
@@ -835,7 +835,7 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Puantaj Özeti", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
+        Text(AppLocalizations.of(context)!.attendanceSummary, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF011627))),
         const SizedBox(height: 16),
         Container(
           width: double.infinity,
@@ -880,17 +880,17 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                       duration: const Duration(milliseconds: 1200),
                       curve: Curves.easeOutCubic,
                       builder: (context, val, child) {
-                        return Text(
-                           "%${val.toStringAsFixed(1)}",
-                           style: const TextStyle(fontSize: 46, fontWeight: FontWeight.w900, color: Color(0xFF011627), letterSpacing: -1.5),
-                        );
+                         return Text(
+                            Localizations.localeOf(context).languageCode == 'tr' ? "%${val.toStringAsFixed(1)}" : "${val.toStringAsFixed(1)}%",
+                            style: const TextStyle(fontSize: 46, fontWeight: FontWeight.w900, color: Color(0xFF011627), letterSpacing: -1.5),
+                         );
                       }
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                       "VERİMLİLİK",
-                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 2.5),
-                    ),
+                     Text(
+                        AppLocalizations.of(context)!.productivity_caps,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 2.5),
+                     ),
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -898,8 +898,8 @@ class _WorkerAnalysisPageState extends State<WorkerAnalysisPage> {
                         color: const Color(0xFF2EC4B6).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Text(
-                        "$_selectedWorkerWorkedDays Gün Çalıştı",
+                       child: Text(
+                        AppLocalizations.of(context)!.daysWorked(_selectedWorkerWorkedDays),
                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2EC4B6)),
                       ),
                     ),

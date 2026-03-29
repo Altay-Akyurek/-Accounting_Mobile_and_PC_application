@@ -95,7 +95,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
     }
 
     for (var islem in projectCariIslemler) {
-      if (!(islem.aciklama.contains('Hakediş Tahsilatı'))) {
+      if (!(islem.aciklama.contains(AppLocalizations.of(context)!.hakedisCollection_internal))) {
         gelir += islem.borc;
       }
       gider += islem.alacak;
@@ -323,7 +323,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                       strokeCap: StrokeCap.round,
                     ),
                   ),
-                  Text("${(progress * 100).toInt()}%", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF011627))),
+                  Text(
+                    Localizations.localeOf(context).languageCode == 'tr' 
+                      ? "%${(progress * 100).toInt()}"
+                      : "${(progress * 100).toInt()}%", 
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF011627))
+                  ),
                 ],
               ),
               const SizedBox(width: 24),
@@ -365,7 +370,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(AppLocalizations.of(context)!.profitabilityRatio.toUpperCase(), style: const TextStyle(color: Colors.white60, fontSize: 10, fontWeight: FontWeight.w900)),
-                Text("%${ratio.toStringAsFixed(1)}", style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                Text(
+                  Localizations.localeOf(context).languageCode == 'tr' 
+                    ? "%${ratio.toStringAsFixed(1)}"
+                    : "${ratio.toStringAsFixed(1)}%", 
+                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)
+                ),
               ],
             ),
           ),
@@ -383,10 +393,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
         children: [
           Text(AppLocalizations.of(context)!.projectDetails.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1.0)),
           const SizedBox(height: 24),
-          _buildDetailRow(AppLocalizations.of(context)!.startingDate, DateFormat('dd.MM.yyyy').format(widget.project.baslangicTarihi)),
+          _buildDetailRow(AppLocalizations.of(context)!.startingDate, DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(widget.project.baslangicTarihi)),
           _buildDetailRow(
             AppLocalizations.of(context)!.status, 
-            widget.project.durum.name.toUpperCase(),
+            _getTranslatedStatus(widget.project.durum, context),
             isStatus: true,
           ),
           _buildDetailRow(AppLocalizations.of(context)!.description, widget.project.aciklama ?? AppLocalizations.of(context)!.notEntered),
@@ -446,6 +456,17 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
         ),
       ),
     );
+  }
+
+  String _getTranslatedStatus(ProjectStatus status, BuildContext context) {
+    switch (status) {
+      case ProjectStatus.aktif:
+        return AppLocalizations.of(context)!.active.toUpperCase();
+      case ProjectStatus.askida:
+        return AppLocalizations.of(context)!.suspended.toUpperCase();
+      case ProjectStatus.bitti:
+        return AppLocalizations.of(context)!.completed.toUpperCase();
+    }
   }
 
   Widget _buildStatusOption(ProjectStatus status, String label, IconData icon, Color color) {
@@ -583,11 +604,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
 
   Widget _buildExpensesTab() {
     final List<Map<String, dynamic>> allExpenses = [];
-    for (var gg in _gelirGiderler) if (gg.tipi == GelirGiderTipi.gider) allExpenses.add({'id': gg.id, 'name': gg.baslik, 'amount': gg.tutar, 'date': gg.tarih, 'type': 'GİDER', 'model': gg});
-    for (var islem in _cariIslemler) if (islem.alacak > 0) allExpenses.add({'id': islem.id, 'name': islem.aciklama, 'amount': islem.alacak, 'date': islem.tarih, 'type': 'CARİ', 'model': islem});
+    for (var gg in _gelirGiderler) if (gg.tipi == GelirGiderTipi.gider) allExpenses.add({'id': gg.id, 'name': gg.baslik, 'amount': gg.tutar, 'date': gg.tarih, 'type': AppLocalizations.of(context)!.expense.toUpperCase(), 'model': gg});
+    for (var islem in _cariIslemler) if (islem.alacak > 0) allExpenses.add({'id': islem.id, 'name': islem.aciklama, 'amount': islem.alacak, 'date': islem.tarih, 'type': AppLocalizations.of(context)!.cariLabel.toUpperCase(), 'model': islem});
     for (var p in _puantajlar) {
       final worker = _workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: AppLocalizations.of(context)!.unknown, baslangicTarihi: DateTime.now()));
-      allExpenses.add({'id': p.id, 'name': AppLocalizations.of(context)!.laborPayment, 'amount': DatabaseHelper.instance.calculateLaborCost(p, worker), 'date': p.tarih, 'type': 'İŞÇİLİK', 'subtitle': 'Puantaj Kaydı (${worker.adSoyad})', 'model': p});
+      allExpenses.add({'id': p.id, 'name': AppLocalizations.of(context)!.laborPayment, 'amount': DatabaseHelper.instance.calculateLaborCost(p, worker), 'date': p.tarih, 'type': AppLocalizations.of(context)!.laborPayment.toUpperCase(), 'subtitle': '${AppLocalizations.of(context)!.puantajRecord} (${worker.adSoyad})', 'model': p});
     }
     allExpenses.sort((a,b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
 
@@ -601,10 +622,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
         Color iconColor = const Color(0xFFFF3366);
         IconData iconData = Icons.remove_circle_outline_rounded;
 
-        if (exp['type'] == 'CARİ') {
+        if (exp['type'] == AppLocalizations.of(context)!.cariLabel.toUpperCase()) {
           iconColor = Colors.blue;
           iconData = Icons.sync_alt_rounded;
-        } else if (exp['type'] == 'İŞÇİLİK') {
+        } else if (exp['type'] == AppLocalizations.of(context)!.laborPayment.toUpperCase()) {
           iconColor = Colors.purple;
           iconData = Icons.engineering_rounded;
         }
@@ -627,7 +648,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                   children: [
                     Text(exp['name'] as String, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF011627))),
                     Text(
-                      exp['subtitle'] ?? '${exp['type'] == 'CARİ' ? (exp['model'] as CariIslem).cariHesapUnvan ?? 'Cari' : exp['type']} • ${DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(exp['date'] as DateTime)}',
+                      exp['subtitle'] ?? '${exp['type'] == AppLocalizations.of(context)!.cariLabel.toUpperCase() ? (exp['model'] as CariIslem).cariHesapUnvan ?? AppLocalizations.of(context)!.cariLabel : exp['type']} • ${DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(exp['date'] as DateTime)}',
                       style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -640,7 +661,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                     "- ${_formatPara(exp['amount'] as double)}",
                     style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFFFF3366)),
                   ),
-                  if (exp['type'] != 'İŞÇİLİK') 
+                  if (exp['type'] != AppLocalizations.of(context)!.laborPayment.toUpperCase()) 
                     IconButton(
                       icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.grey),
                       onPressed: () => _deleteExpense(exp),
@@ -669,9 +690,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
       ),
     );
     if (confirm == true) {
-      if (exp['type'] == 'GİDER') {
+      if (exp['type'] == AppLocalizations.of(context)!.expense.toUpperCase()) {
         await DatabaseHelper.instance.deleteGelirGider(exp['id']);
-      } else if (exp['type'] == 'CARİ') {
+      } else if (exp['type'] == AppLocalizations.of(context)!.cariLabel.toUpperCase()) {
         await DatabaseHelper.instance.deleteCariIslem(exp['id']);
       }
       _loadData();
@@ -741,17 +762,17 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    "Vergi ve Kesinti Oranları (%)",
+                    AppLocalizations.of(context)!.taxAndDeductionRates_percent,
                     style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(child: _buildAddHakedisInput(controller: kdvController, hint: 'KDV', keyboardType: TextInputType.number)),
+                      Expanded(child: _buildAddHakedisInput(controller: kdvController, hint: AppLocalizations.of(context)!.vat, keyboardType: TextInputType.number)),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildAddHakedisInput(controller: stopajController, hint: 'Stopaj', keyboardType: TextInputType.number)),
+                      Expanded(child: _buildAddHakedisInput(controller: stopajController, hint: AppLocalizations.of(context)!.withholding, keyboardType: TextInputType.number)),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildAddHakedisInput(controller: teminatController, hint: 'Teminat', keyboardType: TextInputType.number)),
+                      Expanded(child: _buildAddHakedisInput(controller: teminatController, hint: AppLocalizations.of(context)!.teminat, keyboardType: TextInputType.number)),
                     ],
                   ),
                   const SizedBox(height: 32),
@@ -782,7 +803,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Hakediş Tarihi", style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w900)),
+                            Text(AppLocalizations.of(context)!.hakedisDate, style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w900)),
                             const SizedBox(height: 4),
                             Text(
                               DateFormat.yMMMMd(Localizations.localeOf(context).toString()).format(selectedDate),
@@ -797,7 +818,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                   _buildAddHakedisInput(
                     controller: noteController,
                     icon: Icons.notes_rounded,
-                    hint: "Açıklama / Not (Opsiyonel)",
+                    hint: AppLocalizations.of(context)!.hakedisDescriptionHint,
                     maxLines: 3,
                   ),
                   const SizedBox(height: 40),
@@ -839,7 +860,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> with SingleTicker
                       elevation: 4,
                       shadowColor: const Color(0xFF011627).withOpacity(0.4),
                     ),
-                    child: Text("HAKEDİŞİ KAYDET", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1.0)),
+                    child: Text(AppLocalizations.of(context)!.saveHakedis, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1.0)),
                   ),
                 ],
               ),

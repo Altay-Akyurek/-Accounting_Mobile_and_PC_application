@@ -121,10 +121,10 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
               onPressed: _yukleVeriler,
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Ekstre (Ledger)', icon: Icon(Icons.receipt_long)),
-              Tab(text: 'İşçilik Özeti', icon: Icon(Icons.engineering)),
+              Tab(text: AppLocalizations.of(context)!.ledger, icon: const Icon(Icons.receipt_long)),
+              Tab(text: AppLocalizations.of(context)!.laborSummary, icon: const Icon(Icons.engineering)),
             ],
             indicatorColor: Colors.white,
             labelStyle: TextStyle(fontWeight: FontWeight.bold),
@@ -217,7 +217,7 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Makbuz özelliği yakında eklenecek')),
+                          SnackBar(content: Text(AppLocalizations.of(context)!.receiptFeatureSoon)),
                         );
                       },
                       icon: const Icon(Icons.receipt, size: 18),
@@ -278,11 +278,24 @@ class _CariDetaySayfasiState extends State<CariDetaySayfasi> {
             DataColumn(label: Text(AppLocalizations.of(context)!.balance, style: const TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: _islemler.map((islem) {
+            // Localization for account type
+            String displayHesapTipi = islem.hesapTipi;
+            final l10n = AppLocalizations.of(context)!;
+            if (islem.hesapTipi == 'Nakit') {
+              displayHesapTipi = l10n.cash;
+            } else if (islem.hesapTipi == 'Banka Havale') {
+              displayHesapTipi = l10n.bankTransfer;
+            } else if (islem.hesapTipi == 'Çek') {
+              displayHesapTipi = l10n.check;
+            } else if (islem.hesapTipi == 'Kredi Kartı') {
+              displayHesapTipi = l10n.creditCard;
+            }
+
             return DataRow(
               cells: [
                 DataCell(Text(DateFormat('dd.MM.yyyy', Localizations.localeOf(context).toString()).format(islem.tarih))),
                 DataCell(Text(islem.displayAciklama)),
-                DataCell(Text(islem.hesapTipi)),
+                DataCell(Text(displayHesapTipi)),
                 DataCell(Text(
                   islem.borc > 0 ? _formatPara(islem.borc) : '',
                   style: TextStyle(color: Colors.red[700], fontWeight: FontWeight.bold),

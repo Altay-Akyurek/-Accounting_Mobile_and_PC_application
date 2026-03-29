@@ -69,9 +69,9 @@ class _FinanceManagementPageState extends State<FinanceManagementPage> with Sing
         const SizedBox(height: 24),
         Text(AppLocalizations.of(context)!.recentTransactions, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
         const SizedBox(height: 16),
-        _buildMovementItem('Hakediş Tahsilatı', 'Akasya Projesi', 85000.0, true),
-        _buildMovementItem('Mazot Gideri', 'Şantiye Petrol', -4500.0, false),
-        _buildMovementItem('Maaş Ödemesi', 'Personel Ödemeleri', -12500.0, false),
+        _buildMovementItem(AppLocalizations.of(context)!.hakedisCollection_internal, 'Akasya Project', 85000.0, true),
+        _buildMovementItem('Fuel Expense', 'Site Petrol', -4500.0, false),
+        _buildMovementItem(AppLocalizations.of(context)!.laborPayment, 'Personnel Payments', -12500.0, false),
       ],
     );
   }
@@ -82,12 +82,12 @@ class _FinanceManagementPageState extends State<FinanceManagementPage> with Sing
       children: [
         Text(AppLocalizations.of(context)!.pendingCollections, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
         const SizedBox(height: 16),
-        _buildCheckItem('Müşteri Çeki', 'Özkul İnşaat', 150000.0, '25.04.2026', Colors.orange),
-        _buildCheckItem('Portföy Çeki', 'Alfa Yapı', 75000.0, '12.05.2026', Colors.blue),
+        _buildCheckItem('Customer Check', 'Ozkul Construction', 150000.0, '25.04.2026', Colors.orange),
+        _buildCheckItem('Portfolio Check', 'Alfa Build', 75000.0, '12.05.2026', Colors.blue),
         const SizedBox(height: 24),
         Text(AppLocalizations.of(context)!.checksGiven, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
         const SizedBox(height: 16),
-        _buildCheckItem('Firma Çeki', 'Beton A.Ş', 45000.0, '15.03.2026', Colors.red),
+        _buildCheckItem('Company Check', 'Beton Corp', 45000.0, '15.03.2026', Colors.red),
       ],
     );
   }

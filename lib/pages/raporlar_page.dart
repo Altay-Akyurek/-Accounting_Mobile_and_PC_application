@@ -76,10 +76,10 @@ class _RaporlarPageState extends State<RaporlarPage> {
         };
         
         _kategoriler = {
-          'Malzeme/Hizmet': (invoices['purchases'] ?? 0.0).toDouble() + (fin['extra_expense'] ?? 0.0).toDouble(),
-          'İşçilik (Ödenen)': (labor['period_paid'] ?? 0.0).toDouble(),
-          'İşçilik (Bekleyen)': (labor['period_net'] ?? 0.0).toDouble(),
-          'Cari/Diğer Çıkışlar': 0.0,
+          'material_service': (invoices['purchases'] ?? 0.0).toDouble() + (fin['extra_expense'] ?? 0.0).toDouble(),
+          'labor_paid': (labor['period_paid'] ?? 0.0).toDouble(),
+          'labor_pending': (labor['period_net'] ?? 0.0).toDouble(),
+          'otherAccountOutflows': 0.0,
         };
         
         final breakDownMap = <String, dynamic>{};
@@ -96,7 +96,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
             'leave': item['leave'] ?? 0,
             'sunday': item['sunday'] ?? 0,
             'absent': item['absent'] ?? 0,
-            'label': isPeriodCleared ? 'DÖNEM KAPALI' : (bakiye > 0 ? 'DÖNEM BORÇ' : 'DÖNEM ALACAK'),
+            'label': isPeriodCleared ? AppLocalizations.of(context)!.periodClosed_caps : (bakiye > 0 ? AppLocalizations.of(context)!.periodDebt_caps : AppLocalizations.of(context)!.periodCredit_caps),
           };
         }
         
@@ -370,7 +370,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
               ? entry.value / _genelOzet['gider']!
               : 0;
           
-          final bool isPendingLabor = entry.key == 'İşçilik (Bekleyen)';
+          final bool isPendingLabor = entry.key == 'labor_pending';
 
           Widget row = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,11 +402,11 @@ class _RaporlarPageState extends State<RaporlarPage> {
                   minHeight: 8,
                   backgroundColor: Colors.grey.shade100,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    entry.key.contains('İşçilik')
-                        ? (entry.key.contains('Ödenen')
+                    entry.key.contains('labor')
+                        ? (entry.key.contains('paid')
                               ? Colors.purple
                               : Colors.purple.withOpacity(0.4))
-                        : (entry.key == 'Malzeme/Hizmet'
+                        : (entry.key == 'material_service'
                               ? Colors.orange
                               : Colors.blue),
                   ),
@@ -453,7 +453,7 @@ class _RaporlarPageState extends State<RaporlarPage> {
                             _buildMiniActivityBadge(Icons.error_outline_rounded, (data['absent'] ?? 0).toString(), Colors.red, (data['absent'] ?? 0) > 0),
                             const Spacer(),
                             Text(
-                              'Kalan: ${_formatPara(data['cumulative'] as double)}',
+                              '${AppLocalizations.of(context)!.remaining_colon}${_formatPara(data['cumulative'] as double)}',
                               style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
                             ),
                           ],
@@ -478,16 +478,18 @@ class _RaporlarPageState extends State<RaporlarPage> {
   String _translateCategory(String key, BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     switch (key) {
-      case 'Malzeme/Hizmet':
+      case 'material_service':
         return l10n.materialService;
-      case 'İşçilik (Ödenen)':
+      case 'labor_paid':
         return l10n.laborPaid;
-      case 'İşçilik (Bekleyen)':
+      case 'labor_pending':
         return l10n.pendingWorkerPayment;
       case 'Cari Ödemeler':
         return l10n.accountPayments;
       case 'Kasa Çıkışları':
         return l10n.cashOutflows;
+      case 'otherAccountOutflows':
+        return l10n.otherAccountOutflows;
       default:
         return key;
     }
@@ -647,7 +649,7 @@ class _ProjectReportItem extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${AppLocalizations.of(context)!.profitabilityRate}: %${(progress * 100).toStringAsFixed(1)}',
+                      '${AppLocalizations.of(context)!.profitabilityRate}: ${Localizations.localeOf(context).languageCode == 'tr' ? "%${(progress * 100).toStringAsFixed(1)}" : "${(progress * 100).toStringAsFixed(1)}%"}',
                       style: TextStyle(
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.w600,
@@ -735,7 +737,7 @@ class _ProjectReportItem extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                isClosed ? '${item['name']} (HESAP KAPALI)' : item['name'], 
+                                isClosed ? '${item['name']} ${AppLocalizations.of(context)!.accountClosed_parentheses}' : item['name'], 
                                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isClosed ? Colors.grey : const Color(0xFF011627)),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -759,7 +761,7 @@ class _ProjectReportItem extends StatelessWidget {
                             const Spacer(),
                             if (!isClosed)
                               Text(
-                                'E: ${_formatPara(context, (item['previous_balance']?.toDouble() ?? 0.0).abs())} | H: ${_formatPara(context, (item['period_earned']?.toDouble() ?? 0.0).abs())} | Ö: ${_formatPara(context, (item['period_paid']?.toDouble() ?? 0.0).abs())}',
+                                '${AppLocalizations.of(context)!.previous_short}${_formatPara(context, (item['previous_balance']?.toDouble() ?? 0.0).abs())} | ${AppLocalizations.of(context)!.accrued_short}${_formatPara(context, (item['period_earned']?.toDouble() ?? 0.0).abs())} | ${AppLocalizations.of(context)!.paid_short}${_formatPara(context, (item['period_paid']?.toDouble() ?? 0.0).abs())}',
                                 style: TextStyle(fontSize: 8, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
                               ),
                           ],

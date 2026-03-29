@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/cari_hesap.dart';
 import '../services/database_helper.dart';
+import '../l10n/app_localizations.dart';
 
 class CariEkleDialog extends StatefulWidget {
   final CariHesap? cariHesap;
@@ -82,14 +83,14 @@ class _CariEkleDialogState extends State<CariEkleDialog> {
         await DatabaseHelper.instance.insertCariHesap(cariHesap);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cari hesap başarıyla eklendi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.cariAccountAdded)),
           );
         }
       } else {
         await DatabaseHelper.instance.updateCariHesap(cariHesap);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cari hesap başarıyla güncellendi')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.cariAccountUpdated)),
           );
         }
       }
@@ -115,7 +116,7 @@ class _CariEkleDialogState extends State<CariEkleDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.cariHesap == null ? 'Yeni Cari Hesap' : 'Cari Hesap Düzenle'),
+      title: Text(widget.cariHesap == null ? AppLocalizations.of(context)!.newCariAccountDialog : AppLocalizations.of(context)!.editCariAccountDialog),
       content: SizedBox(
         width: double.maxFinite,
         child: _isLoading
@@ -128,13 +129,13 @@ class _CariEkleDialogState extends State<CariEkleDialog> {
                     children: [
                       TextFormField(
                         controller: _unvanController,
-                        decoration: const InputDecoration(
-                          labelText: 'Ünvan *',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.titleLabelStar,
+                          border: const OutlineInputBorder(),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Ünvan zorunludur';
+                            return AppLocalizations.of(context)!.titleIsRequired;
                           }
                           return null;
                         },
@@ -142,44 +143,44 @@ class _CariEkleDialogState extends State<CariEkleDialog> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _vergiNoController,
-                        decoration: const InputDecoration(
-                          labelText: 'Vergi No',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.taxNo,
+                          border: const OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.number,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _vergiDairesiController,
-                        decoration: const InputDecoration(
-                          labelText: 'Vergi Dairesi',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.taxOffice,
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _telefonController,
-                        decoration: const InputDecoration(
-                          labelText: 'Telefon',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.phone,
+                          border: const OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.phone,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'E-posta',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.email,
+                          border: const OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _adresController,
-                        decoration: const InputDecoration(
-                          labelText: 'Adres',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.address,
+                          border: const OutlineInputBorder(),
                         ),
                         maxLines: 2,
                       ),
@@ -191,11 +192,11 @@ class _CariEkleDialogState extends State<CariEkleDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('İptal'),
+          child: Text(AppLocalizations.of(context)!.cancel),
         ),
         ElevatedButton(
           onPressed: _kaydet,
-          child: const Text('Kaydet'),
+          child: Text(AppLocalizations.of(context)!.save),
         ),
       ],
     );

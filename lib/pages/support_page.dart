@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/app_localizations.dart';
 
 class SupportPage extends StatelessWidget {
   const SupportPage({super.key});
 
   Future<void> _sendEmail(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
       path: 'destek_muhasebePro@hotmail.com',
       query: _encodeQueryParameters(<String, String>{
-        'subject': 'Muhasebe Pro - Destek Talebi / Geri Bildirim',
-        'body': 'Lütfen karşılaştığınız sorunu veya önerinizi detaylı bir şekilde açıklayın:\n\n'
-                '--- Sorun / Öneri Detayları ---\n\n\n'
-                '--- Cihaz ve Uygulama Bilgileri ---\n'
-                'Uygulama Sürümü: 1.0.0\n'
-                'Cihaz Modeli: (Lütfen Belirtin)\n'
-                'İşletim Sistemi: (Lütfen Belirtin)\n'
+        'subject': l10n.supportEmailSubject,
+        'body': l10n.supportEmailBody,
       }),
     );
 
@@ -23,14 +20,14 @@ class SupportPage extends StatelessWidget {
       if (!await launchUrl(emailLaunchUri)) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('E-posta uygulaması bulunamadı veya açılamadı.')),
+            SnackBar(content: Text(l10n.emailNotFound)),
           );
         }
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('E-posta uygulaması açılamadı.')),
+          SnackBar(content: Text(l10n.emailNotOpened)),
         );
       }
     }
@@ -48,7 +45,7 @@ class SupportPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        title: const Text('Bize Ulaşın / Destek'),
+        title: Text(AppLocalizations.of(context)!.supportPageTitle),
       ),
       body: SingleChildScrollView(
         child: Center(
@@ -64,8 +61,8 @@ class SupportPage extends StatelessWidget {
                   color: Color(0xFF2EC4B6),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Müşteri Hizmetleri ve Teknik Destek',
+                Text(
+                  AppLocalizations.of(context)!.customerServiceHeader,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -74,8 +71,8 @@ class SupportPage extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Uygulamamızı tercih ettiğiniz için teşekkür ederiz. Muhasebe Pro deneyiminizi en üst seviyeye taşımak amacıyla uzman destek ekibimiz sorularınızı yanıtlamaya ve teknik problemlerinizi çözmeye hazırdır. Uygulama ile ilgili karşılaştığınız her türlü sorunu çözebilmemiz için detaylı olarak bizimle paylaşmaktan çekinmeyin.',
+                Text(
+                  AppLocalizations.of(context)!.supportDescription,
                   style: TextStyle(
                     fontSize: 15,
                     color: Colors.black87,
@@ -87,14 +84,14 @@ class SupportPage extends StatelessWidget {
                 
                 _buildInfoCard(
                   icon: Icons.access_time_filled_rounded,
-                  title: 'Çalışma ve Yanıt Süreleri',
-                  description: 'Destek taleplerinize hafta içi (Pazartesi-Cuma) 09:00 - 18:00 saatleri arasında, ortalama 24 ile 48 saat içerisinde geri dönüş yapılmaktadır.',
+                  title: AppLocalizations.of(context)!.workingHoursTitle,
+                  description: AppLocalizations.of(context)!.workingHoursDescription,
                 ),
                 const SizedBox(height: 16),
                 _buildInfoCard(
                   icon: Icons.privacy_tip_rounded,
-                  title: 'Kişisel Veri Talepleri',
-                  description: 'Kullanım koşulları veya gizlilik sözleşmesi uyarınca hesabınızın silinmesi ve verilerinizin yok edilmesi taleplerinizi doğrudan destek mailimize e-posta aracılığıyla iletebilirsiniz.',
+                  title: AppLocalizations.of(context)!.dataPrivacyTitle,
+                  description: AppLocalizations.of(context)!.dataPrivacyDescription,
                 ),
                 
                 const SizedBox(height: 32),
@@ -114,8 +111,8 @@ class SupportPage extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      const Text(
-                        'Resmi Destek Adresi',
+                      Text(
+                        AppLocalizations.of(context)!.officialSupportEmail,
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey,
@@ -125,15 +122,20 @@ class SupportPage extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.email_rounded, color: Color(0xFF2EC4B6)),
-                          SizedBox(width: 12),
-                          Text(
-                            'destek_muhasebePro@hotmail.com',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF011627)
+                        children: [
+                          const Icon(Icons.email_rounded, color: Color(0xFF2EC4B6)),
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'destek_muhasebePro@hotmail.com',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF011627)
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -147,8 +149,8 @@ class SupportPage extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () => _sendEmail(context),
                     icon: const Icon(Icons.send_rounded),
-                    label: const Text(
-                      'Destek Talebi Oluştur (E-posta)',
+                    label: Text(
+                      AppLocalizations.of(context)!.createSupportRequest,
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                     ),
                     style: ElevatedButton.styleFrom(

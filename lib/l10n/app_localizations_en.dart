@@ -30,7 +30,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get processing => 'Processing...';
 
   @override
-  String get appTitle => 'Muhasebe Pro: Expense & Worker Tracker';
+  String get marketError => 'Could not open the app store.';
+
+  @override
+  String get deletingAccount => 'Deleting your account...';
+
+  @override
+  String get accountDeletedSuccess =>
+      'Account deleted successfully and logged out.';
+
+  @override
+  String get cash => 'Cash';
+
+  @override
+  String get bankTransfer => 'Bank Transfer';
+
+  @override
+  String get check => 'Check';
+
+  @override
+  String get creditCard => 'Credit Card';
+
+  @override
+  String get appTitle => 'Muhasebe Pro: Revenue, Expense and Labor Tracking';
 
   @override
   String get dashboard => 'Dashboard';
@@ -133,6 +155,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contactSupport => 'Contact / Support';
+
+  @override
+  String get supportPageTitle => 'Contact / Support';
+
+  @override
+  String get customerServiceHeader => 'Customer Service and Technical Support';
+
+  @override
+  String get supportDescription =>
+      'Thank you for choosing our application. Our expert support team is ready to answer your questions and solve your technical problems to take your Muhasebe Pro experience to the highest level. Do not hesitate to share any problems you encounter with the application in detail so that we can solve them.';
+
+  @override
+  String get workingHoursTitle => 'Working and Response Times';
+
+  @override
+  String get workingHoursDescription =>
+      'Your support requests are answered between 09:00 - 18:00 on weekdays (Monday-Friday), within an average of 24 to 48 hours.';
+
+  @override
+  String get dataPrivacyTitle => 'Personal Data Requests';
+
+  @override
+  String get dataPrivacyDescription =>
+      'You can send your requests for deletion of your account and destruction of your data in accordance with the terms of use or privacy agreement directly to our support e-mail via e-mail.';
+
+  @override
+  String get officialSupportEmail => 'Official Support Address';
+
+  @override
+  String get createSupportRequest => 'Create Support Request (E-mail)';
+
+  @override
+  String get emailNotOpened => 'Email app could not be opened.';
+
+  @override
+  String get emailNotFound => 'Email app not found or could not be opened.';
+
+  @override
+  String get supportEmailSubject => 'Muhasebe Pro - Support Request / Feedback';
+
+  @override
+  String get supportEmailBody =>
+      'Please explain the problem or suggestion you encountered in detail:\n\n--- Problem / Suggestion Details ---\n\n\n--- Device and Application Information ---\nVersion: 1.0.0\nDevice: (Please Specify)\nOS: (Please Specify)\n';
 
   @override
   String get logout => 'Logout';
@@ -368,7 +433,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get summary => 'SUMMARY';
 
   @override
-  String get hakedisler => 'HAKEDISLER';
+  String get hakedisler => 'Progress Payments';
 
   @override
   String get expenses => 'EXPENSES';
@@ -439,6 +504,150 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cashOutflows => 'Cash Outflows';
 
   @override
+  String get otherAccountOutflows => 'Other Account Outflows';
+
+  @override
+  String get periodClosed_caps => 'PERIOD CLOSED';
+
+  @override
+  String get periodDebt_caps => 'PERIOD DEBT';
+
+  @override
+  String get periodCredit_caps => 'PERIOD CREDIT';
+
+  @override
+  String get remaining_colon => 'Remaining: ';
+
+  @override
+  String get accountClosed_parentheses => '(ACCOUNT CLOSED)';
+
+  @override
+  String get previous_short => 'P: ';
+
+  @override
+  String get accrued_short => 'A: ';
+
+  @override
+  String get paid_short => 'Pd: ';
+
+  @override
+  String get noPendingLaborBalance =>
+      'No pending labor balance found for selected period.';
+
+  @override
+  String get settleSelectedPeriod => 'Settle Selected Period';
+
+  @override
+  String laborSettleConfirmDetail(Object amount, Object count) {
+    return 'Do you want to process the net labor payment of $count personnel totaling $amount for the selected date range?';
+  }
+
+  @override
+  String noCariLinked(Object name) {
+    return 'Current Account not defined for $name. Please link one in Personnel Edit.';
+  }
+
+  @override
+  String get salaryPaymentPeriod => 'Salary Payment (Period): ';
+
+  @override
+  String get accountClosure => 'Account Closure';
+
+  @override
+  String get inProfit_caps => 'IN PROFIT';
+
+  @override
+  String get inLoss_caps => 'IN LOSS';
+
+  @override
+  String get efficiencyScore => 'Overall Efficiency Score';
+
+  @override
+  String get attendanceRate => 'Attendance Rate';
+
+  @override
+  String get hourPerformance => 'Hour Performance';
+
+  @override
+  String get totalWorkHours_short => 'Total Work';
+
+  @override
+  String get overtime_short => 'Overtime';
+
+  @override
+  String get activityHeatmap => 'ACTIVITY HEATMAP (LAST 6 MONTHS)';
+
+  @override
+  String get noRecord => 'No Record';
+
+  @override
+  String get holidayOrNoRecord => 'Holiday / No Record';
+
+  @override
+  String get onLeaveOrReported => 'On Leave / Reported';
+
+  @override
+  String get projectTimeDistribution => 'PROJECT BASED TIME DISTRIBUTION';
+
+  @override
+  String get veryGood => 'Very Good';
+
+  @override
+  String get good => 'Good';
+
+  @override
+  String get average => 'Average';
+
+  @override
+  String get poor => 'Poor';
+
+  @override
+  String get unknownProject => 'Unknown Project';
+
+  @override
+  String get deletedProject => 'Deleted Project';
+
+  @override
+  String get taxAndDeductionRates_percent => 'Tax and Deduction Rates (%)';
+
+  @override
+  String get hakedisDate => 'Hakedis Date';
+
+  @override
+  String get hakedisDescriptionHint => 'Description / Note (Optional)';
+
+  @override
+  String get hakedisCollection_internal => 'Progress Payment Collection';
+
+  @override
+  String get selectedPeriodRemainingBalance =>
+      'Selected Period Remaining Balance';
+
+  @override
+  String get grandTotalBalanceAllTime => 'Grand Total Balance (All Time)';
+
+  @override
+  String get previousDebt_colon => 'Previous Debt: ';
+
+  @override
+  String get grandTotal_colon => 'Grand Total: ';
+
+  @override
+  String get periodClosed_parentheses_small => '(Period Closed)';
+
+  @override
+  String get preparing_ellipsis => 'Preparing...';
+
+  @override
+  String get error_colon => 'Error: ';
+
+  @override
+  String get reportPreparing_ellipsis => 'Your report is being prepared...';
+
+  @override
+  String get cancel_caps_upper => 'CANCEL';
+
+  @override
   String get sunday => 'Sunday';
 
   @override
@@ -498,9 +707,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get guarantee => 'Guarantee';
 
   @override
-  String get hakedisDate => 'Hakedis Date';
-
-  @override
   String get descriptionOptional => 'Description / Note (Optional)';
 
   @override
@@ -540,7 +746,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get outgoingCredit => 'Outgoing (Credit)';
 
   @override
-  String get netCashKasa => 'Net Cash (Kasa)';
+  String get netCashKasa => 'Net Cash (Vault)';
 
   @override
   String get netStatusBalance => 'Net Status (Balance)';
@@ -1252,6 +1458,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attendanceSummary => 'Attendance Summary';
 
   @override
+  String get expectedTarget => 'Expected Target';
+
+  @override
+  String daysWorked(int count) {
+    return '$count Days Worked';
+  }
+
+  @override
   String get noWorkerFound => 'No personnel records found.';
 
   @override
@@ -1259,6 +1473,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get printFeatureSoon => 'Print feature coming soon';
+
+  @override
+  String get receiptFeatureSoon => 'Receipt feature coming soon';
+
+  @override
+  String get ledger => 'Ledger (Ekstre)';
 
   @override
   String get turkish => 'Turkish';
@@ -1330,19 +1550,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get accountDetail => 'accountDetail';
+  String get accountDetail => 'Account Details';
 
   @override
-  String get collectionIn_caps => 'collectionIn_caps';
+  String get collectionIn_caps => 'COLLECTION (IN)';
 
   @override
-  String get incomingDebt_caps => 'incomingDebt_caps';
+  String get incomingDebt_caps => 'INCOMING (DEBT)';
 
   @override
-  String get paymentOut_caps => 'paymentOut_caps';
+  String get paymentOut_caps => 'PAYMENT (OUT)';
 
   @override
-  String get outgoingCredit_caps => 'outgoingCredit_caps';
+  String get outgoingCredit_caps => 'OUTGOING (CREDIT)';
 
   @override
   String get netCashKasa_caps => 'NET CASH / VAULT';
@@ -1351,19 +1571,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get netStatusBalance_caps => 'NET STATUS BALANCE';
 
   @override
-  String get exportExcel => 'exportExcel';
+  String get exportExcel => 'Export Excel';
 
   @override
-  String get print => 'print';
+  String get print => 'Print';
 
   @override
-  String get createReceipt => 'createReceipt';
+  String get createReceipt => 'Create Receipt';
 
   @override
-  String get back => 'back';
+  String get back => 'Back';
 
   @override
-  String get noTransactionsYet => 'noTransactionsYet';
+  String get noTransactionsYet => 'No transactions found for this account.';
 
   @override
   String get newCariRecord => 'NEW ACCOUNT RECORD';
@@ -1405,13 +1625,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchCariHint => 'Search by name or representative...';
 
   @override
-  String get noCariAccountsYet => 'noCariAccountsYet';
+  String get noCariAccountsYet => 'No cari accounts found yet.';
 
   @override
-  String get noResultsFound => 'noResultsFound';
+  String get noResultsFound => 'No results found matching your search.';
 
   @override
-  String get deleteConfirmTitle => 'deleteConfirmTitle';
+  String get deleteConfirmTitle => 'Confirm Deletion';
 
   @override
   String deleteCariConfirm(Object arg) {
@@ -1422,7 +1642,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel_caps => 'CANCEL';
 
   @override
-  String get delete_caps => 'delete_caps';
+  String get delete_caps => 'DELETE';
 
   @override
   String deleteFailed(Object arg) {
@@ -1439,19 +1659,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalExpenses => 'Total Expenses';
 
   @override
-  String get mustAddAtLeastOneItem => 'mustAddAtLeastOneItem';
+  String get mustAddAtLeastOneItem => 'You must add at least one item';
 
   @override
-  String get invoiceAdded => 'invoiceAdded';
+  String get invoiceAdded => 'Invoice added successfully';
 
   @override
-  String get invoiceUpdated => 'invoiceUpdated';
+  String get invoiceUpdated => 'Invoice updated successfully';
 
   @override
-  String get sales => 'sales';
+  String get sales => 'Sales';
 
   @override
-  String get purchase => 'purchase';
+  String get purchase => 'Purchase';
 
   @override
   String newInvoiceType(String arg) {
@@ -1464,28 +1684,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get invoiceNo => 'invoiceNo';
+  String get invoiceNo => 'Invoice No';
 
   @override
-  String get invoiceNoRequired => 'invoiceNoRequired';
+  String get invoiceNoRequired => 'Invoice Number is required';
 
   @override
-  String get pleaseSelectDate => 'pleaseSelectDate';
+  String get pleaseSelectDate => 'Please select a date';
 
   @override
-  String get dueDate => 'dueDate';
+  String get dueDate => 'Due Date';
 
   @override
-  String get selectCariAccount => 'selectCariAccount';
+  String get selectCariAccount => 'Select Cari Account';
 
   @override
-  String get invoiceItems => 'invoiceItems';
+  String get invoiceItems => 'Invoice Items';
 
   @override
-  String get addItem => 'addItem';
+  String get addItem => 'Add Item';
 
   @override
-  String get noItemsYet => 'noItemsYet';
+  String get noItemsYet => 'No items added yet';
 
   @override
   String get item => 'Item';
@@ -1494,54 +1714,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get amountLabel => 'Amount';
 
   @override
-  String get priceLabel => 'priceLabel';
+  String get priceLabel => 'Price';
 
   @override
-  String get grandTotal => 'grandTotal';
+  String get grandTotal => 'Grand Total';
 
   @override
-  String get editItem => 'editItem';
+  String get editItem => 'Edit Item';
 
   @override
-  String get newItem => 'newItem';
+  String get newItem => 'New Item';
 
   @override
-  String get itemName => 'itemName';
+  String get itemName => 'Item Name';
 
   @override
-  String get unitPrice => 'unitPrice';
+  String get unitPrice => 'Unit Price';
 
   @override
-  String get vatRatePercent => 'vatRatePercent';
+  String get vatRatePercent => 'VAT Rate (%)';
 
   @override
-  String get invoices => 'invoices';
+  String get invoices => 'Invoices';
 
   @override
-  String get salesInvoices => 'salesInvoices';
+  String get salesInvoices => 'Sales Invoices';
 
   @override
-  String get purchaseInvoices => 'purchaseInvoices';
+  String get purchaseInvoices => 'Purchase Invoices';
 
   @override
-  String get noInvoicesYet => 'noInvoicesYet';
+  String get noInvoicesYet => 'No invoices recorded yet';
 
   @override
   String deleteInvoiceConfirm(Object arg) {
-    return 'Are you sure you want to delete invoice $arg?';
+    return 'Are you sure you want to delete $arg invoice?';
   }
 
   @override
-  String get invoiceDeleted => 'invoiceDeleted';
+  String get invoiceDeleted => 'Invoice deleted';
 
   @override
-  String get recordAdded => 'recordAdded';
+  String get recordAdded => 'Record added';
 
   @override
-  String get recordUpdated => 'recordUpdated';
+  String get recordUpdated => 'Record updated';
 
   @override
-  String get income => 'income';
+  String get income => 'Income';
 
   @override
   String newItemType(Object arg) {
@@ -1557,16 +1777,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get titleLabel => 'Title';
 
   @override
-  String get pleaseEnterValidAmount => 'pleaseEnterValidAmount';
+  String get pleaseEnterValidAmount => 'Please enter a valid amount';
 
   @override
-  String get selectCariAccountOptional => 'selectCariAccountOptional';
+  String get selectCariAccountOptional => 'Select Cari Account (Optional)';
 
   @override
-  String get selectProjectOptional => 'selectProjectOptional';
+  String get selectProjectOptional => 'Select Project (Optional)';
 
   @override
-  String get incomeExpense => 'incomeExpense';
+  String get incomeExpense => 'Income / Expense';
 
   @override
   String get incomes => 'incomes';
@@ -1582,7 +1802,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get recordDeleted => 'recordDeleted';
+  String get recordDeleted => 'Record deleted';
 
   @override
   String get settlementReport_caps => 'SETTLEMENT REPORT';
@@ -1860,4 +2080,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get premiumBenefitPerformance => 'Worker & Performance Analysis';
+
+  @override
+  String get newCariAccountDialog => 'New Current Account';
+
+  @override
+  String get editCariAccountDialog => 'Edit Current Account';
+
+  @override
+  String get titleLabelStar => 'Title *';
+
+  @override
+  String get titleIsRequired => 'Title is required';
+
+  @override
+  String get taxNo => 'Tax Number';
+
+  @override
+  String get taxOffice => 'Tax Office';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get cariAccountAdded => 'Account successfully added';
+
+  @override
+  String get cariAccountUpdated => 'Account successfully updated';
 }

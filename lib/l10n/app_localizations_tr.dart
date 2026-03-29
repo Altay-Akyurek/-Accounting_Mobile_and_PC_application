@@ -30,6 +30,27 @@ class AppLocalizationsTr extends AppLocalizations {
   String get processing => 'İşleniyor...';
 
   @override
+  String get marketError => 'Uygulama mağazası açılamadı.';
+
+  @override
+  String get deletingAccount => 'Hesabınız siliniyor...';
+
+  @override
+  String get accountDeletedSuccess => 'Hesabınız silindi ve çıkış yapıldı.';
+
+  @override
+  String get cash => 'Nakit';
+
+  @override
+  String get bankTransfer => 'Banka Havale';
+
+  @override
+  String get check => 'Çek';
+
+  @override
+  String get creditCard => 'Kredi Kartı';
+
+  @override
   String get appTitle => 'Muhasebe Pro: Gelir Gider ve İşçi Takibi';
 
   @override
@@ -133,6 +154,50 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get contactSupport => 'Bize Ulaşın / Destek';
+
+  @override
+  String get supportPageTitle => 'Bize Ulaşın / Destek';
+
+  @override
+  String get customerServiceHeader => 'Müşteri Hizmetleri ve Teknik Destek';
+
+  @override
+  String get supportDescription =>
+      'Uygulamamızı tercih ettiğiniz için teşekkür ederiz. Muhasebe Pro deneyiminizi en üst seviyeye taşımak amacıyla uzman destek ekibimiz sorularınızı yanıtlamaya ve teknik problemlerinizi çözmeye hazırdır. Uygulama ile ilgili karşılaştığınız her türlü sorunu çözebilmemiz için detaylı olarak bizimle paylaşmaktan çekinmeyin.';
+
+  @override
+  String get workingHoursTitle => 'Çalışma ve Yanıt Süreleri';
+
+  @override
+  String get workingHoursDescription =>
+      'Destek taleplerinize hafta içi (Pazartesi-Cuma) 09:00 - 18:00 saatleri arasında, ortalama 24 ile 48 saat içerisinde geri dönüş yapılmaktadır.';
+
+  @override
+  String get dataPrivacyTitle => 'Kişisel Veri Talepleri';
+
+  @override
+  String get dataPrivacyDescription =>
+      'Kullanım koşulları veya gizlilik sözleşmesi uyarınca hesabınızın silinmesi ve verilerinizin yok edilmesi taleplerinizi doğrudan destek mailimize e-posta aracılığıyla iletebilirsiniz.';
+
+  @override
+  String get officialSupportEmail => 'Resmi Destek Adresi';
+
+  @override
+  String get createSupportRequest => 'Destek Talebi Oluştur (E-posta)';
+
+  @override
+  String get emailNotOpened => 'E-posta uygulaması açılamadı.';
+
+  @override
+  String get emailNotFound => 'E-posta uygulaması bulunamadı veya açılamadı.';
+
+  @override
+  String get supportEmailSubject =>
+      'Muhasebe Pro - Destek Talebi / Geri Bildirim';
+
+  @override
+  String get supportEmailBody =>
+      'Lütfen karşılaştığınız sorunu veya önerinizi detaylı bir şekilde açıklayın:\n\n--- Sorun / Öneri Detayları ---\n\n\n--- Cihaz ve Uygulama Bilgileri ---\nUygulama Sürümü: 1.0.0\nCihaz Modeli: (Lütfen Belirtin)\nİşletim Sistemi: (Lütfen Belirtin)\n';
 
   @override
   String get logout => 'Çıkış Yap';
@@ -439,6 +504,149 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cashOutflows => 'Kasa Çıkışları';
 
   @override
+  String get otherAccountOutflows => 'Cari/Diğer Çıkışlar';
+
+  @override
+  String get periodClosed_caps => 'DÖNEM KAPALI';
+
+  @override
+  String get periodDebt_caps => 'DÖNEM BORÇ';
+
+  @override
+  String get periodCredit_caps => 'DÖNEM ALACAK';
+
+  @override
+  String get remaining_colon => 'Kalan: ';
+
+  @override
+  String get accountClosed_parentheses => '(HESAP KAPALI)';
+
+  @override
+  String get previous_short => 'E: ';
+
+  @override
+  String get accrued_short => 'H: ';
+
+  @override
+  String get paid_short => 'Ö: ';
+
+  @override
+  String get noPendingLaborBalance =>
+      'Seçilen dönem için ödenecek bakiye bulunamadı.';
+
+  @override
+  String get settleSelectedPeriod => 'Seçili Dönemi Kapat';
+
+  @override
+  String laborSettleConfirmDetail(Object amount, Object count) {
+    return 'Seçili tarih aralığındaki $count personelin net hakediş ödemesini ($amount) yapmak istiyor musunuz?';
+  }
+
+  @override
+  String noCariLinked(Object name) {
+    return '$name için Cari Hesap tanımlanmamış. Lütfen Personel Düzenle kısmından bir Cari Hesap bağlayın.';
+  }
+
+  @override
+  String get salaryPaymentPeriod => 'Maaş Ödemesi (Dönem): ';
+
+  @override
+  String get accountClosure => 'Hesap Kapatma';
+
+  @override
+  String get inProfit_caps => 'KARDA';
+
+  @override
+  String get inLoss_caps => 'ZARARDA';
+
+  @override
+  String get efficiencyScore => 'Genel Verimlilik Puanı';
+
+  @override
+  String get attendanceRate => 'Katılım Oranı';
+
+  @override
+  String get hourPerformance => 'Saat Performansı';
+
+  @override
+  String get totalWorkHours_short => 'Toplam Çalışma';
+
+  @override
+  String get overtime_short => 'Fazla Mesai';
+
+  @override
+  String get activityHeatmap => 'AKTİVİTE ISI HARİTASI (SON 6 AY)';
+
+  @override
+  String get noRecord => 'Kayıt Yok';
+
+  @override
+  String get holidayOrNoRecord => 'Tatil/Kayıt Yok';
+
+  @override
+  String get onLeaveOrReported => 'İzinli/Raporlu';
+
+  @override
+  String get projectTimeDistribution => 'PROJE BAZLI ZAMAN DAĞILIMI';
+
+  @override
+  String get veryGood => 'Çok İyi';
+
+  @override
+  String get good => 'İyi';
+
+  @override
+  String get average => 'Orta';
+
+  @override
+  String get poor => 'Zayıf';
+
+  @override
+  String get unknownProject => 'Bilinmeyen Proje';
+
+  @override
+  String get deletedProject => 'Silinmiş Proje';
+
+  @override
+  String get taxAndDeductionRates_percent => 'Vergi ve Kesinti Oranları (%)';
+
+  @override
+  String get hakedisDate => 'Hakediş Tarihi';
+
+  @override
+  String get hakedisDescriptionHint => 'Açıklama / Not (Opsiyonel)';
+
+  @override
+  String get hakedisCollection_internal => 'Hakediş Tahsilatı';
+
+  @override
+  String get selectedPeriodRemainingBalance => 'Seçili Dönem Kalan Bakiye';
+
+  @override
+  String get grandTotalBalanceAllTime => 'Genel Toplam Bakiye (Tüm Zamanlar)';
+
+  @override
+  String get previousDebt_colon => 'Eski Borç: ';
+
+  @override
+  String get grandTotal_colon => 'Genel Toplam: ';
+
+  @override
+  String get periodClosed_parentheses_small => '(Dönem Kapalı)';
+
+  @override
+  String get preparing_ellipsis => 'Hazırlanıyor...';
+
+  @override
+  String get error_colon => 'Hata: ';
+
+  @override
+  String get reportPreparing_ellipsis => 'Raporunuz hazırlanıyor...';
+
+  @override
+  String get cancel_caps_upper => 'İPTAL';
+
+  @override
   String get sunday => 'Pazar';
 
   @override
@@ -496,9 +704,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get guarantee => 'Teminat';
-
-  @override
-  String get hakedisDate => 'Hakediş Tarihi';
 
   @override
   String get descriptionOptional => 'Açıklama / Not (Opsiyonel)';
@@ -1251,6 +1456,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get attendanceSummary => 'Puantaj Özeti';
 
   @override
+  String get expectedTarget => 'Beklenen Hedef';
+
+  @override
+  String daysWorked(int count) {
+    return '$count Gün Çalıştı';
+  }
+
+  @override
   String get noWorkerFound => 'Henüz personel kaydı bulunmuyor.';
 
   @override
@@ -1258,6 +1471,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get printFeatureSoon => 'Yazdırma özelliği yakında eklenecek';
+
+  @override
+  String get receiptFeatureSoon => 'Makbuz özelliği yakında eklenecek';
+
+  @override
+  String get ledger => 'Ekstre';
 
   @override
   String get turkish => 'Türkçe';
@@ -1859,4 +2078,31 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get premiumBenefitPerformance => 'İşçi & Performans Analizi';
+
+  @override
+  String get newCariAccountDialog => 'Yeni Cari Hesap';
+
+  @override
+  String get editCariAccountDialog => 'Cari Hesap Düzenle';
+
+  @override
+  String get titleLabelStar => 'Ünvan *';
+
+  @override
+  String get titleIsRequired => 'Ünvan zorunludur';
+
+  @override
+  String get taxNo => 'Vergi No';
+
+  @override
+  String get taxOffice => 'Vergi Dairesi';
+
+  @override
+  String get phone => 'Telefon';
+
+  @override
+  String get cariAccountAdded => 'Cari hesap başarıyla eklendi';
+
+  @override
+  String get cariAccountUpdated => 'Cari hesap başarıyla güncellendi';
 }

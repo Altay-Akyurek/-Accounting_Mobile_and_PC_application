@@ -345,7 +345,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             } else {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Uygulama mağazası açılamadı.')),
+                                  SnackBar(content: Text(AppLocalizations.of(context)!.marketError)),
                                 );
                               }
                             }
@@ -1154,7 +1154,7 @@ class _DashboardPageState extends State<DashboardPage> {
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (context) => const Center(
+                builder: (context) => Center(
                   child: Card(
                     child: Padding(
                       padding: EdgeInsets.all(24),
@@ -1163,7 +1163,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           CircularProgressIndicator(),
                           SizedBox(height: 16),
-                          Text('Hesabınız siliniyor...', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text(AppLocalizations.of(context)!.deletingAccount, style: TextStyle(fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -1192,7 +1192,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   await AuthService().signOut();
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Hesabınız silindi ve çıkış yapıldı.')),
+                      SnackBar(content: Text(AppLocalizations.of(context)!.accountDeletedSuccess)),
                     );
                   }
                 }

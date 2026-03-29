@@ -900,52 +900,48 @@ class DatabaseHelper {
     final workerCariIds = cariToWorker.keys.toSet();
     final kasaCariIds = cariler.where((c) => c.isKasa).map((c) => c.id).where((id) => id != null).toSet();
 
-    double realizedIncome = 0; // Kasa Giriş
-    double realizedExpense = 0; // Kasa Çıkış
-
-    // 1. Hakedişler (Realized Collections)
-    for (var h in hakedisler) {
-      if (h.durum == HakedisDurum.tahsilEdildi) {
-        realizedIncome += h.netTutar;
-      }
-    }
-
-    // 2. Gelir/Gider (Other Direct Cash items)
-    for (var gg in gelirGiderler) {
-      if (gg.tipi == GelirGiderTipi.gelir) {
-        realizedIncome += gg.tutar;
-      } else {
-        realizedExpense += gg.tutar;
-      }
-    }
-
-    // 3. Cari İşlemler (In/Out)
-    Map<int, double> workerPayments = {};
+    // 1. Calculate Realized Totals from Ledger (Cari Islemler)
+    double netKasaBalance = 0;
+    double totalCollections = 0;
+    double otherPayables = 0; 
+    
+    // Calculate balances for each account
+    final Map<int, double> cariBalances = {};
     for (var islem in cariIslemler) {
-      // Skip hakedis tahsilatlari (already in realizedIncome via hakedis table)
-      bool isSettlement = islem.aciklama.toLowerCase().contains('hakediş tahsilatı') ||
-                         islem.aciklama.toLowerCase().contains('tahsilat') ||
-                         islem.aciklama.contains('#H:[');
-      if (isSettlement) continue;
+      if (islem.cariHesapId == null) continue;
+      double diff = islem.borc - islem.alacak;
+      cariBalances[islem.cariHesapId!] = (cariBalances[islem.cariHesapId!] ?? 0) + diff;
+      
+      // Specifically for Collection tracking (Income)
+      // If it's a Kasa account and money is coming in (borc)
+      if (kasaCariIds.contains(islem.cariHesapId) && islem.borc > 0) {
+          totalCollections += islem.borc;
+      }
+    }
 
-      bool isKasa = kasaCariIds.contains(islem.cariHesapId);
-
-      // Expense Tracking
-      if (islem.alacak > 0) {
-        realizedExpense += islem.alacak;
-        if (workerCariIds.contains(islem.cariHesapId)) {
-          int wId = cariToWorker[islem.cariHesapId]!;
-          workerPayments[wId] = (workerPayments[wId] ?? 0) + islem.alacak;
+    // Determine Net Status (All accounts) and Liabilities (Payables)
+    for (var entry in cariBalances.entries) {
+      netKasaBalance += entry.value; // Sum ALL accounts for global net to match Accounting page
+      
+      if (!kasaCariIds.contains(entry.key)) {
+        // If balance is negative, we owe them (Liability)
+        if (entry.value < 0) {
+          otherPayables += entry.value.abs();
         }
       }
+    }
 
-      // Income Tracking
-      if (isKasa && islem.borc > 0) {
-        realizedIncome += islem.borc;
+    // 2. Calculate Worker Payables (Accrued but not yet in Ledger)
+    Map<int, double> workerPaymentsInLedger = {};
+    for (var islem in cariIslemler) {
+      if (islem.cariHesapId != null && workerCariIds.contains(islem.cariHesapId)) {
+        if (islem.alacak > 0) {
+          int wId = cariToWorker[islem.cariHesapId]!;
+          workerPaymentsInLedger[wId] = (workerPaymentsInLedger[wId] ?? 0) + islem.alacak;
+        }
       }
     }
 
-    // 4. Puantaj & Sunday Bonuses (Work Produced)
     Map<int, double> workerAccruals = {};
     for (var p in puantajlar) {
       final worker = workers.firstWhere((w) => w.id == p.workerId, orElse: () => Worker(adSoyad: 'Bilinmeyen', baslangicTarihi: DateTime.now()));
@@ -957,25 +953,21 @@ class DatabaseHelper {
       if (w.id == null) continue;
       final workerPuantaj = puantajlar.where((p) => p.workerId == w.id).toList();
       if (workerPuantaj.isEmpty) continue;
-
       DateTime minDate = workerPuantaj.map((p) => p.tarih).reduce((a, b) => a.isBefore(b) ? a : b);
-      DateTime maxDate = DateTime.now();
-
-      double bonus = await _calculateWorkerSundayBonuses(w, minDate, maxDate, workerPuantaj);
+      double bonus = await _calculateWorkerSundayBonuses(w, minDate, DateTime.now(), workerPuantaj);
       if (bonus > 0) {
         workerAccruals[w.id!] = (workerAccruals[w.id!] ?? 0) + bonus;
       }
     }
 
-    // 5. Final Calculations
     double totalWorkerAccrual = workerAccruals.values.fold(0, (a, b) => a + b);
-    double totalWorkerPayment = workerPayments.values.fold(0, (a, b) => a + b);
+    double totalWorkerPayment = workerPaymentsInLedger.values.fold(0, (a, b) => a + b);
     double pendingLaborDebt = totalWorkerAccrual > totalWorkerPayment ? (totalWorkerAccrual - totalWorkerPayment) : 0;
 
     return {
-      'gelir': realizedIncome, // Gerçek Tahsilatlar
-      'gider': pendingLaborDebt, // Bekleyen Borçlerimiz
-      'kar': realizedIncome - realizedExpense, // Net Kasa (Real Cash)
+      'gelir': totalCollections, // Total Collections (Realized in Vaults)
+      'gider': otherPayables + pendingLaborDebt, // Total Payables (Ledger + Accrued Workers)
+      'kar': netKasaBalance, // Global Net Status (Matches Accounting page balance)
     };
   }
 
