@@ -5,6 +5,7 @@
   "deleteAccountSuccess": "Deletion request received. You are being logged out.",
   "demoDataLoaded": "Demo data successfully loaded. App is ready for screenshots!",
   "processingPayment": "Processing payment...",
+  "processing": "Processing...",
   "appTitle": "Muhasebe Pro: Expense & Worker Tracker",
   "dashboard": "Dashboard",
   "netCash": "NET CASH",

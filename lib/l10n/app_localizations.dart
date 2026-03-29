@@ -128,6 +128,12 @@ abstract class AppLocalizations {
   /// **'İşlem yapılıyor...'**
   String get processingPayment;
 
+  /// No description provided for @processing.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşleniyor...'**
+  String get processing;
+
   /// No description provided for @appTitle.
   ///
   /// In tr, this message translates to:

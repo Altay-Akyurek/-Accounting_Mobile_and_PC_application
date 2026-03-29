@@ -27,6 +27,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get processingPayment => 'Processing payment...';
 
   @override
+  String get processing => 'Processing...';
+
+  @override
   String get appTitle => 'Muhasebe Pro: Expense & Worker Tracker';
 
   @override

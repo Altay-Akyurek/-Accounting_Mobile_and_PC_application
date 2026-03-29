@@ -1,5 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 import '../l10n/app_localizations.dart';
 import '../services/database_helper.dart';
 import '../models/worker.dart';
@@ -20,6 +22,10 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
   List<Puantaj> _puantajlar = [];
   Map<int, Worker> _workerMap = {};
   Map<int, String> _projectNames = {};
+  double _totalCost = 0;
+  double _totalHours = 0;
+  Map<int, double> _workerTotalCosts = {};
+  Map<int, double> _workerTotalHours = {};
   
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
@@ -27,6 +33,8 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
   bool _isSearching = false;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  String _currentStatus = "";
+  bool _isCancelled = false;
 
   @override
   void initState() {
@@ -36,6 +44,10 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
+    
+    // Give UI a chance to show the spinner
+    await Future.delayed(Duration.zero);
+    
     try {
       final results = await Future.wait([
         DatabaseHelper.instance.getAllPuantajlar(baslangic: _startDate, bitis: _endDate),
@@ -57,18 +69,68 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
         if (p.id != null) pMap[p.id!] = p.ad;
       }
 
-      puantajList.sort((a, b) => b.tarih.compareTo(a.tarih));
+      // Perform heavy calculations in a separate isolate
+      final totals = await compute(_calculateTotalsInIsolate, {
+        'puantajlar': puantajList,
+        'workerMap': wMap,
+      });
 
       setState(() {
         _puantajlar = puantajList;
         _workerMap = wMap;
         _projectNames = pMap;
+        _totalCost = totals['totalCost']!;
+        _totalHours = totals['totalHours']!;
+        _workerTotalCosts = totals['workerTotalCosts']!;
+        _workerTotalHours = totals['workerTotalHours']!;
         _isLoading = false;
       });
     } catch (e) {
-      // debugPrint('DEBUG: Labor Summary load error: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  // Heavy calculation logic for Isolate
+  static Map<String, dynamic> _calculateTotalsInIsolate(Map<String, dynamic> params) {
+    final List<Puantaj> puantajList = params['puantajlar'];
+    final Map<int, Worker> wMap = params['workerMap'];
+    
+    // Sort
+    puantajList.sort((a, b) => b.tarih.compareTo(a.tarih));
+
+    double tCost = 0;
+    double tHours = 0;
+    Map<int, double> wTCost = {};
+    Map<int, double> wTHours = {};
+
+    for (var p in puantajList) {
+      final worker = wMap[p.workerId];
+      double cost = 0;
+      if (worker != null) {
+        // Simple cost calculation (static logic replicate)
+        double hourlyRate = 0;
+        if (worker.maasTuru == WorkerSalaryType.saatlik) {
+          hourlyRate = worker.maasTutari;
+        } else if (worker.maasTuru == WorkerSalaryType.gunluk) {
+          hourlyRate = worker.maasTutari / 8;
+        } else if (worker.maasTuru == WorkerSalaryType.aylik) {
+          hourlyRate = worker.maasTutari / 240;
+        }
+        cost = (p.saat * hourlyRate) + (p.mesai * hourlyRate * 1.5);
+        
+        tCost += cost;
+        wTCost[p.workerId] = (wTCost[p.workerId] ?? 0) + cost;
+      }
+      tHours += p.saat;
+      wTHours[p.workerId] = (wTHours[p.workerId] ?? 0) + p.saat;
+    }
+
+    return {
+      'totalCost': tCost,
+      'totalHours': tHours,
+      'workerTotalCosts': wTCost,
+      'workerTotalHours': wTHours,
+    };
   }
 
   Future<void> _selectDateRange() async {
@@ -98,16 +160,6 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    double totalCost = 0;
-    double totalHours = 0;
-    for (var p in _puantajlar) {
-      final worker = _workerMap[p.workerId];
-      if (worker != null) {
-        totalCost += DatabaseHelper.instance.calculateLaborCost(p, worker);
-      }
-      totalHours += p.saat;
-    }
-
     // Grouping
     Map<int, List<Puantaj>> groupedPuantaj = {};
     for (var p in _puantajlar) {
@@ -162,41 +214,53 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) async {
-              if (value == 'pdf') {
+              if (value == 'pdf' || value == 'excel') {
                 if (PremiumManager.instance.checkPremium(context)) {
-                  // Total cost and hours for all (ignoring search for export or using searched? let's use all)
-                  double totalCost = 0;
-                  double totalHours = 0;
-                  for (var p in _puantajlar) {
-                    final worker = _workerMap[p.workerId];
-                    if (worker != null) {
-                      totalCost += DatabaseHelper.instance.calculateLaborCost(p, worker);
+                    setState(() {
+                      _currentStatus = "Hazirlaniyor...";
+                      _isCancelled = false;
+                    });
+                    _showLoadingDialog();
+                    try {
+                        final l10n = AppLocalizations.of(context)!;
+                        if (value == 'pdf') {
+                          await WorkerExportService.exportToPDF(
+                            l10n: l10n,
+                            startDate: _startDate,
+                            endDate: _endDate,
+                            puantajlar: _puantajlar,
+                            workerMap: _workerMap,
+                            projectNames: _projectNames,
+                            totalCost: _totalCost,
+                            totalHours: _totalHours,
+                            onStatusUpdate: (status) {
+                              if (mounted && !_isCancelled) {
+                                setState(() {
+                                  _currentStatus = status;
+                                });
+                              }
+                            },
+                            isCancelled: () => _isCancelled,
+                          );
+                        } else {
+                          await WorkerExportService.exportToExcel(
+                            l10n: l10n,
+                            startDate: _startDate,
+                            endDate: _endDate,
+                            puantajlar: _puantajlar,
+                            workerMap: _workerMap,
+                            projectNames: _projectNames,
+                          );
+                        }
+                    } catch (e) {
+                        if (mounted && !_isCancelled) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Hata: $e')),
+                          );
+                        }
+                    } finally {
+                        if (mounted) Navigator.of(context).pop();
                     }
-                    totalHours += p.saat;
-                  }
-                  final l10n = AppLocalizations.of(context)!;
-                  await WorkerExportService.exportToPDF(
-                    l10n: l10n,
-                    startDate: _startDate,
-                    endDate: _endDate,
-                    puantajlar: _puantajlar,
-                    workerMap: _workerMap,
-                    projectNames: _projectNames,
-                    totalCost: totalCost,
-                    totalHours: totalHours,
-                  );
-                }
-              } else if (value == 'excel') {
-                if (PremiumManager.instance.checkPremium(context)) {
-                  final l10n = AppLocalizations.of(context)!;
-                  await WorkerExportService.exportToExcel(
-                    l10n: l10n,
-                    startDate: _startDate,
-                    endDate: _endDate,
-                    puantajlar: _puantajlar,
-                    workerMap: _workerMap,
-                    projectNames: _projectNames,
-                  );
                 }
               }
             },
@@ -205,8 +269,8 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                 value: 'pdf',
                 child: Row(
                   children: [
-                    Icon(Icons.picture_as_pdf, color: Colors.red),
-                    SizedBox(width: 8),
+                    const Icon(Icons.picture_as_pdf, color: Colors.red),
+                    const SizedBox(width: 8),
                     Text(AppLocalizations.of(context)!.downloadPDF),
                   ],
                 ),
@@ -215,8 +279,8 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                 value: 'excel',
                 child: Row(
                   children: [
-                    Icon(Icons.table_chart, color: Colors.green),
-                    SizedBox(width: 8),
+                    const Icon(Icons.table_chart, color: Colors.green),
+                    const SizedBox(width: 8),
                     Text(AppLocalizations.of(context)!.downloadExcel),
                   ],
                 ),
@@ -227,8 +291,8 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
       ),
       body: Column(
         children: [
-          _buildHeader(totalCost, totalHours),
-          _buildWorkerList(groupedPuantaj, sortedWorkerIds, totalHours),
+          _buildHeader(_totalCost, _totalHours),
+          _buildWorkerList(groupedPuantaj, sortedWorkerIds, _totalHours),
         ],
       ),
       bottomNavigationBar: const BannerAdWidget(),
@@ -338,15 +402,8 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                 final worker = _workerMap[workerId];
                 final puantajs = groupedPuantaj[workerId]!;
                 
-                double workerTotalHours = 0;
-                double workerTotalCost = 0;
-                for (var p in puantajs) {
-                  workerTotalHours += p.saat;
-                  if (worker != null) {
-                    workerTotalCost += DatabaseHelper.instance.calculateLaborCost(p, worker);
-                  }
-                }
-
+                final workerTotalHours = _workerTotalHours[workerId] ?? 0.0;
+                final workerTotalCost = _workerTotalCosts[workerId] ?? 0.0;
                 double contribution = totalHours > 0 ? workerTotalHours / totalHours : 0;
 
                 return TweenAnimationBuilder<double>(
@@ -425,37 +482,69 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.picture_as_pdf, size: 22, color: Color(0xFFE71D36)),
-                            onPressed: () {
+                            onPressed: () async {
                               if (PremiumManager.instance.checkPremium(context)) {
-                                final l10n = AppLocalizations.of(context)!;
-                                WorkerExportService.exportToPDF(
-                                  l10n: l10n,
-                                  startDate: _startDate,
-                                  endDate: _endDate,
-                                  puantajlar: puantajs,
-                                  workerMap: _workerMap,
-                                  projectNames: _projectNames,
-                                  totalCost: workerTotalCost,
-                                  totalHours: workerTotalHours,
-                                  filterWorkerId: workerId,
-                                );
+                                setState(() {
+                                  _currentStatus = "Hazirlaniyor...";
+                                  _isCancelled = false;
+                                });
+                                _showLoadingDialog();
+                                try {
+                                  final l10n = AppLocalizations.of(context)!;
+                                  await WorkerExportService.exportToPDF(
+                                    l10n: l10n,
+                                    startDate: _startDate,
+                                    endDate: _endDate,
+                                    puantajlar: puantajs,
+                                    workerMap: _workerMap,
+                                    projectNames: _projectNames,
+                                    totalCost: workerTotalCost,
+                                    totalHours: workerTotalHours,
+                                    filterWorkerId: workerId,
+                                    onStatusUpdate: (status) {
+                                      if (mounted && !_isCancelled) {
+                                        setState(() {
+                                          _currentStatus = status;
+                                        });
+                                      }
+                                    },
+                                    isCancelled: () => _isCancelled,
+                                  );
+                                } catch (e) {
+                                  if (mounted && !_isCancelled) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Hata: $e')),
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) Navigator.of(context).pop();
+                                }
                               }
                             },
                           ),
                           IconButton(
                             icon: const Icon(Icons.table_chart, size: 22, color: Color(0xFF2EC4B6)),
-                            onPressed: () {
+                            onPressed: () async {
                               if (PremiumManager.instance.checkPremium(context)) {
-                                final l10n = AppLocalizations.of(context)!;
-                                WorkerExportService.exportToExcel(
-                                  l10n: l10n,
-                                  startDate: _startDate,
-                                  endDate: _endDate,
-                                  puantajlar: puantajs,
-                                  workerMap: _workerMap,
-                                  projectNames: _projectNames,
-                                  filterWorkerId: workerId,
-                                );
+                                _showLoadingDialog();
+                                try {
+                                  final l10n = AppLocalizations.of(context)!;
+                                  await WorkerExportService.exportToExcel(
+                                    l10n: l10n,
+                                    startDate: _startDate,
+                                    endDate: _endDate,
+                                    puantajlar: puantajs,
+                                    workerMap: _workerMap,
+                                    projectNames: _projectNames,
+                                    filterWorkerId: workerId,
+                                  );
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Hata: $e')),
+                                  );
+                                } finally {
+                                  if (mounted) Navigator.of(context).pop();
+                                }
                               }
                             },
                           ),
@@ -470,9 +559,9 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                     ),
                   ),
                 ),
-              );
-            },
-          ),
+                );
+              },
+            ),
     );
   }
 
@@ -484,7 +573,11 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
           final index = entry.key;
           final p = entry.value;
           final isLast = index == puantajs.length - 1;
-          final cost = worker != null ? DatabaseHelper.instance.calculateLaborCost(p, worker) : 0.0;
+          
+          double cost = 0;
+          if (worker != null) {
+            cost = DatabaseHelper.instance.calculateLaborCost(p, worker);
+          }
 
           return IntrinsicHeight(
             child: Row(
@@ -582,6 +675,152 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
       ),
     );
   }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(40),
+                border: Border.all(color: Colors.white.withOpacity(0.5)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF011627).withOpacity(0.15),
+                    blurRadius: 30,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    duration: const Duration(seconds: 2),
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    onEnd: () {},
+                    builder: (context, value, child) {
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                const Color(0xFF2EC4B6).withOpacity(0.2),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 5,
+                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2EC4B6)),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.picture_as_pdf_rounded,
+                            color: Color(0xFFE71D36),
+                            size: 35,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  const _AnimatedProcessingText(),
+                  const SizedBox(height: 12),
+                  StatefulBuilder(
+                    builder: (context, setDialogState) {
+                      return Text(
+                        _currentStatus.isEmpty ? "Raporunuz hazirlaniyor..." : _currentStatus,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.none,
+                          fontSize: 13,
+                          letterSpacing: 0.3,
+                        ),
+                      );
+                    }
+                  ),
+                  const SizedBox(height: 24),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _isCancelled = true;
+                      });
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      "İPTAL",
+                      style: TextStyle(
+                        color: Colors.red.shade400,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AnimatedProcessingText extends StatefulWidget {
+  const _AnimatedProcessingText();
+
+  @override
+  State<_AnimatedProcessingText> createState() => _AnimatedProcessingTextState();
+}
+
+class _AnimatedProcessingTextState extends State<_AnimatedProcessingText> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..repeat(reverse: true);
+    _opacity = Tween<double>(begin: 0.5, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: Text(
+        AppLocalizations.of(context)!.processing.toUpperCase(),
+        style: const TextStyle(
+          color: Color(0xFF011627),
+          fontWeight: FontWeight.w900,
+          decoration: TextDecoration.none,
+          fontSize: 20,
+          letterSpacing: 2.0,
+        ),
+      ),
+    );
+  }
 }
 
 class _StatCard extends StatelessWidget {
@@ -641,6 +880,3 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
-
-
-

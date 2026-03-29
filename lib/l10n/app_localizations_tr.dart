@@ -27,6 +27,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get processingPayment => 'İşlem yapılıyor...';
 
   @override
+  String get processing => 'İşleniyor...';
+
+  @override
   String get appTitle => 'Muhasebe Pro: Gelir Gider ve İşçi Takibi';
 
   @override

@@ -5,6 +5,7 @@
   "deleteAccountSuccess": "Silme talebiniz alındı. Hesabınızdan çıkış yapılıyor.",
   "demoDataLoaded": "Örnek veriler başarıyla yüklendi. Görseller için uygulama hazır!",
   "processingPayment": "İşlem başlatıldı...",
+  "processing": "İşleniyor...",
   "appTitle": "Muhasebe Pro: Gelir Gider ve İşçi Takibi",
   "dashboard": "Ana Sayfa",
   "netCash": "NET NAKİT (KASA)",
