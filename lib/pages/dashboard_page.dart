@@ -113,7 +113,35 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.appTitle),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              AppLocalizations.of(context)!.shortAppTitle,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 19,
+                letterSpacing: -0.5,
+              ),
+              textScaleFactor: 1.0,
+            ),
+            const SizedBox(height: 1),
+            Text(
+              AppLocalizations.of(context)!.appSlogan,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white.withOpacity(0.8),
+                fontWeight: FontWeight.w400,
+                letterSpacing: 0.1,
+              ),
+              textScaleFactor: 1.0,
+            ),
+          ],
+        ),
+        toolbarHeight: 65, // Slightly more height for the two lines to breathe
+        centerTitle: false,
+        titleSpacing: 12, // More space from the drawer icon
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),

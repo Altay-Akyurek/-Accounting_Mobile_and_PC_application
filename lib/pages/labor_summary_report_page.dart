@@ -185,7 +185,15 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                   setState(() => _searchQuery = value);
                 },
               )
-            : Text(AppLocalizations.of(context)!.laborSummaryReport_caps),
+            : FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  AppLocalizations.of(context)!.laborSummaryReport_caps,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  textScaleFactor: 1.0,
+                ),
+              ),
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
@@ -445,7 +453,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                         child: Text(
                           (worker != null && worker.adSoyad.isNotEmpty 
                               ? worker.adSoyad[0] 
-                              : '?').toUpperCase(),
+                              : '?'),
                           style: const TextStyle(color: Color(0xFF011627), fontWeight: FontWeight.w900),
                         ),
                       ),
@@ -566,6 +574,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
   }
 
   Widget _buildTimelineDetail(List<Puantaj> puantajs, Worker? worker) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
@@ -637,7 +646,7 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        '+${p.mesai} ${AppLocalizations.of(context)!.tableMesai_caps}',
+                                        '+${p.mesai} ${l10n.tableMesai_caps}',
                                         style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.blue),
                                       ),
                                     ),
@@ -654,13 +663,19 @@ class _LaborSummaryReportPageState extends State<LaborSummaryReportPage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text(
-                              _formatPara(cost),
-                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFFE71D36)),
+                            FittedBox(
+                              child: Text(
+                                _formatPara(cost),
+                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFFE71D36)),
+                                textScaleFactor: 1.0,
+                              ),
                             ),
-                            Text(
-                              '${p.saat} ${AppLocalizations.of(context)!.hour_caps}',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                            FittedBox(
+                              child: Text(
+                                '${p.saat} ${l10n.hour_caps}',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                                textScaleFactor: 1.0,
+                              ),
                             ),
                           ],
                         ),
@@ -810,7 +825,7 @@ class _AnimatedProcessingTextState extends State<_AnimatedProcessingText> with S
     return FadeTransition(
       opacity: _opacity,
       child: Text(
-        AppLocalizations.of(context)!.processing.toUpperCase(),
+        AppLocalizations.of(context)!.processing,
         style: const TextStyle(
           color: Color(0xFF011627),
           fontWeight: FontWeight.w900,

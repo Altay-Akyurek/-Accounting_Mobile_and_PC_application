@@ -325,7 +325,15 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.accountingAndCurrent),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            AppLocalizations.of(context)!.accountingAndCurrent,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            textScaleFactor: 1.0,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -455,13 +463,13 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
                                   columnSpacing: 16,
                                   horizontalMargin: 12,
                                      columns: [
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableDate, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableCari, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableDescription, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableStatus, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableIncoming, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableOutgoing, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
-                                      DataColumn(label: Text(AppLocalizations.of(context)!.tableBalance, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
+                                      DataColumn(label: FittedBox(fit: BoxFit.scaleDown, child: Text(AppLocalizations.of(context)!.tableDate, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), textScaleFactor: 1.0))),
+                                      DataColumn(label: FittedBox(fit: BoxFit.scaleDown, child: Text(AppLocalizations.of(context)!.tableCari, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), textScaleFactor: 1.0))),
+                                      DataColumn(label: FittedBox(fit: BoxFit.scaleDown, child: Text(AppLocalizations.of(context)!.tableDescription, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), textScaleFactor: 1.0))),
+                                      DataColumn(label: FittedBox(fit: BoxFit.scaleDown, child: Text(AppLocalizations.of(context)!.tableStatus, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), textScaleFactor: 1.0))),
+                                      DataColumn(label: FittedBox(fit: BoxFit.scaleDown, child: Text(AppLocalizations.of(context)!.tableIncoming, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), textScaleFactor: 1.0))),
+                                      DataColumn(label: FittedBox(fit: BoxFit.scaleDown, child: Text(AppLocalizations.of(context)!.tableOutgoing, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), textScaleFactor: 1.0))),
+                                      DataColumn(label: FittedBox(fit: BoxFit.scaleDown, child: Text(AppLocalizations.of(context)!.tableBalance, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), textScaleFactor: 1.0))),
                                       const DataColumn(label: Text(' ', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5))),
                                     ],
                                   rows: _filtrelenmisIslemler.map((islem) {
@@ -495,7 +503,7 @@ class _MuhasebeSayfasiState extends State<MuhasebeSayfasi> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showIslemEkleBottomSheet,
-        label: Text(AppLocalizations.of(context)!.addNewTransaction),
+        label: Text(AppLocalizations.of(context)!.addNewTransaction, textScaleFactor: 1.0),
         icon: const Icon(Icons.add_rounded, size: 26),
         backgroundColor: const Color(0xFF003399),
         foregroundColor: Colors.white,
@@ -893,14 +901,17 @@ class _OzetKartModern extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  baslik,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: isGlass ? Colors.white70 : Colors.grey.shade500,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    baslik,
+                    style: TextStyle(
+                      color: isGlass ? Colors.white70 : Colors.grey.shade500,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textScaleFactor: 1.0,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -913,6 +924,7 @@ class _OzetKartModern extends StatelessWidget {
                       fontSize: fullWidth ? 22 : 18,
                       fontWeight: FontWeight.w900,
                     ),
+                    textScaleFactor: 1.0,
                   ),
                 ),
               ],

@@ -182,6 +182,18 @@ abstract class AppLocalizations {
   /// **'Muhasebe Pro: Gelir Gider ve İşçi Takibi'**
   String get appTitle;
 
+  /// No description provided for @shortAppTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Muhasebe Pro'**
+  String get shortAppTitle;
+
+  /// No description provided for @appSlogan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelir Gider ve İşçi Takibi'**
+  String get appSlogan;
+
   /// No description provided for @dashboard.
   ///
   /// In tr, this message translates to:
@@ -1451,7 +1463,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountingAndCurrent.
   ///
   /// In tr, this message translates to:
-  /// **'MUHASEBE & CARİ'**
+  /// **'Muhasebe & Cari'**
   String get accountingAndCurrent;
 
   /// No description provided for @pleaseSelectCari.
@@ -1523,7 +1535,7 @@ abstract class AppLocalizations {
   /// No description provided for @addNewTransaction.
   ///
   /// In tr, this message translates to:
-  /// **'YENİ İŞLEM EKLE'**
+  /// **'Yeni İşlem Ekle'**
   String get addNewTransaction;
 
   /// No description provided for @quickTransactionEntry.
@@ -1607,43 +1619,43 @@ abstract class AppLocalizations {
   /// No description provided for @tableDate.
   ///
   /// In tr, this message translates to:
-  /// **'TARİH'**
+  /// **'Tarih'**
   String get tableDate;
 
   /// No description provided for @tableCari.
   ///
   /// In tr, this message translates to:
-  /// **'CARİ'**
+  /// **'Cari'**
   String get tableCari;
 
   /// No description provided for @tableDescription.
   ///
   /// In tr, this message translates to:
-  /// **'AÇIKLAMA'**
+  /// **'Açıklama'**
   String get tableDescription;
 
   /// No description provided for @tableStatus.
   ///
   /// In tr, this message translates to:
-  /// **'DURUM'**
+  /// **'Durum'**
   String get tableStatus;
 
   /// No description provided for @tableIncoming.
   ///
   /// In tr, this message translates to:
-  /// **'GELECEK'**
+  /// **'Gelen (Borç)'**
   String get tableIncoming;
 
   /// No description provided for @tableOutgoing.
   ///
   /// In tr, this message translates to:
-  /// **'ÇIKACAK'**
+  /// **'Giden (Alacak)'**
   String get tableOutgoing;
 
   /// No description provided for @tableBalance.
   ///
   /// In tr, this message translates to:
-  /// **'BAKİYE'**
+  /// **'Bakiye'**
   String get tableBalance;
 
   /// No description provided for @adminDashboard.
@@ -1685,7 +1697,7 @@ abstract class AppLocalizations {
   /// No description provided for @personnelTracking.
   ///
   /// In tr, this message translates to:
-  /// **'PERSONEL TAKİBİ'**
+  /// **'Personel Takibi'**
   String get personnelTracking;
 
   /// No description provided for @fieldPersonnelManagement.
@@ -2189,7 +2201,7 @@ abstract class AppLocalizations {
   /// No description provided for @laborSummaryReport_caps.
   ///
   /// In tr, this message translates to:
-  /// **'İŞÇİLİK ÖZET RAPORU'**
+  /// **'İşçilik Özet Raporu'**
   String get laborSummaryReport_caps;
 
   /// No description provided for @dateRange.
@@ -3492,11 +3504,11 @@ abstract class AppLocalizations {
   /// **'recordDeleted'**
   String get recordDeleted;
 
-  /// No description provided for @settlementReport_caps.
+  /// No description provided for @settlementReport.
   ///
   /// In tr, this message translates to:
-  /// **'HESAP KESİM RAPORU'**
-  String get settlementReport_caps;
+  /// **'Hesap Kesim Raporu'**
+  String get settlementReport;
 
   /// No description provided for @noDataFound.
   ///
@@ -3723,7 +3735,7 @@ abstract class AppLocalizations {
   /// No description provided for @workerSummaryReport_caps.
   ///
   /// In tr, this message translates to:
-  /// **'İŞÇİ ÖZET RAPORU'**
+  /// **'İşçilik Özet Raporu'**
   String get workerSummaryReport_caps;
 
   /// No description provided for @totalWorkHours.
@@ -3735,7 +3747,7 @@ abstract class AppLocalizations {
   /// No description provided for @workerReport_caps.
   ///
   /// In tr, this message translates to:
-  /// **'{name} ÖZET RAPORU'**
+  /// **'{name} İşçi Raporu'**
   String workerReport_caps(String name);
 
   /// No description provided for @totalHoursAndAmount.

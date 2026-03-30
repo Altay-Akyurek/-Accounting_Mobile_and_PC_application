@@ -14,6 +14,8 @@
   "check": "Check",
   "creditCard": "Credit Card",
   "appTitle": "Muhasebe Pro: Revenue, Expense and Labor Tracking",
+  "shortAppTitle": "Muhasebe Pro",
+  "appSlogan": "Revenue, Expense and Labor Tracking",
   "dashboard": "Dashboard",
   "netCash": "NET CASH",
   "current": "CURRENT",
@@ -261,7 +263,7 @@
   "descriptionOptional": "Description / Note (Optional)",
   "saveHakedis": "SAVE HAKEDIS",
   "enterTitleAndAmount": "Please enter title and amount.",
-  "accountingAndCurrent": "ACCOUNTING & CURRENT",
+  "accountingAndCurrent": "Accounting & Ledger",
   "pleaseSelectCari": "Please select a current account",
   "descriptionRequired": "Description is required",
   "amountRequired": "Debt or Credit amount must be entered",
@@ -273,7 +275,7 @@
   "outgoingCredit": "Outgoing (Credit)",
   "netCashKasa": "Net Cash (Vault)",
   "netStatusBalance": "Net Status (Balance)",
-  "addNewTransaction": "ADD NEW TRANSACTION",
+  "addNewTransaction": "Add New Transaction",
   "quickTransactionEntry": "Quick Transaction Entry",
   "cariAccountSelection": "Current Account Selection",
   "descriptionNote": "Description / Note",
@@ -287,20 +289,20 @@
   "statusOut": "OUT",
   "statusDebt": "DEBT",
   "statusCredit": "CREDIT",
-  "tableDate": "DATE",
-  "tableCari": "ACCOUNT",
-  "tableDescription": "DESCRIPTION",
-  "tableStatus": "STATUS",
-  "tableIncoming": "INCOMING",
-  "tableOutgoing": "OUTGOING",
-  "tableBalance": "BALANCE",
+  "tableDate": "Date",
+  "tableCari": "Account",
+  "tableDescription": "Description",
+  "tableStatus": "Status",
+  "tableIncoming": "Incoming (Debt)",
+  "tableOutgoing": "Outgoing (Credit)",
+  "tableBalance": "Balance",
   "adminDashboard": "Admin Dashboard",
   "financialAnalysis": "Financial Analysis",
   "profitabilityRate": "Profitability Rate",
   "expenseBreakdown": "EXPENSE BREAKDOWN",
   "projectBasedPerformance": "PROJECT BASED PERFORMANCE",
   "pendingWorkerPayment": "Pending Worker Payment",
-  "personnelTracking": "PERSONNEL TRACKING",
+  "personnelTracking": "Personnel Tracking",
   "fieldPersonnelManagement": "Field Personnel Management",
   "personnelSubtitle": "Attendance and salary accrual tracking",
   "getSummary": "GET SUMMARY",
@@ -408,7 +410,7 @@
       }
     }
   },
-  "laborSummaryReport_caps": "LABOR SUMMARY REPORT",
+  "laborSummaryReport_caps": "Labor Summary Report",
   "dateRange": "Date Range",
   "selectedPeriodRecords": "Selected Period Records",
   "xHoursWork": "{hours} Hours Work",
@@ -775,7 +777,7 @@
     }
   },
   "recordDeleted": "Record deleted",
-  "settlementReport_caps": "SETTLEMENT REPORT",
+  "settlementReport": "Settlement Report",
   "noDataFound": "No Data Found",
   "settlementPeriod_caps": "SETTLEMENT PERIOD",
   "selectDate_caps": "SELECT DATE",
@@ -853,7 +855,7 @@
   "supplierPayables": "Supplier Payables",
   "mainCashStatus": "Main Cash Status",
   "search": "Search",
-  "workerSummaryReport_caps": "WORKER SUMMARY REPORT",
+  "workerSummaryReport_caps": "Labor Summary Report",
   "totalWorkHours": "{hours} Hours Total Work",
   "@totalWorkHours": {
     "placeholders": {
@@ -862,7 +864,7 @@
       }
     }
   },
-  "workerReport_caps": "{name} SUMMARY REPORT",
+  "workerReport_caps": "{name} Labor Report",
   "@workerReport_caps": {
     "placeholders": {
       "name": {

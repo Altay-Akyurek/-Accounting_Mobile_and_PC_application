@@ -54,6 +54,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get appTitle => 'Muhasebe Pro: Gelir Gider ve İşçi Takibi';
 
   @override
+  String get shortAppTitle => 'Muhasebe Pro';
+
+  @override
+  String get appSlogan => 'Gelir Gider ve İşçi Takibi';
+
+  @override
   String get dashboard => 'Ana Sayfa';
 
   @override
@@ -715,7 +721,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get enterTitleAndAmount => 'Lütfen başlık ve tutar giriniz.';
 
   @override
-  String get accountingAndCurrent => 'MUHASEBE & CARİ';
+  String get accountingAndCurrent => 'Muhasebe & Cari';
 
   @override
   String get pleaseSelectCari => 'Lütfen bir cari hesap seçiniz';
@@ -751,7 +757,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get netStatusBalance => 'Net Durum (Bakiye)';
 
   @override
-  String get addNewTransaction => 'YENİ İŞLEM EKLE';
+  String get addNewTransaction => 'Yeni İşlem Ekle';
 
   @override
   String get quickTransactionEntry => 'Hızlı İşlem Girişi';
@@ -793,25 +799,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get statusCredit => 'ALACAK';
 
   @override
-  String get tableDate => 'TARİH';
+  String get tableDate => 'Tarih';
 
   @override
-  String get tableCari => 'CARİ';
+  String get tableCari => 'Cari';
 
   @override
-  String get tableDescription => 'AÇIKLAMA';
+  String get tableDescription => 'Açıklama';
 
   @override
-  String get tableStatus => 'DURUM';
+  String get tableStatus => 'Durum';
 
   @override
-  String get tableIncoming => 'GELECEK';
+  String get tableIncoming => 'Gelen (Borç)';
 
   @override
-  String get tableOutgoing => 'ÇIKACAK';
+  String get tableOutgoing => 'Giden (Alacak)';
 
   @override
-  String get tableBalance => 'BAKİYE';
+  String get tableBalance => 'Bakiye';
 
   @override
   String get adminDashboard => 'Yönetici Kontrol Paneli';
@@ -832,7 +838,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pendingWorkerPayment => 'Bekleyen İşçi Ödemesi';
 
   @override
-  String get personnelTracking => 'PERSONEL TAKİBİ';
+  String get personnelTracking => 'Personel Takibi';
 
   @override
   String get fieldPersonnelManagement => 'Saha Personel Yönetimi';
@@ -1091,7 +1097,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get laborSummaryReport_caps => 'İŞÇİLİK ÖZET RAPORU';
+  String get laborSummaryReport_caps => 'İşçilik Özet Raporu';
 
   @override
   String get dateRange => 'Tarih Aralığı';
@@ -1804,7 +1810,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recordDeleted => 'recordDeleted';
 
   @override
-  String get settlementReport_caps => 'HESAP KESİM RAPORU';
+  String get settlementReport => 'Hesap Kesim Raporu';
 
   @override
   String get noDataFound => 'Veri Bulunamadı';
@@ -1928,7 +1934,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get search => 'Ara';
 
   @override
-  String get workerSummaryReport_caps => 'İŞÇİ ÖZET RAPORU';
+  String get workerSummaryReport_caps => 'İşçilik Özet Raporu';
 
   @override
   String totalWorkHours(String hours) {
@@ -1937,7 +1943,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workerReport_caps(String name) {
-    return '$name ÖZET RAPORU';
+    return '$name İşçi Raporu';
   }
 
   @override

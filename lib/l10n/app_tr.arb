@@ -14,6 +14,8 @@
   "check": "Çek",
   "creditCard": "Kredi Kartı",
   "appTitle": "Muhasebe Pro: Gelir Gider ve İşçi Takibi",
+  "shortAppTitle": "Muhasebe Pro",
+  "appSlogan": "Gelir Gider ve İşçi Takibi",
   "dashboard": "Ana Sayfa",
   "netCash": "NET NAKİT (KASA)",
   "current": "GÜNCEL",
@@ -261,7 +263,7 @@
   "descriptionOptional": "Açıklama / Not (Opsiyonel)",
   "saveHakedis": "HAKEDİŞİ KAYDET",
   "enterTitleAndAmount": "Lütfen başlık ve tutar giriniz.",
-  "accountingAndCurrent": "MUHASEBE & CARİ",
+  "accountingAndCurrent": "Muhasebe & Cari",
   "pleaseSelectCari": "Lütfen bir cari hesap seçiniz",
   "descriptionRequired": "Açıklama zorunludur",
   "amountRequired": "Borç veya Alacak tutarından biri girilmelidir",
@@ -273,7 +275,7 @@
   "outgoingCredit": "Çıkacak (Alacak)",
   "netCashKasa": "Net Nakit (Kasa)",
   "netStatusBalance": "Net Durum (Bakiye)",
-  "addNewTransaction": "YENİ İŞLEM EKLE",
+  "addNewTransaction": "Yeni İşlem Ekle",
   "quickTransactionEntry": "Hızlı İşlem Girişi",
   "cariAccountSelection": "Cari Hesap Seçimi",
   "descriptionNote": "Açıklama / Not",
@@ -287,20 +289,20 @@
   "statusOut": "ÇIKIŞ",
   "statusDebt": "BORÇ",
   "statusCredit": "ALACAK",
-  "tableDate": "TARİH",
-  "tableCari": "CARİ",
-  "tableDescription": "AÇIKLAMA",
-  "tableStatus": "DURUM",
-  "tableIncoming": "GELECEK",
-  "tableOutgoing": "ÇIKACAK",
-  "tableBalance": "BAKİYE",
+  "tableDate": "Tarih",
+  "tableCari": "Cari",
+  "tableDescription": "Açıklama",
+  "tableStatus": "Durum",
+  "tableIncoming": "Gelen (Borç)",
+  "tableOutgoing": "Giden (Alacak)",
+  "tableBalance": "Bakiye",
   "adminDashboard": "Yönetici Kontrol Paneli",
   "financialAnalysis": "Finansal Analiz",
   "profitabilityRate": "Karlılık Oranı",
   "expenseBreakdown": "GİDER KIRILIMI",
   "projectBasedPerformance": "PROJE BAZLI PERFORMANS",
   "pendingWorkerPayment": "Bekleyen İşçi Ödemesi",
-  "personnelTracking": "PERSONEL TAKİBİ",
+  "personnelTracking": "Personel Takibi",
   "fieldPersonnelManagement": "Saha Personel Yönetimi",
   "personnelSubtitle": "Puantaj ve maaş tahakkuk takibi",
   "getSummary": "ÖZET AL",
@@ -408,7 +410,7 @@
       }
     }
   },
-  "laborSummaryReport_caps": "İŞÇİLİK ÖZET RAPORU",
+  "laborSummaryReport_caps": "İşçilik Özet Raporu",
   "dateRange": "Tarih Aralığı",
   "selectedPeriodRecords": "Seçili Dönem Kayıtları",
   "xHoursWork": "{hours} Saat Çalışma",
@@ -775,7 +777,7 @@
     }
   },
   "recordDeleted": "recordDeleted",
-  "settlementReport_caps": "HESAP KESİM RAPORU",
+  "settlementReport": "Hesap Kesim Raporu",
   "noDataFound": "Veri Bulunamadı",
   "settlementPeriod_caps": "HESAP KESİM DÖNEMİ",
   "selectDate_caps": "TARİH SEÇ",
@@ -853,7 +855,7 @@
   "supplierPayables": "Tedarikçi Borçları",
   "mainCashStatus": "Ana Kasa Durumu",
   "search": "Ara",
-  "workerSummaryReport_caps": "İŞÇİ ÖZET RAPORU",
+  "workerSummaryReport_caps": "İşçilik Özet Raporu",
   "totalWorkHours": "{hours} Saat Toplam Çalışma",
   "@totalWorkHours": {
     "placeholders": {
@@ -862,7 +864,7 @@
       }
     }
   },
-  "workerReport_caps": "{name} ÖZET RAPORU",
+  "workerReport_caps": "{name} İşçi Raporu",
   "@workerReport_caps": {
     "placeholders": {
       "name": {

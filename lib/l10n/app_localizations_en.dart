@@ -55,6 +55,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Muhasebe Pro: Revenue, Expense and Labor Tracking';
 
   @override
+  String get shortAppTitle => 'Muhasebe Pro';
+
+  @override
+  String get appSlogan => 'Revenue, Expense and Labor Tracking';
+
+  @override
   String get dashboard => 'Dashboard';
 
   @override
@@ -716,7 +722,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enterTitleAndAmount => 'Please enter title and amount.';
 
   @override
-  String get accountingAndCurrent => 'ACCOUNTING & CURRENT';
+  String get accountingAndCurrent => 'Accounting & Ledger';
 
   @override
   String get pleaseSelectCari => 'Please select a current account';
@@ -752,7 +758,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get netStatusBalance => 'Net Status (Balance)';
 
   @override
-  String get addNewTransaction => 'ADD NEW TRANSACTION';
+  String get addNewTransaction => 'Add New Transaction';
 
   @override
   String get quickTransactionEntry => 'Quick Transaction Entry';
@@ -794,25 +800,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusCredit => 'CREDIT';
 
   @override
-  String get tableDate => 'DATE';
+  String get tableDate => 'Date';
 
   @override
-  String get tableCari => 'ACCOUNT';
+  String get tableCari => 'Account';
 
   @override
-  String get tableDescription => 'DESCRIPTION';
+  String get tableDescription => 'Description';
 
   @override
-  String get tableStatus => 'STATUS';
+  String get tableStatus => 'Status';
 
   @override
-  String get tableIncoming => 'INCOMING';
+  String get tableIncoming => 'Incoming (Debt)';
 
   @override
-  String get tableOutgoing => 'OUTGOING';
+  String get tableOutgoing => 'Outgoing (Credit)';
 
   @override
-  String get tableBalance => 'BALANCE';
+  String get tableBalance => 'Balance';
 
   @override
   String get adminDashboard => 'Admin Dashboard';
@@ -833,7 +839,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingWorkerPayment => 'Pending Worker Payment';
 
   @override
-  String get personnelTracking => 'PERSONNEL TRACKING';
+  String get personnelTracking => 'Personnel Tracking';
 
   @override
   String get fieldPersonnelManagement => 'Field Personnel Management';
@@ -1092,7 +1098,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get laborSummaryReport_caps => 'LABOR SUMMARY REPORT';
+  String get laborSummaryReport_caps => 'Labor Summary Report';
 
   @override
   String get dateRange => 'Date Range';
@@ -1805,7 +1811,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recordDeleted => 'Record deleted';
 
   @override
-  String get settlementReport_caps => 'SETTLEMENT REPORT';
+  String get settlementReport => 'Settlement Report';
 
   @override
   String get noDataFound => 'No Data Found';
@@ -1929,7 +1935,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get search => 'Search';
 
   @override
-  String get workerSummaryReport_caps => 'WORKER SUMMARY REPORT';
+  String get workerSummaryReport_caps => 'Labor Summary Report';
 
   @override
   String totalWorkHours(String hours) {
@@ -1938,7 +1944,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String workerReport_caps(String name) {
-    return '$name SUMMARY REPORT';
+    return '$name Labor Report';
   }
 
   @override

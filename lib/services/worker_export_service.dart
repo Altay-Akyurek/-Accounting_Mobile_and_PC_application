@@ -69,7 +69,7 @@ class WorkerExportService {
       'total': l10n.total,
     };
 
-    onStatusUpdate?.call("Fontlar hazirlaniyor...");
+    onStatusUpdate?.call(l10n.localeName == 'tr' ? "Fontlar hazırlanıyor..." : "Preparing fonts...");
     
     Uint8List? regBytes;
     Uint8List? boldBytes;
@@ -87,7 +87,7 @@ class WorkerExportService {
       debugPrint("Main thread font prep error: $e");
     }
 
-    onStatusUpdate?.call("Islem baslatiliyor...");
+    onStatusUpdate?.call(l10n.localeName == 'tr' ? "İşlem başlatılıyor..." : "Starting process...");
     
     final receivePort = ReceivePort();
     final params = {
@@ -127,9 +127,9 @@ class WorkerExportService {
           receivePort.close();
           isolate.kill();
           
-          String fileName = filterWorkerId != null 
-              ? '${_tr(workerMap[filterWorkerId]?.adSoyad) ?? 'Isci'}_Raporu_${DateFormat('dd_MM_yyyy').format(DateTime.now())}.pdf'
-              : 'Isci_Ozet_Raporu_${DateFormat('dd_MM_yyyy').format(DateTime.now())}.pdf';
+          String namePart = filterWorkerId != null ? '${_tr(workerMap[filterWorkerId]?.adSoyad) ?? 'Isci'}_' : '';
+          String prefix = filterWorkerId != null ? (l10n.localeName == 'tr' ? 'Raporu' : 'Report') : (l10n.localeName == 'tr' ? 'Isci_Ozet_Raporu' : 'Worker_Summary_Report');
+          String fileName = '${namePart}${prefix}_${DateFormat('dd_MM_yyyy').format(DateTime.now())}.pdf';
 
           await Printing.layoutPdf(
             onLayout: (PdfPageFormat format) async => msg,
@@ -153,7 +153,7 @@ class WorkerExportService {
         BackgroundIsolateBinaryMessenger.ensureInitialized(token);
       }
 
-      sendPort.send("STATUS:Veriler isleniyor...");
+      sendPort.send(params['locale'] == 'tr' ? "STATUS:Veriler işleniyor..." : "STATUS:Processing data...");
       final List<Puantaj> puantajlar = params['puantajlar'];
       final Map<int, Worker> workerMap = params['workerMap'];
       final Map<int, String> projectNames = params['projectNames'];
@@ -167,7 +167,7 @@ class WorkerExportService {
       final Uint8List? regBytes = params['regBytes'];
       final Uint8List? boldBytes = params['boldBytes'];
 
-      sendPort.send("STATUS:Fontlar hazirlaniyor...");
+      sendPort.send(params['locale'] == 'tr' ? "STATUS:Fontlar hazırlanıyor..." : "STATUS:Preparing fonts...");
       pw.Font fontRegular;
       pw.Font fontBold;
 
@@ -180,7 +180,7 @@ class WorkerExportService {
         fontBold = pw.Font.helveticaBold();
       }
 
-      sendPort.send("STATUS:PDF olusturuluyor...");
+      sendPort.send(params['locale'] == 'tr' ? "STATUS:PDF oluşturuluyor..." : "STATUS:Generating PDF...");
 
       final pdf = pw.Document();
       final currencyFormat = NumberFormat.currency(
@@ -211,7 +211,7 @@ class WorkerExportService {
         pdf.addPage(
           pw.Page(
             build: (pw.Context context) => pw.Center(
-              child: pw.Text("Secili tarihler arasinda kayit bulunamadi.", style: pw.TextStyle(font: fontRegular)),
+              child: pw.Text(locale == 'tr' ? "Seçili tarihler arasında kayıt bulunamadı." : "No records found for selected dates.", style: pw.TextStyle(font: fontRegular)),
             ),
           ),
         );
@@ -225,19 +225,19 @@ class WorkerExportService {
           theme: theme,
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(32),
-          header: (context) => _buildHeaderIsolate(translations, currencyFormat, startDate, endDate, totalCost, totalHours, filterWorkerId != null ? _tr(workerMap[filterWorkerId]?.adSoyad) : null),
+          header: (context) => _buildHeaderIsolate(translations, currencyFormat, startDate, endDate, totalCost, totalHours, locale, filterWorkerId != null ? _tr(workerMap[filterWorkerId]?.adSoyad) : null),
           build: (context) => [
             pw.SizedBox(height: 20),
             ...sortedWorkerIds.expand((workerId) {
               final worker = workerMap[workerId];
               final puantajs = groupedPuantaj[workerId]!;
-              return _buildWorkerSectionIsolate(translations, currencyFormat, worker, puantajs, projectNames);
+              return _buildWorkerSectionIsolate(translations, currencyFormat, worker, puantajs, projectNames, locale);
             }),
           ],
         ),
       );
 
-      sendPort.send("STATUS:Dosya kaydediliyor...");
+      sendPort.send(params['locale'] == 'tr' ? "STATUS:Dosya kaydediliyor..." : "STATUS:Saving file...");
       final bytes = await pdf.save();
       sendPort.send(bytes);
     } catch (e, stack) {
@@ -245,7 +245,7 @@ class WorkerExportService {
     }
   }
 
-  static pw.Widget _buildHeaderIsolate(Map<String, String> translations, NumberFormat currencyFormat, DateTime start, DateTime end, double cost, double hours, [String? workerName]) {
+  static pw.Widget _buildHeaderIsolate(Map<String, String> translations, NumberFormat currencyFormat, DateTime start, DateTime end, double cost, double hours, String locale, [String? workerName]) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
       decoration: const pw.BoxDecoration(
@@ -269,7 +269,7 @@ class WorkerExportService {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(currencyFormat.format(cost), style: pw.TextStyle(color: PdfColors.teal200, fontWeight: pw.FontWeight.bold, fontSize: 18)),
-              pw.Text(_tr('${hours.toString()} Saat Çalışma'), style: const pw.TextStyle(color: PdfColors.white, fontSize: 10)),
+              pw.Text(_tr('${hours.toString()} ${locale == 'tr' ? 'Saat Çalışma' : 'Hours Work'}'), style: const pw.TextStyle(color: PdfColors.white, fontSize: 10)),
             ],
           ),
         ],
@@ -277,7 +277,7 @@ class WorkerExportService {
     );
   }
 
-  static List<pw.Widget> _buildWorkerSectionIsolate(Map<String, String> translations, NumberFormat currencyFormat, Worker? worker, List<Puantaj> puantajs, Map<int, String> projectNames) {
+  static List<pw.Widget> _buildWorkerSectionIsolate(Map<String, String> translations, NumberFormat currencyFormat, Worker? worker, List<Puantaj> puantajs, Map<int, String> projectNames, String locale) {
     double workerTotalHours = 0;
     double workerTotalCost = 0;
     for (var p in puantajs) {
@@ -295,7 +295,7 @@ class WorkerExportService {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(_tr(worker?.adSoyad ?? translations['unknown']), style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-            pw.Text(_tr('${workerTotalHours.toString()} Saat | ${currencyFormat.format(workerTotalCost)}'), style: pw.TextStyle(fontSize: 10)),
+            pw.Text(_tr('${workerTotalHours.toString()} ${locale == 'tr' ? 'Saat' : 'Hours'} | ${currencyFormat.format(workerTotalCost)}'), style: pw.TextStyle(fontSize: 10)),
           ],
         ),
       ),
@@ -354,9 +354,9 @@ class WorkerExportService {
     final Uint8List? bytes = await compute(_generateExcelBytes, params);
 
     if (bytes != null) {
-      String fileName = filterWorkerId != null 
-          ? '${_tr(workerMap[filterWorkerId]?.adSoyad) ?? 'Isci'}_Ozet_${DateFormat('dd_MM_yyyy').format(DateTime.now())}.xlsx'
-          : 'Isci_Ozet_${DateFormat('dd_MM_yyyy').format(DateTime.now())}.xlsx';
+      String namePart = filterWorkerId != null ? '${_tr(workerMap[filterWorkerId]?.adSoyad) ?? 'Isci'}_' : '';
+      String prefix = filterWorkerId != null ? (l10n.localeName == 'tr' ? 'Ozet' : 'Summary') : (l10n.localeName == 'tr' ? 'Isci_Ozet_Raporu' : 'Worker_Summary_Report');
+      String fileName = '${namePart}${prefix}_${DateFormat('dd_MM_yyyy').format(DateTime.now())}.xlsx';
 
       await Printing.sharePdf(
         bytes: bytes,

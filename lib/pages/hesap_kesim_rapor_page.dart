@@ -115,7 +115,15 @@ class _HesapKesimRaporPageState extends State<HesapKesimRaporPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.settlementReport_caps),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            AppLocalizations.of(context)!.settlementReport,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            textScaleFactor: 1.0,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),

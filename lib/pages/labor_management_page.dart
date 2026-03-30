@@ -36,7 +36,15 @@ class _LaborManagementPageState extends State<LaborManagementPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.personnelTracking.toUpperCase()),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            AppLocalizations.of(context)!.personnelTracking,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            textScaleFactor: 1.0,
+          ),
+        ),
       ),
       body: Column(
         children: [
