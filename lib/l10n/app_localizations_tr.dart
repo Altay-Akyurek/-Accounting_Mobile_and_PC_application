@@ -60,6 +60,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get appSlogan => 'Gelir Gider ve İşçi Takibi';
 
   @override
+  String get appTagline => 'Geleceğin Finans Yönetimi';
+
+  @override
   String get dashboard => 'Ana Sayfa';
 
   @override
@@ -234,6 +237,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get featureB2B => 'B2B/Şirket özellikleri erişimi';
 
   @override
+  String get premiumFeatures => 'Premium Özellikler';
+
+  @override
+  String get premiumBenefitPerformance => 'İşçi & Performans Analizi';
+
+  @override
+  String get tryFreeTitle => 'Ücretsiz Deneyin';
+
+  @override
+  String get tryFreeDescription =>
+      'Kısa bir reklam izleyerek 10 dakika boyunca tüm Premium özelliklere ücretsiz erişin.';
+
+  @override
+  String get watchAdButton => 'Reklam İzle ve 10dk Aç';
+
+  @override
+  String get restorePurchases => 'Satın Almaları Geri Yükle';
+
+  @override
   String get monthlyPackage => 'Aylık Paket';
 
   @override
@@ -356,9 +378,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get secureConnection => 'SSL GÜVENLİ BAĞLANTI';
-
-  @override
-  String get appTagline => 'Geleceğin Finans Yönetimi';
 
   @override
   String get projects => 'PROJELER';
@@ -2065,25 +2084,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get accountAndSettings => 'Hesap ve Ayarlar';
-
-  @override
-  String get premiumFeatures => 'Premium Özellikler';
-
-  @override
-  String get tryFreeTitle => 'Ücretsiz Deneyin';
-
-  @override
-  String get tryFreeDescription =>
-      'Kısa bir reklam izleyerek 10 dakika boyunca tüm Premium özelliklere ücretsiz erişin.';
-
-  @override
-  String get watchAdButton => 'Reklam İzle ve 10dk Aç';
-
-  @override
-  String get restorePurchases => 'Satın Almaları Geri Yükle';
-
-  @override
-  String get premiumBenefitPerformance => 'İşçi & Performans Analizi';
 
   @override
   String get newCariAccountDialog => 'Yeni Cari Hesap';

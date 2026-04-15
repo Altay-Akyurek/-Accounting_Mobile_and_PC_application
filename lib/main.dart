@@ -36,14 +36,56 @@ void main() async {
   );
 
   await initializeDateFormatting('tr_TR', null);
-  await DatabaseHelper.instance.init();
-  await SyncManager.instance.init();
-  
-  await PremiumManager.instance.init();
-  if (Platform.isAndroid || Platform.isIOS) {
-    IAPService.instance.init(); 
+
+  // Global Hata Yakalayıcı (Gri Ekranı Engellemek İçin)
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: const Color(0xFF011627),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.bug_report_rounded, color: Color(0xFF2EC4B6), size: 60),
+                const SizedBox(height: 20),
+                const Text(
+                  "KRİTİK HATA OLUŞTU",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  details.exception.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  "Lütfen bu ekranın görüntüsünü alıp geliştiriciye gönderin.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Color(0xFF2EC4B6), fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  };
+
+  try {
+    await DatabaseHelper.instance.init();
+    await SyncManager.instance.init();
+    await PremiumManager.instance.init();
+    if (Platform.isAndroid || Platform.isIOS) {
+      IAPService.instance.init(); 
+    }
+    await LanguageService.instance.init();
+  } catch (e) {
+    debugPrint('Initialization error (continuing app): $e');
   }
-  await LanguageService.instance.init();
   
   runApp(const MyApp());
 }

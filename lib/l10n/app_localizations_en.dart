@@ -61,6 +61,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appSlogan => 'Revenue, Expense and Labor Tracking';
 
   @override
+  String get appTagline => 'Future of Financial Management';
+
+  @override
   String get dashboard => 'Dashboard';
 
   @override
@@ -234,6 +237,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featureB2B => 'B2B/Company features access';
 
   @override
+  String get premiumFeatures => 'Premium Features';
+
+  @override
+  String get premiumBenefitPerformance => 'Worker & Performance Analysis';
+
+  @override
+  String get tryFreeTitle => 'Try Premium for Free';
+
+  @override
+  String get tryFreeDescription =>
+      'Watch a short ad to unlock all premium features for 10 minutes.';
+
+  @override
+  String get watchAdButton => 'Watch Ad & Unlock 10m';
+
+  @override
+  String get restorePurchases => 'Restore Purchases';
+
+  @override
   String get monthlyPackage => 'Monthly Package';
 
   @override
@@ -356,9 +378,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get secureConnection => 'SSL SECURE CONNECTION';
-
-  @override
-  String get appTagline => 'Future of Financial Management';
 
   @override
   String get projects => 'PROJECTS';
@@ -2067,25 +2086,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountAndSettings => 'Account and Settings';
-
-  @override
-  String get premiumFeatures => 'Premium Features';
-
-  @override
-  String get tryFreeTitle => 'Try Premium for Free';
-
-  @override
-  String get tryFreeDescription =>
-      'Watch a short ad to unlock all premium features for 10 minutes.';
-
-  @override
-  String get watchAdButton => 'Watch Ad & Unlock 10m';
-
-  @override
-  String get restorePurchases => 'Restore Purchases';
-
-  @override
-  String get premiumBenefitPerformance => 'Worker & Performance Analysis';
 
   @override
   String get newCariAccountDialog => 'New Current Account';

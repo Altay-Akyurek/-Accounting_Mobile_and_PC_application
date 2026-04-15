@@ -60,7 +60,7 @@ class IAPService {
     }
   }
 
-  void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
+  Future<void> _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) async {
     for (var purchase in purchaseDetailsList) {
       purchaseStatusNotifier.value = purchase.status;
 
@@ -72,10 +72,27 @@ class IAPService {
       } else if (purchase.status == PurchaseStatus.purchased || 
                  purchase.status == PurchaseStatus.restored) {
         // Satın alma başarılı veya geri yüklendi
-        final product = products.firstWhere(
-          (p) => p.id == purchase.productID,
-          orElse: () => products.isNotEmpty ? products.first : products.first, // Dummy handle
-        );
+        if (products.isEmpty) {
+          debugPrint('Product list is empty, querying again...');
+          await _loadProducts();
+        }
+        
+        // Güvenli ürün bulma (Android'de tip uyuşmazlığını önlemek için loop kullanıyoruz)
+        ProductDetails? product;
+        for (final p in products) {
+          if (p.id == purchase.productID) {
+            product = p;
+            break;
+          }
+        }
+        
+        // Eğer ürün bulunamazsa ama liste boş değilse ilkini al (Fallback)
+        product ??= products.isNotEmpty ? products.first : null;
+        
+        if (product == null) {
+          throw Exception('Product details not available for ${purchase.productID}');
+        }
+        
         _verifyPurchase(purchase, product);
       }
       

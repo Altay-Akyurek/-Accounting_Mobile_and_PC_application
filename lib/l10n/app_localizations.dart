@@ -194,6 +194,12 @@ abstract class AppLocalizations {
   /// **'Gelir Gider ve İşçi Takibi'**
   String get appSlogan;
 
+  /// No description provided for @appTagline.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geleceğin Finans Yönetimi'**
+  String get appTagline;
+
   /// No description provided for @dashboard.
   ///
   /// In tr, this message translates to:
@@ -530,6 +536,42 @@ abstract class AppLocalizations {
   /// **'B2B/Şirket özellikleri erişimi'**
   String get featureB2B;
 
+  /// No description provided for @premiumFeatures.
+  ///
+  /// In tr, this message translates to:
+  /// **'Premium Özellikler'**
+  String get premiumFeatures;
+
+  /// No description provided for @premiumBenefitPerformance.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşçi & Performans Analizi'**
+  String get premiumBenefitPerformance;
+
+  /// No description provided for @tryFreeTitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ücretsiz Deneyin'**
+  String get tryFreeTitle;
+
+  /// No description provided for @tryFreeDescription.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kısa bir reklam izleyerek 10 dakika boyunca tüm Premium özelliklere ücretsiz erişin.'**
+  String get tryFreeDescription;
+
+  /// No description provided for @watchAdButton.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reklam İzle ve 10dk Aç'**
+  String get watchAdButton;
+
+  /// No description provided for @restorePurchases.
+  ///
+  /// In tr, this message translates to:
+  /// **'Satın Almaları Geri Yükle'**
+  String get restorePurchases;
+
   /// No description provided for @monthlyPackage.
   ///
   /// In tr, this message translates to:
@@ -763,12 +805,6 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'SSL GÜVENLİ BAĞLANTI'**
   String get secureConnection;
-
-  /// No description provided for @appTagline.
-  ///
-  /// In tr, this message translates to:
-  /// **'Geleceğin Finans Yönetimi'**
-  String get appTagline;
 
   /// No description provided for @projects.
   ///
@@ -3965,42 +4001,6 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Hesap ve Ayarlar'**
   String get accountAndSettings;
-
-  /// No description provided for @premiumFeatures.
-  ///
-  /// In tr, this message translates to:
-  /// **'Premium Özellikler'**
-  String get premiumFeatures;
-
-  /// No description provided for @tryFreeTitle.
-  ///
-  /// In tr, this message translates to:
-  /// **'Ücretsiz Deneyin'**
-  String get tryFreeTitle;
-
-  /// No description provided for @tryFreeDescription.
-  ///
-  /// In tr, this message translates to:
-  /// **'Kısa bir reklam izleyerek 10 dakika boyunca tüm Premium özelliklere ücretsiz erişin.'**
-  String get tryFreeDescription;
-
-  /// No description provided for @watchAdButton.
-  ///
-  /// In tr, this message translates to:
-  /// **'Reklam İzle ve 10dk Aç'**
-  String get watchAdButton;
-
-  /// No description provided for @restorePurchases.
-  ///
-  /// In tr, this message translates to:
-  /// **'Satın Almaları Geri Yükle'**
-  String get restorePurchases;
-
-  /// No description provided for @premiumBenefitPerformance.
-  ///
-  /// In tr, this message translates to:
-  /// **'İşçi & Performans Analizi'**
-  String get premiumBenefitPerformance;
 
   /// No description provided for @newCariAccountDialog.
   ///

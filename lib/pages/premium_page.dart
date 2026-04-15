@@ -56,19 +56,29 @@ class _PremiumPageState extends State<PremiumPage> {
 
   void _initializeSelection() {
 
-    if (IAPService.instance.products.isNotEmpty) {
-      _selectedProduct = IAPService.instance.products.firstWhere(
-        (p) => p.id.contains('yearly'),
-        orElse: () => IAPService.instance.products.first,
-      );
+    final products = IAPService.instance.products;
+    if (products.isNotEmpty) {
+      ProductDetails? yearly;
+      for (final p in products) {
+        if (p.id.contains('yearly')) {
+          yearly = p;
+          break;
+        }
+      }
+      _selectedProduct = yearly ?? products.first;
     } else {
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted && IAPService.instance.products.isNotEmpty) {
           setState(() {
-            _selectedProduct = IAPService.instance.products.firstWhere(
-              (p) => p.id.contains('yearly'),
-              orElse: () => IAPService.instance.products.first,
-            );
+            final products = IAPService.instance.products;
+            ProductDetails? yearly;
+            for (final p in products) {
+              if (p.id.contains('yearly')) {
+                yearly = p;
+                break;
+              }
+            }
+            _selectedProduct = yearly ?? products.first;
           });
         }
       });
@@ -253,11 +263,32 @@ class _PremiumPageState extends State<PremiumPage> {
 
   Widget _buildPurchaseSection(AppLocalizations l10n) {
     if (IAPService.instance.products.isEmpty) {
-      return const Center(child: Padding(
-        padding: EdgeInsets.all(40.0),
-        child: CircularProgressIndicator(color: Color(0xFF2EC4B6)),
-      ));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            children: [
+              const CircularProgressIndicator(color: Color(0xFF2EC4B6)),
+              const SizedBox(height: 24),
+              Text(
+                "Paketler yükleniyor veya mağaza ile bağlantı kuruluyor...",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  setState(() {}); // UI yenilemeyi tetikle
+                },
+                child: const Text("Yenilemeyi Dene"),
+              ),
+            ],
+          ),
+        ),
+      );
     }
+
+    try {
 
     return Column(
       children: [
@@ -294,6 +325,30 @@ class _PremiumPageState extends State<PremiumPage> {
         _buildRewardedAdCard(l10n),
       ],
     );
+    } catch (e) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
+              const SizedBox(height: 16),
+              const Text(
+                "Ürünler listelenirken bir hata oluştu.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                e.toString(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildSubscriptionCard(
@@ -410,7 +465,9 @@ class _PremiumPageState extends State<PremiumPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  "Bitiş: ${DateFormat('dd MMMM yyyy', 'tr_TR').format(PremiumManager.instance.expiryDate!)}",
+                  PremiumManager.instance.expiryDate != null 
+                    ? "Bitiş: ${DateFormat('dd MMMM yyyy', 'tr_TR').format(PremiumManager.instance.expiryDate!)}"
+                    : "Premium Üyelik Aktif",
                   style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
                 ),
               ),
