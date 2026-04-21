@@ -14,6 +14,7 @@ class PremiumManager {
   
    // UI değişiklikleri için bildirim mekanizması
   final ValueNotifier<bool> premiumStatusNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<String?> syncErrorNotifier = ValueNotifier<String?>(null);
   DateTime? _expiryDate;
   DateTime? get expiryDate => _expiryDate;
 
@@ -197,6 +198,7 @@ class PremiumManager {
 
   Future<void> setPremiumFromIAP(String productId) async {
     await setPremium(true);
+    syncErrorNotifier.value = null;
 
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null) {
@@ -212,16 +214,23 @@ class PremiumManager {
       try {
         await Supabase.instance.client
             .from('user_subscriptions')
-            .upsert({
-              'user_id': user.id,
-              'is_premium': true,
-              'expires_at': expiry.toIso8601String(),
-              'product_id': productId,
-              'updated_at': now.toIso8601String(),
-            });
+            .upsert(
+              {
+                'user_id': user.id,
+                'is_premium': true,
+                'expires_at': expiry.toIso8601String(),
+                'plan_type': productId,
+              },
+              onConflict: 'user_id', // Kullanıcı ID'si çakışırsa güncelle
+            );
+        debugPrint('Premium status synced successfully to Supabase');
       } catch (e) {
-        debugPrint('Premium status sync error: $e');
+        final errorMsg = 'Premium senkronizasyon hatası: $e';
+        debugPrint(errorMsg);
+        syncErrorNotifier.value = errorMsg;
       }
+    } else {
+      syncErrorNotifier.value = "Kullanıcı girişi yapılmadığı için veritabanı senkronize edilemedi.";
     }
   }
 

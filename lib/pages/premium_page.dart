@@ -25,11 +25,13 @@ class _PremiumPageState extends State<PremiumPage> {
     
     // Purchase Status Listener
     IAPService.instance.purchaseStatusNotifier.addListener(_onPurchaseStatusChanged);
+    PremiumManager.instance.syncErrorNotifier.addListener(_onSyncErrorChanged);
   }
 
   @override
   void dispose() {
     IAPService.instance.purchaseStatusNotifier.removeListener(_onPurchaseStatusChanged);
+    PremiumManager.instance.syncErrorNotifier.removeListener(_onSyncErrorChanged);
     super.dispose();
   }
 
@@ -49,6 +51,48 @@ class _PremiumPageState extends State<PremiumPage> {
         const SnackBar(
           content: Text("Tebrikler! Premium üyeliğiniz aktif edildi."),
           backgroundColor: Color(0xFF2EC4B6),
+        ),
+      );
+    }
+  }
+
+  void _onSyncErrorChanged() {
+    final error = PremiumManager.instance.syncErrorNotifier.value;
+    if (error != null && mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Senkronizasyon Hatası"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Ödeme başarılı oldu ancak veritabanına kaydedilirken bir hata oluştu:"),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  error,
+                  style: const TextStyle(color: Colors.red, fontSize: 13, fontFamily: 'monospace'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text("Lütfen bu mesajın görüntüsünü alıp geliştiriciye teknik destek için iletin."),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                PremiumManager.instance.syncErrorNotifier.value = null;
+                Navigator.pop(context);
+              },
+              child: const Text("Tamam"),
+            ),
+          ],
         ),
       );
     }
